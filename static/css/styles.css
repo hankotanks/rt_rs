@@ -1,0 +1,9 @@
+.outer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#tracing {
+    flex-grow: 1;
+}
