@@ -3,6 +3,7 @@ use winit::{dpi, event, keyboard};
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(serde::Serialize)]
 #[derive(Debug)]
 pub struct CameraUniform {
     pub pos: [f32; 3],
@@ -72,6 +73,7 @@ impl<'de> serde::Deserialize<'de> for CameraUniform {
     }
 }
 
+#[derive(Clone, Copy)]
 #[derive(Debug)]
 pub enum CameraController {
     Orbit { left: bool, right: bool, scroll: i32, },
@@ -105,6 +107,29 @@ impl<'de> serde::Deserialize<'de> for CameraController {
         }
 
         Ok(Intermediate::deserialize(deserializer)?.into())
+    }
+}
+
+impl serde::Serialize for CameraController {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: serde::Serializer {
+
+        #[derive(serde::Serialize)]
+        enum Intermediate {
+            Orbit,
+            Fixed,
+        }
+
+        impl From<CameraController> for Intermediate {
+            fn from(value: CameraController) -> Self {
+                match value {
+                    CameraController::Orbit { .. } => Intermediate::Orbit,
+                    CameraController::Fixed => Intermediate::Fixed,
+                }
+            }
+        }
+
+        Into::<Intermediate>::into(*self).serialize(serializer)
     }
 }
 

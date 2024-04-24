@@ -10,7 +10,7 @@ pub struct ScenePack {
     pub bg_layout: wgpu::BindGroupLayout,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Debug)]
 pub struct Scene {
     pub camera: camera::CameraUniform,

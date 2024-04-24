@@ -182,6 +182,10 @@ fn intrs_valid(intrs: Intrs) -> bool {
     return valid;
 }
 
+fn intrs_empty() -> Intrs {
+    return Intrs(primitives[0], config.t_max + 1.0);
+}
+
 fn shadowed(pack: LightingPack) -> bool {
     let light_dir = normalize(pack.light.pos - pack.hit.at);
     let light_dist = length(pack.light.pos - pack.hit.at);
@@ -282,3 +286,5 @@ fn main_cs(@builtin(global_invocation_id) id: vec3<u32>) {
         textureStore(out, coord, vec4<f32>(color, 1.0));
     }
 }
+
+fn intrs(ray: Ray, excl: Prim) -> Intrs { return intrs_empty(); }

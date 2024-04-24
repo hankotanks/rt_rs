@@ -25,6 +25,9 @@ pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
     }
 
     let source = match stage {
+        ShaderStage::Render => { //
+            include_str!("render.wgsl").into()
+        },
         ShaderStage::Compute { wg, pack, } => {
             let source: &'static str = include_str!("compute.wgsl");
 
@@ -59,14 +62,14 @@ pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
             }
 
             // Add the intersection logic
-            source.insert_str(main_cs_idx(&source)?, H::logic());
+            let source = source.replace(
+                "fn intrs(ray: Ray, excl: Prim) -> Intrs { return intrs_empty(); }", 
+                H::logic()
+            );
 
             borrow::Cow::Borrowed({
                 Box::leak(source.into_boxed_str())
             })
-        },
-        ShaderStage::Render => { //
-            include_str!("render.wgsl").into()
         },
     };
 

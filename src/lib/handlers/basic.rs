@@ -32,10 +32,6 @@ impl super::IntrsHandler for BasicIntrs {
     }
 
     fn logic() -> &'static str {"\
-        fn intrs_empty() -> Intrs {
-            return Intrs(primitives[0], config.t_max + 1.0);
-        }
-
         fn intrs_tri(r: Ray, s: Prim) -> Intrs {
             let e1: vec3<f32> = vertices[s.b].pos - vertices[s.a].pos;
             let e2: vec3<f32> = vertices[s.c].pos - vertices[s.a].pos;
