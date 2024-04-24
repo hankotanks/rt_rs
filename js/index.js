@@ -8,4 +8,9 @@ const isLocal = _ => Boolean(
     )
 );
 
+document.getElementById("config-resize").onclick = _ => {
+    document.getElementById("display").width = window.innerWidth;
+    document.getElementById("display").height = window.innerHeight;
+};  
+
 import("../pkg/index.js").then(module => module.run()).catch(console.error);

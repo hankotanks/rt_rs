@@ -1,6 +1,7 @@
 use crate::scene;
 
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct BasicIntrs;
 
 impl super::IntrsHandler for BasicIntrs {
@@ -78,7 +79,7 @@ impl super::IntrsHandler for BasicIntrs {
             for(var i = 1i; i < i32(arrayLength(&primitives)); i = i + 1i) {
                 let prim: Prim = primitives[i];
 
-                var excluded: bool = prim.material != excl.material;
+                var excluded: bool = false;
                     excluded |= prim.a != excl.a;
                     excluded |= prim.b != excl.b;
                     excluded |= prim.c != excl.c;

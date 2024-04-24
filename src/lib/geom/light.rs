@@ -1,6 +1,7 @@
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct Light {
     pub pos: [f32; 3],
     pub strength: f32,

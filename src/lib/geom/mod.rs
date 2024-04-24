@@ -4,9 +4,10 @@ pub mod v3;
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct Prim {
     pub indices: [u32; 3],
-    pub material: u32,
+    pub material: i32,
 }
 
 impl<'de> serde::Deserialize<'de> for Prim {
@@ -16,7 +17,7 @@ impl<'de> serde::Deserialize<'de> for Prim {
         #[derive(serde::Deserialize)]
         struct Intermediate {
             indices: Vec<u32>,
-            material: u32,
+            material: i32,
         }
 
         let intermediate = Intermediate::deserialize(deserializer)?;
@@ -48,6 +49,7 @@ impl<'de> serde::Deserialize<'de> for Prim {
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct PrimVertex {
     pub pos: [f32; 3],
     _p0: u32,
@@ -119,6 +121,7 @@ impl<'de> serde::Deserialize<'de> for PrimVertex {
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct PrimMat {
     pub color: [f32; 3],
     _p0: u32,

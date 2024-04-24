@@ -11,6 +11,7 @@ pub struct ScenePack {
 }
 
 #[derive(serde::Deserialize)]
+#[derive(Debug)]
 pub struct Scene {
     pub camera: camera::CameraUniform,
     pub camera_controller: camera::CameraController,
@@ -53,7 +54,7 @@ impl Scene {
 
         // The first primitive acts as a 'null'
         let mut primitives = vec![
-            geom::Prim { indices: [0; 3], material: 0 }
+            geom::Prim { indices: [0; 3], material: -1 }
         ];
         
         // Then we add all the others
@@ -168,7 +169,7 @@ impl Scene {
     pub fn add_mesh(
         &mut self, 
         obj: wavefront::Obj,
-        material: u32,
+        material: i32,
     ) {
         use crate::geom::v3::V3Ops as _;
 

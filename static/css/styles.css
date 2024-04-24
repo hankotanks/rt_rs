@@ -1,9 +1,15 @@
 .outer {
     display: flex;
     flex-direction: column;
+    width: 100vw;
     height: 100vh;
 }
 
-#tracing {
+.config {
+    z-index: 1;
+    position: absolute; 
+}
+
+canvas {
     flex-grow: 1;
 }

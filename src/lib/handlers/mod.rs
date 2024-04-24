@@ -2,6 +2,7 @@ pub mod basic;
 
 use crate::scene;
 
+#[derive(Debug)]
 pub struct IntrsVar<'a> {
     pub var_name: &'a str,
     pub var_decl: &'a str,
@@ -9,6 +10,7 @@ pub struct IntrsVar<'a> {
     pub buffer: wgpu::Buffer,
 }
 
+#[derive(Debug)]
 pub struct IntrsPack<'a> {
     pub vars: Vec<IntrsVar<'a>>,
     pub group: wgpu::BindGroup,

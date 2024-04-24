@@ -3,6 +3,7 @@ use winit::{dpi, event, keyboard};
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct CameraUniform {
     pub pos: [f32; 3],
     _p0: u32,
@@ -71,6 +72,7 @@ impl<'de> serde::Deserialize<'de> for CameraUniform {
     }
 }
 
+#[derive(Debug)]
 pub enum CameraController {
     Orbit { left: bool, right: bool, scroll: i32, },
     Fixed,

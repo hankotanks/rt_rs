@@ -10,6 +10,7 @@ use crate::{handlers, shaders, vertex};
 use crate::scene;
 use crate::scene::camera as camera;
 
+#[derive(Debug)]
 pub struct State<H: handlers::IntrsHandler> {
     // WGPU interface
     device: wgpu::Device,

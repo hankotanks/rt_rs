@@ -6,6 +6,9 @@ pub mod state;
 pub mod handlers;
 pub mod shaders;
 
+#[cfg(target_arch = "wasm32")]
+mod web;
+
 use std::sync;
 
 use winit::{dpi, event, event_loop, keyboard, window};
@@ -165,6 +168,19 @@ pub fn update_config(serialized: JsValue) -> Result<(), Failed> {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run() -> Result<(), Failed> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            console_error_panic_hook::set_once();
+
+            wasm_logger::init(wasm_logger::Config::default());
+        } else {
+            simple_logger::SimpleLogger::new()
+                .with_level(log::LevelFilter::Info)
+                .init()
+                .unwrap();
+        }
+    }    
+
     // TODO
     let mut scene = scene::Scene {
         camera: scene::camera::CameraUniform::new(
@@ -207,18 +223,10 @@ pub async fn run() -> Result<(), Failed> {
 
     scene.add_mesh(mesh, 1);
 
-    cfg_if::cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            console_error_panic_hook::set_once();
+    let mesh = include_bytes!("../../meshes/dodecahedron.obj");
+    let mesh = BAIL(wavefront::Obj::from_reader(&mesh[..]))?;
 
-            wasm_logger::init(wasm_logger::Config::default());
-        } else {
-            simple_logger::SimpleLogger::new()
-                .with_level(log::LevelFilter::Info)
-                .init()
-                .unwrap();
-        }
-    }    
+    scene.add_mesh(mesh, 0);
     
     let event_loop = BAIL(event_loop::EventLoop::new())?;
         event_loop.set_control_flow(event_loop::ControlFlow::Poll);
@@ -227,30 +235,35 @@ pub async fn run() -> Result<(), Failed> {
         window::WindowBuilder::new().build(&event_loop)
     })?;
 
+    // Initialize the canvas
+    #[cfg(target_arch = "wasm32")] unsafe {
+        web::init(CONFIG, &window);
+    }
+
     // This needs to be shared with State
     let window = sync::Arc::new(window);
 
+    // Initialize the state (bail on failure)
     let mut state = unsafe {
         use handlers::basic::BasicIntrs;
 
         let window = window.clone();
-
         BAIL({
             state::State::<BasicIntrs>::new(CONFIG, &scene, window).await
         })?
     };
 
     // Keeps track of resize actions. 
-    // `size_instant` keeps track of the last resize event, 
-    // after the user has stopped resizing, 
-    // the new size can be processed
-    
+    // We want to wait until the user is done resizing to
+    // avoid repeatedly resizing the texture
     let mut resize_instant = chrono::Local::now();
     let mut resize_dim = None;
 
     let mut curr_frame_instant = chrono::Local::now();
     let mut curr_frame_duration = 0.;
 
+    // This keep track of failures
+    // if failure.is_err(), target.exit()
     let mut failure = Ok(());
 
     // Enter the event loop
@@ -280,7 +293,7 @@ pub async fn run() -> Result<(), Failed> {
         match event {
             event::Event::WindowEvent { event, window_id, .. }
                 if window_id == window.id() => {
-                if scene.camera_controller.handle_event(&event) {
+                if !scene.camera_controller.handle_event(&event) {
                     match event {
                         event::WindowEvent::CloseRequested | //
                         event::WindowEvent::KeyboardInput {
@@ -292,6 +305,8 @@ pub async fn run() -> Result<(), Failed> {
                         event::WindowEvent::Resized(physical_size) //
                             if resize_dim != Some(physical_size) => {
                             
+                            // Update the size and the time the event occurred
+                            // This will later be used to avoid excess resize actions
                             resize_dim = Some(physical_size);
                             resize_instant = chrono::Local::now();
                         },
@@ -312,6 +327,7 @@ pub async fn run() -> Result<(), Failed> {
             _ => { /*  */ },
         }
 
+        // Indicates whether the camera has changed
         let mut update_required_camera = false;
 
         let scene::Scene { 
@@ -319,6 +335,8 @@ pub async fn run() -> Result<(), Failed> {
             camera_controller, ..
         } = &mut scene;
 
+        // Update the camera
+        // NOTE: Camera updates are tied to FPS
         #[allow(clippy::collapsible_if)]
         if curr_frame_duration >= frame_duration {
             if camera_controller.update(camera) {
@@ -328,6 +346,7 @@ pub async fn run() -> Result<(), Failed> {
             }
         }
 
+        // Calculate time since last resize event
         let resize_duration = resize_instant.signed_duration_since(frame_instant);
         let resize_duration = resize_duration
             .num_microseconds()
@@ -335,23 +354,28 @@ pub async fn run() -> Result<(), Failed> {
             .unwrap_or(resize_duration.num_milliseconds() as f64)
             .abs();
 
+        // Indicates that its time for the next frame
         let mut update_required_framerate = false;
 
+        // If the user is done resizing, adjust texture and uniforms
         if resize_duration > frame_duration {
             if let Some(dim) = resize_dim.take() {
                 unsafe { state.resize(CONFIG, dim); }
 
                 // We want to begin an update immediately after resizing
+                // update_required_framerate is co-opted for this purpose
                 update_required_framerate = true;
             }
         }
 
+        // Check if it's time for an update
         if curr_frame_duration >= frame_duration {
             curr_frame_duration -= frame_duration;
 
             update_required_framerate = true;
         }
 
+        // Perform the update only if the camera and FPS call for it
         if update_required_framerate && update_required_camera {
             unsafe { state.update(CONFIG); }
 

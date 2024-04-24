@@ -45,8 +45,10 @@ var<uniform> camera: Camera;
 // Geometry
 
 struct Prim {
-    a: u32, b: u32, c: u32,
-    material: u32,
+    a: u32, 
+    b: u32, 
+    c: u32,
+    material: i32,
 }
 
 // Array of raw primitives
@@ -173,10 +175,7 @@ fn lighting_spec(pack: LightingPack) -> f32 {
 }
 
 fn intrs_valid(intrs: Intrs) -> bool {
-    var valid = intrs.s.material != 0;
-        valid &= intrs.s.a != 0;
-        valid &= intrs.s.b != 0;
-        valid &= intrs.s.c != 0;
+    var valid = intrs.s.material != -1i;
         valid &= intrs.t < config.t_max;
         valid &= intrs.t > config.t_min;
 
@@ -217,59 +216,55 @@ fn lighting(camera_ray: Ray) -> vec3<f32> {
         let intrs: Intrs = intrs(ray, primitives[0]);
         if(!intrs_valid(intrs)) { break; }
 
-        if(intrs.t < config.t_max && intrs.t > config.t_min) {
-            let material: Material = materials[intrs.s.material];
+        let material: Material = materials[intrs.s.material];
 
-            let hit = hit(intrs, ray);
+        let hit = hit(intrs, ray);
 
-            var intensity_diffuse: f32 = 0.;
-            var intensity_spec: f32 = 0.;
+        var intensity_diffuse: f32 = 0.;
+        var intensity_spec: f32 = 0.;
 
-            // Handle the camera light source
-            if(config.camera_light_source > 0.0) {
-                let pack_light = Light(camera_ray.origin, config.camera_light_source);
-                let pack = LightingPack(ray, pack_light, hit, material);
+        // Handle the camera light source
+        if(config.camera_light_source > 0.0) {
+            let pack_light = Light(camera_ray.origin, config.camera_light_source);
+            let pack = LightingPack(ray, pack_light, hit, material);
+
+            if(!shadowed(pack)) {
+                intensity_diffuse += lighting_diffuse(pack);
+                intensity_spec += lighting_spec(pack);
+            }
+        }
+
+        // Iterate through all other light sources in the scene
+        for(var j = 0i; j < i32(arrayLength(&lights)); j = j + 1i) {
+            if(lights[j].strength > 0.0) {
+                let pack = LightingPack(ray, lights[j], hit, material);
 
                 if(!shadowed(pack)) {
                     intensity_diffuse += lighting_diffuse(pack);
                     intensity_spec += lighting_spec(pack);
                 }
             }
-
-            // Iterate through all other light sources in the scene
-            for(var j = 0i; j < i32(arrayLength(&lights)); j = j + 1i) {
-                if(lights[j].strength > 0.0) {
-                    let pack = LightingPack(ray, lights[j], hit, material);
-
-                    if(!shadowed(pack)) {
-                        intensity_diffuse += lighting_diffuse(pack);
-                        intensity_spec += lighting_spec(pack);
-                    }
-                }
-            }
-
-            let color_temp = material.color * intensity_diffuse * material.albedo.x + //
-                vec3<f32>(1.0) * intensity_spec * material.albedo.y;
-
-            if(i == 0u) {
-                color += color_temp;
-            } else {
-                color += color_temp * material.albedo.z;
-            }
-
-            let refl_dir = normalize(reflect(ray.dir, hit.normal));
-
-            var refl_origin: vec3<f32>;
-            if(dot(refl_dir, hit.normal) < 0.0) {
-                refl_origin = hit.at - hit.normal * 0.001;
-            } else {
-                refl_origin = hit.at + hit.normal * 0.001;
-            }
-
-            ray = Ray(refl_origin, refl_dir);
-        } else {
-            break;
         }
+
+        let color_temp = material.color * intensity_diffuse * material.albedo.x + //
+            vec3<f32>(1.0) * intensity_spec * material.albedo.y;
+
+        if(i == 0u) {
+            color += color_temp;
+        } else {
+            color += color_temp * material.albedo.z;
+        }
+
+        let refl_dir = normalize(reflect(ray.dir, hit.normal));
+
+        var refl_origin: vec3<f32>;
+        if(dot(refl_dir, hit.normal) < 0.0) {
+            refl_origin = hit.at - hit.normal * 0.001;
+        } else {
+            refl_origin = hit.at + hit.normal * 0.001;
+        }
+
+        ray = Ray(refl_origin, refl_dir);
     }
 
     return color;
