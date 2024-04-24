@@ -42,6 +42,6 @@ chrono = { version = "0.4.35", features = ["wasmbind"] }
 wasm-bindgen = "0.2.45"
 wasm-bindgen-futures = "0.4.30"
 wasm-logger = "0.2.0"
-web-sys = { version = "0.3.22", features = ["console"] }
+web-sys = { version = "0.3", features = ["Document", "Window", "Element"] }
 wee_alloc = "0.4.2"
 console_error_panic_hook = "0.1.5"

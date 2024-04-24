@@ -1,15 +1,16 @@
-.outer {
-    display: flex;
-    flex-direction: column;
-    width: 100vw;
-    height: 100vh;
+html, body {
+  display: flex;
+  margin: 0;
+  padding: 0;
 }
 
-.config {
-    z-index: 1;
+.config-panel {
     position: absolute; 
+    z-index: 1;
+    padding: 5px;
 }
 
 canvas {
-    flex-grow: 1;
+    display: block;
+    background-color: black;
 }

@@ -9,6 +9,9 @@ pub mod shaders;
 #[cfg(target_arch = "wasm32")]
 mod web;
 
+#[cfg(target_arch = "wasm32")]
+pub use web::{update_config, update_viewport};
+
 use std::sync;
 
 use winit::{dpi, event, event_loop, keyboard, window};
@@ -20,24 +23,22 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 // Define the error type based on the platform
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        use wasm_bindgen::prelude::*;
-
-        type Failed = JsValue;
+        pub type Failed = wasm_bindgen::JsValue;
     } else {
-        type Failed = anyhow::Error;
+        pub type Failed = anyhow::Error;
     }
 }
 
 // This is a wrapper function to avoid having to cast Err variants
 #[allow(non_snake_case)]
-fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
+pub fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
     #[allow(clippy::let_and_return)]
     result.map_err(|e| {
         let e = Into::<anyhow::Error>::into(e);
 
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
-                JsValue::from_str(&format!("{}", e))
+                wasm_bindgen::JsValue::from_str(&format!("{}", e))
             } else {
                 e
             }
@@ -135,7 +136,7 @@ impl Default for Config {
 // sets the flag
 impl Config {
     const fn new() -> Self {
-        Self { 
+        Self {
             compute: ComputeConfig::new(),
             resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
             fps: 60,
@@ -145,43 +146,17 @@ impl Config {
     }
 }
 
-// The Config global that the JS interface writes into
-pub static mut CONFIG: Config = Config::new();
-
-#[no_mangle]
-#[cfg(target_arch = "wasm32")]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn update_config(serialized: JsValue) -> Result<(), Failed> {
-    use std::io;
-
-    match serialized.as_string() {
-        Some(temp) => unsafe {
-            CONFIG = BAIL(serde_json::from_str::<Config>(&temp))?;
-        },
-        None => {
-            return BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)));
-        },
-    }
-
-    Ok(())
+pub async fn run_native(
+    mut config: Config, 
+    mut scene: scene::Scene
+) -> Result<(), Failed> {
+    unsafe { run_internal(&mut config, &mut scene).await }
 }
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub async fn run() -> Result<(), Failed> {
-    cfg_if::cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            console_error_panic_hook::set_once();
-
-            wasm_logger::init(wasm_logger::Config::default());
-        } else {
-            simple_logger::SimpleLogger::new()
-                .with_level(log::LevelFilter::Info)
-                .init()
-                .unwrap();
-        }
-    }    
-
-    // TODO
+#[cfg(target_arch = "wasm32")]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
+pub async fn run_wasm() -> Result<(), Failed> {
+    // TODO: Implement scene fetching
     let mut scene = scene::Scene {
         camera: scene::camera::CameraUniform::new(
             [0., 0., -10.], 
@@ -228,6 +203,26 @@ pub async fn run() -> Result<(), Failed> {
 
     scene.add_mesh(mesh, 0);
     
+    unsafe { run_internal(&mut web::CONFIG, &mut scene).await }
+}
+
+async unsafe fn run_internal(
+    config: &mut Config, 
+    scene: &mut scene::Scene
+) -> Result<(), Failed> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            console_error_panic_hook::set_once();
+
+            wasm_logger::init(wasm_logger::Config::default());
+        } else {
+            simple_logger::SimpleLogger::new()
+                .with_level(log::LevelFilter::Info)
+                .init()
+                .unwrap();
+        }
+    }
+    
     let event_loop = BAIL(event_loop::EventLoop::new())?;
         event_loop.set_control_flow(event_loop::ControlFlow::Poll);
 
@@ -235,21 +230,19 @@ pub async fn run() -> Result<(), Failed> {
         window::WindowBuilder::new().build(&event_loop)
     })?;
 
-    // Initialize the canvas
-    #[cfg(target_arch = "wasm32")] unsafe {
-        web::init(CONFIG, &window);
-    }
+    // Initialize the canvas (WASM only)
+    #[cfg(target_arch = "wasm32")] BAIL(web::init(*config, &window))?;
 
     // This needs to be shared with State
     let window = sync::Arc::new(window);
 
     // Initialize the state (bail on failure)
-    let mut state = unsafe {
+    let mut state = {
         use handlers::basic::BasicIntrs;
 
         let window = window.clone();
         BAIL({
-            state::State::<BasicIntrs>::new(CONFIG, &scene, window).await
+            state::State::<BasicIntrs>::new(*config, scene, window).await
         })?
     };
 
@@ -270,7 +263,7 @@ pub async fn run() -> Result<(), Failed> {
     BAIL(event_loop.run(|event, target| {
         // Take a snapshot of the current Instant
         let frame_instant = chrono::Local::now();
-        let frame_duration = unsafe { (CONFIG.fps as f64).recip() * 1_000. };
+        let frame_duration = 1_000. * (config.fps as f64).recip();
 
         let temp = curr_frame_instant.signed_duration_since(frame_instant);
         let temp = temp
@@ -282,11 +275,17 @@ pub async fn run() -> Result<(), Failed> {
         curr_frame_instant = frame_instant;
         curr_frame_duration += temp;
 
-        unsafe {
-            if CONFIG.updated {
-                CONFIG.updated = false;
+        // We are only updating config options live on the web
+        // So it can be disabled on native
+        #[cfg(target_arch = "wasm32")] unsafe {
+            if config.updated {
+                config.updated = false;
                 
-                state.update_config(CONFIG.compute);
+                state.update_config(config.compute);
+            }
+
+            if let Some(size) = web::VIEWPORT.take() {
+                state.resize(*config, size);
             }
         }
 
@@ -315,9 +314,7 @@ pub async fn run() -> Result<(), Failed> {
                                 Ok(_) => { /*  */ },
                                 Err(wgpu::SurfaceError::Lost | 
                                     wgpu::SurfaceError::Outdated
-                                ) => unsafe {
-                                    state.resize(CONFIG, state.window_size());
-                                },
+                                ) => state.resize(*config, state.window_size()),
                                 Err(e) => failure = BAIL(Err(e)),
                             }
                         },
@@ -333,7 +330,7 @@ pub async fn run() -> Result<(), Failed> {
         let scene::Scene { 
             camera, 
             camera_controller, ..
-        } = &mut scene;
+        } = scene;
 
         // Update the camera
         // NOTE: Camera updates are tied to FPS
@@ -360,7 +357,7 @@ pub async fn run() -> Result<(), Failed> {
         // If the user is done resizing, adjust texture and uniforms
         if resize_duration > frame_duration {
             if let Some(dim) = resize_dim.take() {
-                unsafe { state.resize(CONFIG, dim); }
+                state.resize(*config, dim);
 
                 // We want to begin an update immediately after resizing
                 // update_required_framerate is co-opted for this purpose
@@ -377,7 +374,7 @@ pub async fn run() -> Result<(), Failed> {
 
         // Perform the update only if the camera and FPS call for it
         if update_required_framerate && update_required_camera {
-            unsafe { state.update(CONFIG); }
+            state.update(*config);
 
             window.request_redraw();
         }

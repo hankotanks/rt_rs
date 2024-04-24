@@ -8,9 +8,20 @@ const isLocal = _ => Boolean(
     )
 );
 
-document.getElementById("config-resize").onclick = _ => {
-    document.getElementById("display").width = window.innerWidth;
-    document.getElementById("display").height = window.innerHeight;
-};  
 
-import("../pkg/index.js").then(module => module.run()).catch(console.error);
+import("../pkg/index.js").then(module => {
+    let sinceLastResize;
+
+    window.onresize = _ => {
+        clearTimeout(sinceLastResize);
+
+        sinceLastResize = setTimeout(_ => {
+            module.update_viewport(`{
+                "width": ${window.innerWidth},
+                "height": ${window.innerHeight}
+            }`);
+        }, 500);
+    };
+
+    module.run_wasm();
+}).catch(console.error);
