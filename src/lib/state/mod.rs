@@ -447,6 +447,10 @@ impl<H: handlers::IntrsHandler> State<H> {
         );
     }
 
+    pub fn window_size(&self) -> dpi::PhysicalSize<u32> {
+        self.window_size
+    }
+
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 

@@ -46,8 +46,6 @@ var<uniform> camera: Camera;
 
 struct Prim {
     a: u32, b: u32, c: u32,
-    tag: u32,
-    scale: f32,
     material: u32,
 }
 
@@ -119,39 +117,33 @@ fn camera_ray(coord: vec2<i32>) -> Ray {
 
 fn hit(intrs: Intrs, r: Ray) -> Hit {
     let at: vec3<f32> = r.origin + (r.dir * intrs.t);
+    // NOTE: As of now, 
+    // I have no explanation for why these need to be flipped...
+    let b: vec3<f32> = vertices[intrs.s.a].pos;
+    let c: vec3<f32> = vertices[intrs.s.b].pos;
+    let a: vec3<f32> = vertices[intrs.s.c].pos;
 
-    var normal: vec3<f32>;
-    if(intrs.s.tag == 1u) {
-        normal = normalize(at - vertices[intrs.s.a].pos);
-    } else if(intrs.s.tag == 2u) {
-        // NOTE: As of now, 
-        // I have no explanation for why these need to be flipped...
-        let b: vec3<f32> = vertices[intrs.s.a].pos;
-        let c: vec3<f32> = vertices[intrs.s.b].pos;
-        let a: vec3<f32> = vertices[intrs.s.c].pos;
+    let v0: vec3<f32> = b - a;
+    let v1: vec3<f32> = c - a;
+    let v2: vec3<f32> = at - a;
 
-        let v0: vec3<f32> = b - a;
-        let v1: vec3<f32> = c - a;
-        let v2: vec3<f32> = at - a;
+    let d00: f32 = dot(v0, v0);
+    let d01: f32 = dot(v0, v1);
+    let d11: f32 = dot(v1, v1);
+    let d20: f32 = dot(v2, v0);
+    let d21: f32 = dot(v2, v1);
 
-        let d00: f32 = dot(v0, v0);
-        let d01: f32 = dot(v0, v1);
-        let d11: f32 = dot(v1, v1);
-        let d20: f32 = dot(v2, v0);
-        let d21: f32 = dot(v2, v1);
+    let denom: f32 = d00 * d11 - d01 * d01;
 
-        let denom: f32 = d00 * d11 - d01 * d01;
+    let v: f32 = (d11 * d20 - d01 * d21) / denom;
+    let w: f32 = (d00 * d21 - d01 * d20) / denom;
+    let u: f32 = 1.0 - v - w;
 
-        let v: f32 = (d11 * d20 - d01 * d21) / denom;
-        let w: f32 = (d00 * d21 - d01 * d20) / denom;
-        let u: f32 = 1.0 - v - w;
+    let na: vec3<f32> = vertices[intrs.s.a].normal * v;
+    let nb: vec3<f32> = vertices[intrs.s.b].normal * w;
+    let nc: vec3<f32> = vertices[intrs.s.c].normal * u;
 
-        let na: vec3<f32> = vertices[intrs.s.a].normal * v;
-        let nb: vec3<f32> = vertices[intrs.s.b].normal * w;
-        let nc: vec3<f32> = vertices[intrs.s.c].normal * u;
-
-        normal = normalize(na + nb + nc);
-    }
+    let normal = normalize(na + nb + nc);
 
     return Hit(at, normal, intrs.s, intrs.t);
 }
@@ -180,6 +172,17 @@ fn lighting_spec(pack: LightingPack) -> f32 {
     return spec;
 }
 
+fn intrs_valid(intrs: Intrs) -> bool {
+    var valid = intrs.s.material != 0;
+        valid &= intrs.s.a != 0;
+        valid &= intrs.s.b != 0;
+        valid &= intrs.s.c != 0;
+        valid &= intrs.t < config.t_max;
+        valid &= intrs.t > config.t_min;
+
+    return valid;
+}
+
 fn shadowed(pack: LightingPack) -> bool {
     let light_dir = normalize(pack.light.pos - pack.hit.at);
     let light_dist = length(pack.light.pos - pack.hit.at);
@@ -194,7 +197,7 @@ fn shadowed(pack: LightingPack) -> bool {
     let shadow_ray: Ray = Ray(shadow_origin, light_dir);
 
     let shadow_intrs = intrs(shadow_ray, pack.hit.s);
-    if(shadow_intrs.s.tag != 0u) {
+    if(intrs_valid(shadow_intrs)) {
         let shadow_hit = hit(shadow_intrs, shadow_ray);
 
         if(length(shadow_hit.at - shadow_origin) < light_dist) {
@@ -212,7 +215,7 @@ fn lighting(camera_ray: Ray) -> vec3<f32> {
 
     for(var i: u32 = 0u; i < config.bounces; i = i + 1u) {
         let intrs: Intrs = intrs(ray, primitives[0]);
-        if(intrs.s.tag == 0u) { break; }
+        if(!intrs_valid(intrs)) { break; }
 
         if(intrs.t < config.t_max && intrs.t > config.t_min) {
             let material: Material = materials[intrs.s.material];

@@ -119,6 +119,7 @@ impl ComputeConfig {
 pub struct Config {
     pub compute: ComputeConfig,
     pub resolution: Resolution,
+    pub fps: u32,
     pub updated: bool,
 }
 
@@ -133,6 +134,7 @@ impl Config {
         Self { 
             compute: ComputeConfig::new(),
             resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
+            fps: 60,
             updated: true,
         }
     }
@@ -161,6 +163,48 @@ pub fn update_config(serialized: JsValue) -> Result<(), Failed> {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run() -> Result<(), Failed> {
+    // TODO
+    let mut scene = scene::Scene {
+        camera: scene::camera::CameraUniform::new(
+            [0., 0., -10.], 
+            [0.; 3]
+        ),
+        camera_controller: scene::camera::CameraController::Orbit { 
+            left: false, 
+            right: false, 
+            scroll: 0 
+        },
+        prims: vec![],
+        vertices: vec![],
+        lights: vec![
+            geom::light::Light { pos: [-20., 20., 20.], strength: 1.5, },
+            geom::light::Light { pos: [30., 50., -25.], strength: 1.8, },
+            geom::light::Light { pos: [30., 20., 30.], strength: 1.7, },
+        ],
+        materials: vec![
+            geom::PrimMat::new(
+                [0.4, 0.4, 0.3],
+                [0.6, 0.3, 0.1],
+                50.,
+            ),
+            geom::PrimMat::new(
+                [0.3, 0.1, 0.1],
+                [0.9, 0.1, 0.],
+                 10.,
+            ),
+            geom::PrimMat::new(
+                [1.; 3],
+                [0., 10., 0.8],
+                1425.,
+            )
+        ],
+    };
+
+    let mesh = include_bytes!("../../meshes/tetrahedron.obj");
+    let mesh = BAIL(wavefront::Obj::from_reader(&mesh[..]))?;
+
+    scene.add_mesh(mesh, 1);
+
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             console_error_panic_hook::set_once();
@@ -181,35 +225,137 @@ pub async fn run() -> Result<(), Failed> {
     // This needs to be shared with State
     let window = sync::Arc::new(window);
 
+    let mut state = unsafe {
+        use handlers::basic::BasicIntrs;
+
+        let window = window.clone();
+
+        BAIL({
+            state::State::<BasicIntrs>::new(CONFIG, &scene, window).await
+        })?
+    };
+
+    // Keeps track of resize actions. 
+    // `size_instant` keeps track of the last resize event, 
+    // after the user has stopped resizing, 
+    // the new size can be processed
+    
+    let mut resize_instant = chrono::Local::now();
+    let mut resize_dim = None;
+
+    let mut curr_frame_instant = chrono::Local::now();
+    let mut curr_frame_duration = 0.;
+
+    let mut failure = Ok(());
+
+    // Enter the event loop
     BAIL(event_loop.run(|event, target| {
+        // Take a snapshot of the current Instant
+        let frame_instant = chrono::Local::now();
+        let frame_duration = unsafe { (CONFIG.fps as f64).recip() * 1_000. };
+
+        let temp = curr_frame_instant.signed_duration_since(frame_instant);
+        let temp = temp
+            .num_microseconds()
+            .map(|micros| 0.001 * micros as f64)
+            .unwrap_or(temp.num_milliseconds() as f64)
+            .abs();
+
+        curr_frame_instant = frame_instant;
+        curr_frame_duration += temp;
+
         unsafe {
             if CONFIG.updated {
                 CONFIG.updated = false;
                 
-                // TODO: State::update_config
+                state.update_config(CONFIG.compute);
             }
         }
 
         match event {
             event::Event::WindowEvent { event, window_id, .. }
-                if window_id == window.id() => match event {
-                    event::WindowEvent::CloseRequested | //
-                    event::WindowEvent::KeyboardInput {
-                        event: event::KeyEvent {
-                            state: event::ElementState::Pressed,
-                            logical_key: keyboard::Key::Named(keyboard::NamedKey::Escape), ..
-                        }, ..
-                    } => target.exit(),
-                    event::WindowEvent::Resized(physical_size) => {
-                        log::info!("{:?}", physical_size);
-                    },
-                    event::WindowEvent::RedrawRequested => {
-                        // TODO
-                    },
-                    _ => { /*  */ },
-                }
-            ,
+                if window_id == window.id() => {
+                if scene.camera_controller.handle_event(&event) {
+                    match event {
+                        event::WindowEvent::CloseRequested | //
+                        event::WindowEvent::KeyboardInput {
+                            event: event::KeyEvent {
+                                state: event::ElementState::Pressed,
+                                logical_key: keyboard::Key::Named(keyboard::NamedKey::Escape), ..
+                            }, ..
+                        } => target.exit(),
+                        event::WindowEvent::Resized(physical_size) //
+                            if resize_dim != Some(physical_size) => {
+    
+                            resize_dim = Some(physical_size);
+                            resize_instant = chrono::Local::now();
+                        },
+                        event::WindowEvent::RedrawRequested => {
+                            match state.render() {
+                                Ok(_) => { /*  */ },
+                                Err(wgpu::SurfaceError::Lost | 
+                                    wgpu::SurfaceError::Outdated
+                                ) => unsafe {
+                                    state.resize(CONFIG, state.window_size());
+                                },
+                                Err(e) => failure = BAIL(Err(e)),
+                            }
+                        },
+                        _ => { /*  */ },
+                    }
+                }},
             _ => { /*  */ },
         }
-    }))
+
+        let mut update_required_camera = false;
+
+        let scene::Scene { 
+            camera, 
+            camera_controller, ..
+        } = &mut scene;
+
+        #[allow(clippy::collapsible_if)]
+        if curr_frame_duration >= frame_duration {
+            if camera_controller.update(camera) {
+                state.update_camera_buffer(*camera);
+
+                update_required_camera = true;
+            }
+        }
+
+        let resize_duration = resize_instant.signed_duration_since(frame_instant);
+        let resize_duration = resize_duration
+            .num_microseconds()
+            .map(|micros| 0.001 * micros as f64)
+            .unwrap_or(resize_duration.num_milliseconds() as f64)
+            .abs();
+
+        let mut update_required_framerate = false;
+
+        if resize_duration > frame_duration {
+            if let Some(dim) = resize_dim.take() {
+                unsafe { state.resize(CONFIG, dim); }
+
+                // We want to begin an update immediately after resizing
+                update_required_framerate = true;
+            }
+        }
+
+        if curr_frame_duration >= frame_duration {
+            curr_frame_duration -= frame_duration;
+
+            update_required_framerate = true;
+        }
+
+        if update_required_framerate && update_required_camera {
+            unsafe { state.update(CONFIG); }
+
+            window.request_redraw();
+        }
+
+        // If we've ran into an error, start the process of exiting
+        if failure.is_err() { target.exit(); }
+    }))?;
+
+    failure
 }

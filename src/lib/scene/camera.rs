@@ -108,7 +108,7 @@ impl<'de> serde::Deserialize<'de> for CameraController {
 
 impl CameraController {
     #[allow(dead_code)]
-    fn handle_event(&mut self, event: &event::WindowEvent) -> bool {
+    pub fn handle_event(&mut self, event: &event::WindowEvent) -> bool {
         // The fixed camera never consumes an event
         let Self::Orbit {
             left, right, scroll, ..
@@ -146,7 +146,7 @@ impl CameraController {
     }
 
     #[allow(dead_code)]
-    fn update(&mut self, uniform: &mut CameraUniform) -> bool {
+    pub fn update(&mut self, uniform: &mut CameraUniform) -> bool {
         use crate::geom::v3::V3Ops as _;
 
         const SPEED: f32 = 0.05;

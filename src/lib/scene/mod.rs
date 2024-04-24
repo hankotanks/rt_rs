@@ -164,4 +164,68 @@ impl Scene {
             bg_layout, 
         }
     }
+
+    pub fn add_mesh(
+        &mut self, 
+        obj: wavefront::Obj,
+        material: u32,
+    ) {
+        use crate::geom::v3::V3Ops as _;
+
+        let vertices = obj.positions().to_vec();
+    
+        let mut normals = vec![vec![]; vertices.len()];
+    
+        let mut prims = vec![];
+        for [
+            (pa, na, idx_a), 
+            (pb, nb, idx_b), 
+            (pc, nc, idx_c)
+        ] in obj.triangles().map(|[a, b, c]| [
+                (a.position(), a.normal(), a.position_index()), 
+                (b.position(), b.normal(), b.position_index()), 
+                (c.position(), c.normal(), c.position_index()),
+        ]) {
+            let ab = pb.sub(pa);
+            let ac = pc.sub(pa);
+    
+            let normal = ab.cross(ac).normalize();
+            
+            normals[idx_a].push(match na {
+                Some(normal) => normal,
+                None => normal.scale(pa.angle(pb, pc)),
+            });
+
+            normals[idx_b].push(match nb {
+                Some(normal) => normal,
+                None => normal.scale(pb.angle(pc, pa)),
+            });
+
+            normals[idx_c].push(match nc {
+                Some(normal) => normal,
+                None => normal.scale(pc.angle(pa, pb)),
+            });
+    
+            prims.push(geom::Prim { 
+                indices: [
+                    (idx_a + self.vertices.len()) as u32, 
+                    (idx_b + self.vertices.len()) as u32,
+                    (idx_c + self.vertices.len()) as u32
+                ],
+                material,
+            });
+        }
+    
+        let normals = normals.into_iter().map(|normal| {
+            normal.into_iter().fold([0.; 3], |n, c| n.add(c)).normalize()
+        }).collect::<Vec<_>>();
+
+        self.vertices.extend({
+            vertices.into_iter().enumerate().map(|(idx, pos)| {
+                geom::PrimVertex::new(pos, normals[idx])
+            })
+        });
+
+        self.prims.append(&mut prims);
+    }
 }
