@@ -91,7 +91,36 @@ impl<H: handlers::IntrsHandler> State<H> {
             backends, ..Default::default()
         });
 
-        let surface = instance.create_surface(window)?;
+        // Helper function to construct the surface target on WASM
+        // It depends on the canvas having a particular data field
+        #[cfg(target_arch = "wasm32")]
+        unsafe fn target(config: crate::Config) -> anyhow::Result<wgpu::SurfaceTargetUnsafe> {
+            use wgpu::rwh;
+
+            Ok(wgpu::SurfaceTargetUnsafe::RawHandle { 
+                raw_display_handle: rwh::RawDisplayHandle::Web({
+                    rwh::WebDisplayHandle::new()
+                }),
+                raw_window_handle: rwh::RawWindowHandle::Web({
+                    rwh::WebWindowHandle::new(config.canvas_raw_handle)
+                }),
+            })
+        }
+
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch="wasm32")] {
+                let surface_target = unsafe { target(config)? };
+
+                let surface = unsafe {
+                    instance.create_surface_unsafe(surface_target)?
+                };
+            } else {
+                let surface_target = Box::new(window.clone());
+                let surface_target = wgpu::SurfaceTarget::Window(surface_target);
+
+                let surface = instance.create_surface(surface_target)?;
+            }
+        }
 
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),

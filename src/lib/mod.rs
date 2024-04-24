@@ -120,6 +120,7 @@ pub struct Config {
     pub compute: ComputeConfig,
     pub resolution: Resolution,
     pub fps: u32,
+    pub canvas_raw_handle: u32,
     pub updated: bool,
 }
 
@@ -135,6 +136,7 @@ impl Config {
             compute: ComputeConfig::new(),
             resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
             fps: 60,
+            canvas_raw_handle: 2024,
             updated: true,
         }
     }
@@ -211,7 +213,10 @@ pub async fn run() -> Result<(), Failed> {
 
             wasm_logger::init(wasm_logger::Config::default());
         } else {
-            simple_logger::SimpleLogger::new().init().unwrap();
+            simple_logger::SimpleLogger::new()
+                .with_level(log::LevelFilter::Info)
+                .init()
+                .unwrap();
         }
     }    
     
@@ -286,7 +291,7 @@ pub async fn run() -> Result<(), Failed> {
                         } => target.exit(),
                         event::WindowEvent::Resized(physical_size) //
                             if resize_dim != Some(physical_size) => {
-    
+                            
                             resize_dim = Some(physical_size);
                             resize_instant = chrono::Local::now();
                         },
