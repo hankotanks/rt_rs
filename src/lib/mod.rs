@@ -277,16 +277,8 @@ async unsafe fn run_internal(
 
         // We are only updating config options live on the web
         // So it can be disabled on native
-        #[cfg(target_arch = "wasm32")] unsafe {
-            if config.updated {
-                config.updated = false;
-                
-                state.update_config(config.compute);
-            }
-
-            if let Some(size) = web::VIEWPORT.take() {
-                state.resize(*config, size);
-            }
+        #[cfg(target_arch = "wasm32")] unsafe { 
+            web::update(&mut state); 
         }
 
         match event {

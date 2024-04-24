@@ -8,7 +8,6 @@ const isLocal = _ => Boolean(
     )
 );
 
-
 import("../pkg/index.js").then(module => {
     let sinceLastResize;
 
@@ -20,7 +19,7 @@ import("../pkg/index.js").then(module => {
                 "width": ${window.innerWidth},
                 "height": ${window.innerHeight}
             }`);
-        }, 500);
+        }, 300);
     };
 
     module.run_wasm();

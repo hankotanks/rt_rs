@@ -4,6 +4,11 @@ html, body {
   padding: 0;
 }
 
+html { 
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
 .config-panel {
     position: absolute; 
     z-index: 1;
