@@ -54,8 +54,10 @@ impl<'de> serde::Deserialize<'de> for Prim {
 #[derive(Debug)]
 pub struct PrimVertex {
     pub pos: [f32; 3],
+    #[serde(skip_serializing)]
     _p0: u32,
     pub normal: [f32; 3],
+    #[serde(skip_serializing)]
     _p1: u32,
 }
 
@@ -127,6 +129,7 @@ impl<'de> serde::Deserialize<'de> for PrimVertex {
 #[derive(Debug)]
 pub struct PrimMat {
     pub color: [f32; 3],
+    #[serde(skip_serializing)]
     _p0: u32,
     pub albedo: [f32; 3],
     pub spec: f32,

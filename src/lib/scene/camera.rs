@@ -7,8 +7,10 @@ use winit::{dpi, event, keyboard};
 #[derive(Debug)]
 pub struct CameraUniform {
     pub pos: [f32; 3],
+    #[serde(skip_serializing)]
     _p0: u32,
     pub at: [f32; 3],
+    #[serde(skip_serializing)]
     _p1: u32,
 }
 
