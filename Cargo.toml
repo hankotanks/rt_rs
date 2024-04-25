@@ -1,10 +1,10 @@
 [package]
 name = "rt_rs"
-description = "Comparing efficacy of spatial hierarchies in the context of real-time ray tracing"
+description = "Comparing efficacy of spatial data structures in the context of real-time ray tracing"
 version = "0.1.0"
 authors = ["Hank <hank@modernatomic.com>"]
 categories = ["wasm"]
-readme = "README.md"
+readme = "README.adoc"
 edition = "2021"
 
 [lib]
@@ -15,6 +15,10 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "demo"
 path = "src/demo.rs"
+
+[[bin]]
+name = "load"
+path = "src/tools/load.rs"
 
 [profile.release]
 lto = true

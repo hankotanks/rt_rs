@@ -1,0 +1,33 @@
+= rt_rs
+:hide-uri-scheme:
+
+https://hankotanks.github.io/rt_rs[Link to Pages]
+
+Currently, this file is just a reference for my own use.
+The codebase is the subject of my COMP3391 independent study.
+
+The aim of this project is to compare the efficacy of different spatial data 
+structures in the context of real-time ray tracing.
+The implementation repeatedly applies the Phong shading model to 
+varyingly-reflective surfaces to emulate physically-based 
+rendering approaches. 
+
+== Binaries
+
+Configured to use Vulkan on native, 
+but will fall back on OpenGL if Vulkan is unsupported.
+
+[horizontal]
+demo:: `cargo run --release --bin demo`
+load:: `cargo run --release --bin load \-- path/to/scene.json`
+
+== Deploying on Web
+
+While WASM is compatible with WebGL2, 
+this project forces the use of WebGPU.
+
+Works out of the box on Chrome--requires Firefox Nightly, MS Edge Insider.
+
+[horizontal]
+local:: `npm run build && npm start`
+pages:: `npm run deploy`
