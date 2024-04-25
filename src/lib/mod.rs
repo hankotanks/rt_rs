@@ -125,7 +125,6 @@ pub struct Config {
     pub resolution: Resolution,
     pub fps: u32,
     pub canvas_raw_handle: u32,
-    pub updated: bool,
 }
 
 impl Default for Config {
@@ -141,7 +140,6 @@ impl Config {
             resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
             fps: 60,
             canvas_raw_handle: 2024,
-            updated: true,
         }
     }
 }
@@ -156,54 +154,10 @@ pub async fn run_native(
 #[cfg(target_arch = "wasm32")]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
 pub async fn run_wasm() -> Result<(), Failed> {
-    // TODO: Implement scene fetching
-    let mut scene = scene::Scene {
-        camera: scene::camera::CameraUniform::new(
-            [0., 0., -10.], 
-            [0.; 3]
-        ),
-        camera_controller: scene::camera::CameraController::Orbit { 
-            left: false, 
-            right: false, 
-            scroll: 0 
-        },
-        prims: vec![],
-        vertices: vec![],
-        lights: vec![
-            geom::light::Light { pos: [-20., 20., 20.], strength: 1.5, },
-            geom::light::Light { pos: [30., 50., -25.], strength: 1.8, },
-            geom::light::Light { pos: [30., 20., 30.], strength: 1.7, },
-        ],
-        materials: vec![
-            geom::PrimMat::new(
-                [0.4, 0.4, 0.3],
-                [0.6, 0.3, 0.1],
-                50.,
-            ),
-            geom::PrimMat::new(
-                [0.3, 0.1, 0.1],
-                [0.9, 0.1, 0.],
-                 10.,
-            ),
-            geom::PrimMat::new(
-                [1.; 3],
-                [0., 10., 0.8],
-                1425.,
-            )
-        ],
-    };
-
-    let mesh = include_bytes!("../../meshes/tetrahedron.obj");
-    let mesh = BAIL(wavefront::Obj::from_reader(&mesh[..]))?;
-
-    scene.add_mesh(mesh, 1);
-
-    let mesh = include_bytes!("../../meshes/dodecahedron.obj");
-    let mesh = BAIL(wavefront::Obj::from_reader(&mesh[..]))?;
-
-    scene.add_mesh(mesh, 0);
-    
-    unsafe { run_internal(&mut web::CONFIG, &mut scene).await }
+    unsafe {
+        let 
+        run_internal(&mut web::CONFIG, &mut scene).await
+    }
 }
 
 async unsafe fn run_internal(

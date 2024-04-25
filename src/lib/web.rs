@@ -27,12 +27,21 @@ mod err {
     }
 }
 
+struct WebState {
+    config: crate::Config,
+    config_updated: bool,
+    scene: Option<crate::scene::Scene>,
+    scene_updated: bool,
+    viewport: Option<dpi::PhysicalSize<u32>>,
+}
 
-// The Config global that the JS interface writes into
-pub static mut CONFIG: crate::Config = crate::Config::new();
-
-// Written to by `update_viewport` on WASM
-pub static mut VIEWPORT: Option<dpi::PhysicalSize<u32>> = None;
+static mut WEB_STATE: WebState = WebState {
+    config: crate::Config::new(),
+    config_updated: true,
+    scene: None,
+    scene_updated: false,
+    viewport: None,
+};
 
 // Initialize all web-related stuff
 pub fn init(
@@ -68,14 +77,14 @@ pub fn init(
 pub unsafe fn update<H>(state: &mut crate::state::State<H>)
     where H: crate::handlers::IntrsHandler {
 
-    if CONFIG.updated {
-        CONFIG.updated = false;
+    if WEB_STATE.config_updated {
+        WEB_STATE.config_updated = false;
         
-        state.update_config(CONFIG.compute);
+        state.update_config(WEB_STATE.config);
     }
 
-    if let Some(size) = VIEWPORT.take() {
-        state.resize(CONFIG, size);
+    if let Some(size) = WEB_STATE.viewport.take() {
+        state.resize(WEB_STATE.config, size);
     }
 }
 
@@ -87,7 +96,28 @@ pub fn update_config(serialized: JsValue) -> Result<(), crate::Failed> {
 
     match serialized.as_string() {
         Some(temp) => unsafe {
-            CONFIG = crate::BAIL(serde_json::from_str::<crate::Config>(&temp))?;
+            WEB_STATE.config = crate::BAIL(serde_json::from_str::<crate::Config>(&temp))?;
+            WEB_STATE.config_updated = true;
+        },
+        None => {
+            crate::BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)))?;
+        },
+    }
+
+    Ok(())
+}
+
+#[no_mangle]
+#[cfg(target_arch = "wasm32")]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn update_scene(serialized: JsValue) -> Result<(), crate::Failed> {
+    use std::io;
+
+    match serialized.as_string() {
+        Some(temp) => unsafe {
+            let _ = WEB_STATE.scene.insert(crate::BAIL(serde_json::from_str::<crate::scene::Scene>(&temp))?);
+
+            WEB_STATE.scene_updated = true;
         },
         None => {
             crate::BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)))?;
@@ -109,7 +139,7 @@ pub fn update_viewport(serialized: JsValue) -> Result<(), crate::Failed> {
                 serde_json::from_str::<dpi::PhysicalSize<u32>>(&temp)
             })?;
 
-            let _ = VIEWPORT.insert(size);
+            let _ = WEB_STATE.viewport.insert(size);
         },
         None => {
             crate::BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)))?;

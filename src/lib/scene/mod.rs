@@ -22,6 +22,19 @@ pub struct Scene {
 }
 
 impl Scene {
+    pub fn init() -> Self {
+        Self {
+            camera: camera::CameraUniform::new([0.; 3], [0.; 3]),
+            camera_controller: camera::CameraController::Fixed,
+            prims: Vec::with_capacity(0),
+            vertices: vec![geom::PrimVertex::new([0.; 3], [0.; 3])],
+            lights: vec![geom::light::Light { pos: [0.; 3], strength: 0., }],
+            materials: vec![geom::PrimMat::new([0.; 3], [0.; 3], 0.)],
+        }
+    }
+}
+
+impl Scene {
     const COPY_USAGES: wgpu::BufferUsages = {
         wgpu::BufferUsages::COPY_SRC //
             .union(wgpu::BufferUsages::COPY_DST) //
