@@ -10,7 +10,7 @@ pub mod shaders;
 mod web;
 
 #[cfg(target_arch = "wasm32")]
-pub use web::{update_config, update_viewport};
+pub use web::{update_config, update_scene, update_viewport};
 
 use std::sync;
 
@@ -235,8 +235,14 @@ async unsafe fn run_internal(
 
         // We are only updating config options live on the web
         // So it can be disabled on native
-        #[cfg(target_arch = "wasm32")] unsafe { 
-            web::update(&mut state); 
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] { 
+                let mut update_required_web = unsafe { 
+                    web::update(&mut state) 
+                };
+            } else { 
+                let mut update_required_web = false;
+            }
         }
 
         match event {
@@ -249,7 +255,9 @@ async unsafe fn run_internal(
                         camera_controller.handle_event(&event),
                 };
 
-                if !handled {
+                if handled {
+                    update_required_web = true;
+                } else {
                     match event {
                         event::WindowEvent::CloseRequested | //
                         event::WindowEvent::KeyboardInput {
@@ -260,7 +268,6 @@ async unsafe fn run_internal(
                         } => target.exit(),
                         event::WindowEvent::Resized(physical_size) //
                             if resize_dim != Some(physical_size) => {
-                            
                             // Update the size and the time the event occurred
                             // This will later be used to avoid excess resize actions
                             resize_dim = Some(physical_size);
@@ -300,25 +307,29 @@ async unsafe fn run_internal(
             }
         }
 
-        // Calculate time since last resize event
-        let resize_duration = resize_instant.signed_duration_since(frame_instant);
-        let resize_duration = resize_duration
-            .num_microseconds()
-            .map(|micros| 0.001 * micros as f64)
-            .unwrap_or(resize_duration.num_milliseconds() as f64)
-            .abs();
-
         // Indicates that its time for the next frame
         let mut update_required_framerate = false;
 
-        // If the user is done resizing, adjust texture and uniforms
-        if resize_duration > frame_duration {
-            if let Some(dim) = resize_dim.take() {
-                state.resize(*config, dim);
+        #[cfg(not(target_arch = "wasm32"))] {
+            // Calculate time since last resize event
+            let resize_duration = resize_instant
+                .signed_duration_since(frame_instant);
 
-                // We want to begin an update immediately after resizing
-                // update_required_framerate is co-opted for this purpose
-                update_required_framerate = true;
+            let resize_duration = resize_duration
+                .num_microseconds()
+                .map(|micros| 0.001 * micros as f64)
+                .unwrap_or(resize_duration.num_milliseconds() as f64)
+                .abs();
+
+            // If the user is done resizing, adjust texture and uniforms
+            if resize_duration > frame_duration {
+                if let Some(dim) = resize_dim.take() {
+                    state.resize(*config, dim);
+
+                    // We want to begin an update immediately after resizing
+                    // update_required_framerate is co-opted for this purpose
+                    update_required_framerate = true;
+                }
             }
         }
 
@@ -330,7 +341,8 @@ async unsafe fn run_internal(
         }
 
         // Perform the update only if the camera and FPS call for it
-        if update_required_framerate && update_required_camera {
+        if (update_required_framerate && update_required_camera) || 
+            update_required_web {
             state.update(*config);
 
             window.request_redraw();

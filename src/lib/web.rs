@@ -3,7 +3,7 @@ use std::io;
 use winit::{dpi, window};
 use winit::platform::web::WindowExtWebSys as _;
 
-use wasm_bindgen::prelude::*;
+use crate::{state, scene, handlers};
 
 mod err {
     use std::{fmt, error};
@@ -32,7 +32,7 @@ mod err {
 pub struct WebState {
     // These members are used for run_internal dispatch
     pub config: crate::Config,
-    pub scene: crate::scene::Scene,
+    pub scene: scene::Scene,
 
     // Information related to updates
     update_config: bool,
@@ -43,7 +43,7 @@ pub struct WebState {
 pub static mut WEB_STATE: WebState = WebState {
     config: crate::Config::new(),
     update_config: true,
-    scene: crate::scene::Scene::Unloaded,
+    scene: scene::Scene::Unloaded,
     update_scene: false,
     viewport: None,
 };
@@ -79,33 +79,49 @@ pub fn init(
 }
 
 // Update all web-related stuff
-pub unsafe fn update<H>(state: &mut crate::state::State<H>)
-    where H: crate::handlers::IntrsHandler {
+// Returns true if a re-render is necessary
+pub unsafe fn update<H>(state: &mut state::State<H>) -> bool
+    where H: handlers::IntrsHandler {
+
+    let mut update = false;
 
     if WEB_STATE.update_config {
         WEB_STATE.update_config = false;
         
         state.update_config(WEB_STATE.config.compute);
+
+        update = true;
     }
 
     if WEB_STATE.update_scene {
         WEB_STATE.update_scene = false;
 
         state.update_scene(&(WEB_STATE.scene));
+
+        update = true;
     }
 
     if let Some(size) = WEB_STATE.viewport.take() {
         state.resize(WEB_STATE.config, size);
+
+        update = true;
     }
+
+    update
 }
 
 #[no_mangle]
 #[cfg(target_arch = "wasm32")]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn update_config(serialized: JsValue) -> Result<(), crate::Failed> {
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn update_config(
+    serialized: wasm_bindgen::JsValue
+) -> Result<(), crate::Failed> {
     match serialized.as_string() {
         Some(temp) => unsafe {
-            WEB_STATE.config = crate::BAIL(serde_json::from_str::<crate::Config>(&temp))?;
+            WEB_STATE.config = crate::BAIL({
+                serde_json::from_str::<crate::Config>(&temp)
+            })?;
+
             WEB_STATE.update_config = true;
         },
         None => {
@@ -118,11 +134,15 @@ pub fn update_config(serialized: JsValue) -> Result<(), crate::Failed> {
 
 #[no_mangle]
 #[cfg(target_arch = "wasm32")]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn update_scene(serialized: JsValue) -> Result<(), crate::Failed> {
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn update_scene(
+    serialized: wasm_bindgen::JsValue
+) -> Result<(), crate::Failed> {
     match serialized.as_string() {
         Some(temp) => unsafe {
-            WEB_STATE.scene = crate::BAIL(serde_json::from_str::<crate::scene::Scene>(&temp))?;
+            WEB_STATE.scene = crate::BAIL({
+                serde_json::from_str::<scene::Scene>(&temp)
+            })?;
 
             WEB_STATE.update_scene = true;
         },
@@ -136,8 +156,10 @@ pub fn update_scene(serialized: JsValue) -> Result<(), crate::Failed> {
 
 #[no_mangle]
 #[cfg(target_arch = "wasm32")]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn update_viewport(serialized: JsValue) -> Result<(), crate::Failed> {
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn update_viewport(
+    serialized: wasm_bindgen::JsValue
+) -> Result<(), crate::Failed> {
     match serialized.as_string() {
         Some(temp) => unsafe {
             let size = crate::BAIL({

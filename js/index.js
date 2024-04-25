@@ -9,18 +9,40 @@ const isLocal = _ => Boolean(
 );
 
 import("../pkg/index.js").then(module => {
-    let sinceLastResize;
+    module.run_wasm();
 
+    const resizeCanvas = _ => {
+        module.update_viewport(`{
+            "width": ${window.innerWidth},
+            "height": ${window.innerHeight}
+        }`);
+    };
+
+    resizeCanvas();
+
+    let sinceLastResize;
     window.onresize = _ => {
         clearTimeout(sinceLastResize);
 
-        sinceLastResize = setTimeout(_ => {
-            module.update_viewport(`{
-                "width": ${window.innerWidth},
-                "height": ${window.innerHeight}
-            }`);
-        }, 300);
+        sinceLastResize = setTimeout(resizeCanvas, 300);
     };
 
-    module.run_wasm();
+    const loadScene = sceneName => {
+        let root = window.location.origin;
+        if(!isLocal()) { root += '/intersection_benchmarks'; }
+
+        fetch(`${root}/scenes/${sceneName}.json`).then(response => {
+            if (!response.ok) { throw new Error(`Failed to retrieve scene [${sceneName}]`); }
+
+            return response.text();
+        }).then(sceneSerial => {
+            module.update_scene(sceneSerial);
+        }).catch(console.error);
+    };
+
+    document.getElementById("config-load-default").onclick = _ => {
+        loadScene('default');
+    };
+
+    
 }).catch(console.error);

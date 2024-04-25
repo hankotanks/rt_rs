@@ -24,6 +24,9 @@ module.exports = {
         new CopyPlugin([
             path.resolve(__dirname, 'static')
         ]),
+        new CopyPlugin([
+            { from: path.resolve(__dirname, "scenes"), to: "scenes" }
+          ]),
         new WasmPackPlugin({
             crateDirectory: __dirname,
         }),
