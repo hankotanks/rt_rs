@@ -1,3 +1,5 @@
+use std::io;
+
 use winit::{dpi, window};
 use winit::platform::web::WindowExtWebSys as _;
 
@@ -27,19 +29,22 @@ mod err {
     }
 }
 
-struct WebState {
-    config: crate::Config,
-    config_updated: bool,
-    scene: Option<crate::scene::Scene>,
-    scene_updated: bool,
+pub struct WebState {
+    // These members are used for run_internal dispatch
+    pub config: crate::Config,
+    pub scene: crate::scene::Scene,
+
+    // Information related to updates
+    update_config: bool,
+    update_scene: bool,
     viewport: Option<dpi::PhysicalSize<u32>>,
 }
 
-static mut WEB_STATE: WebState = WebState {
+pub static mut WEB_STATE: WebState = WebState {
     config: crate::Config::new(),
-    config_updated: true,
-    scene: None,
-    scene_updated: false,
+    update_config: true,
+    scene: crate::scene::Scene::Unloaded,
+    update_scene: false,
     viewport: None,
 };
 
@@ -77,10 +82,16 @@ pub fn init(
 pub unsafe fn update<H>(state: &mut crate::state::State<H>)
     where H: crate::handlers::IntrsHandler {
 
-    if WEB_STATE.config_updated {
-        WEB_STATE.config_updated = false;
+    if WEB_STATE.update_config {
+        WEB_STATE.update_config = false;
         
-        state.update_config(WEB_STATE.config);
+        state.update_config(WEB_STATE.config.compute);
+    }
+
+    if WEB_STATE.update_scene {
+        WEB_STATE.update_scene = false;
+
+        state.update_scene(&(WEB_STATE.scene));
     }
 
     if let Some(size) = WEB_STATE.viewport.take() {
@@ -92,12 +103,10 @@ pub unsafe fn update<H>(state: &mut crate::state::State<H>)
 #[cfg(target_arch = "wasm32")]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn update_config(serialized: JsValue) -> Result<(), crate::Failed> {
-    use std::io;
-
     match serialized.as_string() {
         Some(temp) => unsafe {
             WEB_STATE.config = crate::BAIL(serde_json::from_str::<crate::Config>(&temp))?;
-            WEB_STATE.config_updated = true;
+            WEB_STATE.update_config = true;
         },
         None => {
             crate::BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)))?;
@@ -111,13 +120,11 @@ pub fn update_config(serialized: JsValue) -> Result<(), crate::Failed> {
 #[cfg(target_arch = "wasm32")]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn update_scene(serialized: JsValue) -> Result<(), crate::Failed> {
-    use std::io;
-
     match serialized.as_string() {
         Some(temp) => unsafe {
-            let _ = WEB_STATE.scene.insert(crate::BAIL(serde_json::from_str::<crate::scene::Scene>(&temp))?);
+            WEB_STATE.scene = crate::BAIL(serde_json::from_str::<crate::scene::Scene>(&temp))?;
 
-            WEB_STATE.scene_updated = true;
+            WEB_STATE.update_scene = true;
         },
         None => {
             crate::BAIL(Err(io::Error::from(io::ErrorKind::InvalidData)))?;
@@ -131,8 +138,6 @@ pub fn update_scene(serialized: JsValue) -> Result<(), crate::Failed> {
 #[cfg(target_arch = "wasm32")]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn update_viewport(serialized: JsValue) -> Result<(), crate::Failed> {
-    use std::io;
-
     match serialized.as_string() {
         Some(temp) => unsafe {
             let size = crate::BAIL({

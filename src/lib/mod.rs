@@ -155,8 +155,12 @@ pub async fn run_native(
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
 pub async fn run_wasm() -> Result<(), Failed> {
     unsafe {
-        let 
-        run_internal(&mut web::CONFIG, &mut scene).await
+        let web::WebState {
+            config,
+            scene, ..
+        } = &mut web::WEB_STATE;
+
+        run_internal(config, scene).await
     }
 }
 
@@ -238,7 +242,14 @@ async unsafe fn run_internal(
         match event {
             event::Event::WindowEvent { event, window_id, .. }
                 if window_id == window.id() => {
-                if !scene.camera_controller.handle_event(&event) {
+
+                let handled = match scene {
+                    scene::Scene::Unloaded => false,
+                    scene::Scene::Active { camera_controller, .. } => //
+                        camera_controller.handle_event(&event),
+                };
+
+                if !handled {
                     match event {
                         event::WindowEvent::CloseRequested | //
                         event::WindowEvent::KeyboardInput {
@@ -273,19 +284,19 @@ async unsafe fn run_internal(
         // Indicates whether the camera has changed
         let mut update_required_camera = false;
 
-        let scene::Scene { 
-            camera, 
-            camera_controller, ..
-        } = scene;
-
         // Update the camera
         // NOTE: Camera updates are tied to FPS
-        #[allow(clippy::collapsible_if)]
-        if curr_frame_duration >= frame_duration {
-            if camera_controller.update(camera) {
-                state.update_camera_buffer(*camera);
-
-                update_required_camera = true;
+        if let scene::Scene::Active { 
+            camera, 
+            camera_controller, .. 
+        } = scene {
+            #[allow(clippy::collapsible_if)]
+            if curr_frame_duration >= frame_duration {
+                if camera_controller.update(camera) {
+                    state.update_camera_buffer(*camera);
+    
+                    update_required_camera = true;
+                }
             }
         }
 

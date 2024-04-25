@@ -1,6 +1,6 @@
 mod package;
 
-use std::{marker, sync};
+use std::{marker, mem, sync};
 
 use wgpu::util::DeviceExt as _;
 
@@ -475,6 +475,21 @@ impl<H: handlers::IntrsHandler> State<H> {
             &self.config_buffer, 0,
             bytemuck::cast_slice(&[config])
         );
+    }
+
+    pub fn update_scene(&mut self, scene: &scene::Scene) {
+        let scene::ScenePack {
+            camera_buffer,
+            buffers,
+            bg, ..
+        } = scene.pack(&self.device);
+
+        let _ = mem::replace(&mut self.scene_group, bg);
+        let _ = mem::replace(&mut self.scene_camera_buffer, camera_buffer);
+
+        for (dst, src) in self.scene_buffers.iter_mut().zip(buffers) {
+            mem::replace(dst, src).destroy();
+        }
     }
 
     pub fn window_size(&self) -> dpi::PhysicalSize<u32> {

@@ -12,25 +12,16 @@ pub struct ScenePack {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Debug)]
-pub struct Scene {
-    pub camera: camera::CameraUniform,
-    pub camera_controller: camera::CameraController,
-    pub prims: Vec<geom::Prim>,
-    pub vertices: Vec<geom::PrimVertex>,
-    pub lights: Vec<light::Light>,
-    pub materials: Vec<geom::PrimMat>,
-}
 
-impl Scene {
-    pub fn init() -> Self {
-        Self {
-            camera: camera::CameraUniform::new([0.; 3], [0.; 3]),
-            camera_controller: camera::CameraController::Fixed,
-            prims: Vec::with_capacity(0),
-            vertices: vec![geom::PrimVertex::new([0.; 3], [0.; 3])],
-            lights: vec![geom::light::Light { pos: [0.; 3], strength: 0., }],
-            materials: vec![geom::PrimMat::new([0.; 3], [0.; 3], 0.)],
-        }
+pub enum Scene {
+    Unloaded,
+    Active {
+        camera: camera::CameraUniform,
+        camera_controller: camera::CameraController,
+        prims: Vec<geom::Prim>,
+        vertices: Vec<geom::PrimVertex>,
+        lights: Vec<light::Light>,
+        materials: Vec<geom::PrimMat>,
     }
 }
 
@@ -43,13 +34,26 @@ impl Scene {
     pub fn pack(&self, device: &wgpu::Device) -> ScenePack {
         use wgpu::util::DeviceExt as _;
 
-        let Scene { 
+        let Scene::Active { 
             camera,
             prims, 
             vertices,
             lights, 
             materials, .. 
-        } = self;
+        } = self else {
+            let n3 = [0.; 3];
+
+            let dummy = Self::Active {
+                camera: camera::CameraUniform::new(n3, n3),
+                camera_controller: camera::CameraController::Fixed,
+                prims: Vec::with_capacity(1),
+                vertices: vec![geom::PrimVertex::new(n3, n3)],
+                lights: vec![light::Light { pos: n3, strength: 0., }],
+                materials: vec![geom::PrimMat::new(n3, n3, 0.)],
+            };
+
+            return dummy.pack(device);
+        };
 
         // Separate the contents out to prevent premature drop
         let camera_buffer_contents = [*camera];
@@ -183,14 +187,19 @@ impl Scene {
         &mut self, 
         obj: wavefront::Obj,
         material: i32,
-    ) {
+    ) -> anyhow::Result<()> {
         use crate::geom::v3::V3Ops as _;
 
-        let vertices = obj.positions().to_vec();
-    
-        let mut normals = vec![vec![]; vertices.len()];
-    
-        let mut prims = vec![];
+        let Self::Active {
+            vertices,
+            prims, .. 
+        } = self else { 
+            anyhow::bail!("Unable to add mesh to unloaded scene"); 
+        };
+
+        let mut obj_normals = vec![vec![]; obj.positions().len()];
+        let mut obj_prims = vec![];
+
         for [
             (pa, na, idx_a), 
             (pb, nb, idx_b), 
@@ -205,41 +214,43 @@ impl Scene {
     
             let normal = ab.cross(ac).normalize();
             
-            normals[idx_a].push(match na {
+            obj_normals[idx_a].push(match na {
                 Some(normal) => normal,
                 None => normal.scale(pa.angle(pb, pc)),
             });
 
-            normals[idx_b].push(match nb {
+            obj_normals[idx_b].push(match nb {
                 Some(normal) => normal,
                 None => normal.scale(pb.angle(pc, pa)),
             });
 
-            normals[idx_c].push(match nc {
+            obj_normals[idx_c].push(match nc {
                 Some(normal) => normal,
                 None => normal.scale(pc.angle(pa, pb)),
             });
     
-            prims.push(geom::Prim { 
+            obj_prims.push(geom::Prim { 
                 indices: [
-                    (idx_a + self.vertices.len()) as u32, 
-                    (idx_b + self.vertices.len()) as u32,
-                    (idx_c + self.vertices.len()) as u32
+                    (idx_a + vertices.len()) as u32, 
+                    (idx_b + vertices.len()) as u32,
+                    (idx_c + vertices.len()) as u32
                 ],
                 material,
             });
         }
     
-        let normals = normals.into_iter().map(|normal| {
+        let normals = obj_normals.into_iter().map(|normal| {
             normal.into_iter().fold([0.; 3], |n, c| n.add(c)).normalize()
         }).collect::<Vec<_>>();
 
-        self.vertices.extend({
-            vertices.into_iter().enumerate().map(|(idx, pos)| {
-                geom::PrimVertex::new(pos, normals[idx])
+        vertices.extend({
+            obj.positions().iter().enumerate().map(|(idx, pos)| {
+                geom::PrimVertex::new(*pos, normals[idx])
             })
         });
 
-        self.prims.append(&mut prims);
+        prims.append(&mut obj_prims);
+
+        Ok(())
     }
 }
