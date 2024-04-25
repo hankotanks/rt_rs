@@ -1,11 +1,11 @@
 {
-  "author": "You <you@example.com>",
-  "name": "rust-webpack-template",
+  "author": "Hank <hank@modernatomic.com>",
+  "name": "rt_rs",
   "version": "0.1.0",
   "scripts": {
     "build": "rimraf dist pkg && webpack",
     "start": "rimraf dist pkg && webpack-dev-server --open -d",
-    "predeploy": "cross-env DEPLOY_PAGES=true npm run build",
+    "predeploy": "cross-env PAGES=true npm run build",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {

@@ -1,3 +1,5 @@
+const package = require('../pkg/package.json');
+
 // NOTE: Courtesy Alireza on SO
 // https://stackoverflow.com/a/57949518
 const isLocal = _ => Boolean(
@@ -29,7 +31,7 @@ import("../pkg/index.js").then(module => {
 
     const loadScene = sceneName => {
         let root = window.location.origin;
-        if(!isLocal()) { root += '/rt_rs'; }
+        if(!isLocal()) { root += `/${package.name}`; }
 
         fetch(`${root}/scenes/${sceneName}.json`).then(response => {
             if (!response.ok) { throw new Error(`Failed to retrieve scene [${sceneName}]`); }

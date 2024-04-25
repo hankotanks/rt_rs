@@ -12,6 +12,7 @@ pub struct ScenePack {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Debug)]
+#[serde(untagged)]
 
 pub enum Scene {
     Unloaded,

@@ -1,3 +1,4 @@
+const package = require('./package.json');
 const path = require('path');
 
 const TerserPlugin = require('terser-webpack-plugin');
@@ -14,7 +15,7 @@ module.exports = {
     output: {
         path: dist,
         filename: '[name].js',
-        publicPath: process.env.DEPLOY_PAGES ? '/rt_rs/' : undefined
+        publicPath: process.env.PAGES ? `/${package.name}/` : undefined
     },
     devServer: {
         contentBase: dist,
