@@ -1,8 +1,8 @@
 use std::{fs, io};
 
 fn main() -> anyhow::Result<()> {
-    let config = tracer::Config {
-        resolution: tracer::Resolution::Dynamic(16),
+    let config = rt::Config {
+        resolution: rt::Resolution::Dynamic(16),
         fps: 60,
         ..Default::default()
     };
@@ -11,8 +11,8 @@ fn main() -> anyhow::Result<()> {
         fs::File::open("scenes/default.json")?
     });
     
-    let scene: tracer::scene::Scene = //
+    let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    pollster::block_on(tracer::run_native(config, scene))
+    pollster::block_on(rt::run_native(config, scene))
 }

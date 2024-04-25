@@ -1,11 +1,10 @@
 const path = require('path');
+
+const TerserPlugin = require('terser-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
 
 const dist = path.resolve(__dirname, 'dist');
-
-const publicPath = process.env.DEPLOY_PAGES ? '/rt.rs/' : undefined;
 
 module.exports = {
     mode: 'production',
@@ -15,7 +14,7 @@ module.exports = {
     output: {
         path: dist,
         filename: '[name].js',
-        publicPath
+        publicPath: process.env.DEPLOY_PAGES ? '/rt_rs/' : undefined
     },
     devServer: {
         contentBase: dist,

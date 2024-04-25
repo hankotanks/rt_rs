@@ -1,6 +1,6 @@
 [package]
-name = "intersection_benchmarks"
-description = "Comparing efficacy of spatial data hierarchies in the context of real-time ray tracing"
+name = "rt_rs"
+description = "Comparing efficacy of spatial hierarchies in the context of real-time ray tracing"
 version = "0.1.0"
 authors = ["Hank <hank@modernatomic.com>"]
 categories = ["wasm"]
@@ -8,7 +8,7 @@ readme = "README.md"
 edition = "2021"
 
 [lib]
-name = "tracer"
+name = "rt"
 path = "src/lib/mod.rs"
 crate-type = ["cdylib", "rlib"]
 

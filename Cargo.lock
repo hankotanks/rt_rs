@@ -704,32 +704,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "intersection_benchmarks"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "cfg-if 1.0.0",
- "chrono",
- "console_error_panic_hook",
- "log",
- "num-traits",
- "once_cell",
- "pollster",
- "serde",
- "serde_json",
- "simple_logger",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-logger",
- "wavefront",
- "web-sys",
- "wee_alloc",
- "wgpu",
- "winit",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1219,6 +1193,32 @@ name = "renderdoc-sys"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
+
+[[package]]
+name = "rt_rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "cfg-if 1.0.0",
+ "chrono",
+ "console_error_panic_hook",
+ "log",
+ "num-traits",
+ "once_cell",
+ "pollster",
+ "serde",
+ "serde_json",
+ "simple_logger",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-logger",
+ "wavefront",
+ "web-sys",
+ "wee_alloc",
+ "wgpu",
+ "winit",
+]
 
 [[package]]
 name = "rustc-hash"

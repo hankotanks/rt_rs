@@ -29,7 +29,7 @@ import("../pkg/index.js").then(module => {
 
     const loadScene = sceneName => {
         let root = window.location.origin;
-        if(!isLocal()) { root += '/intersection_benchmarks'; }
+        if(!isLocal()) { root += '/rt_rs'; }
 
         fetch(`${root}/scenes/${sceneName}.json`).then(response => {
             if (!response.ok) { throw new Error(`Failed to retrieve scene [${sceneName}]`); }
