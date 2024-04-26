@@ -4,11 +4,15 @@ use once_cell::unsync::OnceCell;
 
 use crate::{geom, scene};
 
+#[repr(C)]
 #[derive(Clone, Copy)]
+#[derive(bytemuck::Pod, bytemuck::Zeroable)]
 #[derive(Debug)]
 pub struct Bounds {
     min: [f32; 3],
+    _p0: u32,
     max: [f32; 3],
+    _p1: u32,
 }
 
 impl Bounds {
@@ -38,7 +42,7 @@ impl Bounds {
             extrema_vertex(c, &mut min, &mut max);
         }
 
-        Self { min, max }
+        Self { min, _p0: 0, max, _p1: 0 }
     }
 
     fn contains(&self, point: [f32; 3]) -> bool {

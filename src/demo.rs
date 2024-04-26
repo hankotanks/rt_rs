@@ -1,5 +1,7 @@
 use std::{fs, io};
 
+use rt::handlers;
+
 fn main() -> anyhow::Result<()> {
     let config = rt::Config {
         resolution: rt::Resolution::Dynamic(16),
@@ -14,5 +16,5 @@ fn main() -> anyhow::Result<()> {
     let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    pollster::block_on(rt::run_native(config, scene))
+    pollster::block_on(rt::run_native::<handlers::BasicIntrs>(config, scene))
 }

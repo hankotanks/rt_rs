@@ -254,7 +254,7 @@ impl<H: handlers::IntrsHandler> State<H> {
         );
 
         // Collection of IntrsHandler-specific bindings
-        let pack = H::vars(scene, &device);
+        let pack = H::vars(scene, &device)?;
 
         // The compute shader module requires workgroup size 
         // and the variable pack

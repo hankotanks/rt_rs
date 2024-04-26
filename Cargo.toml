@@ -24,6 +24,10 @@ path = "src/tools/load.rs"
 name = "bb"
 path = "src/tools/bb.rs"
 
+[[bin]]
+name = "handler_data"
+path = "src/tools/handler_data.rs"
+
 [profile.release]
 lto = true
 
