@@ -20,6 +20,10 @@ path = "src/demo.rs"
 name = "load"
 path = "src/tools/load.rs"
 
+[[bin]]
+name = "bb"
+path = "src/tools/bb.rs"
+
 [profile.release]
 lto = true
 

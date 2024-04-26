@@ -1,4 +1,5 @@
 pub mod basic;
+pub mod bvh;
 
 use crate::scene;
 
@@ -21,7 +22,8 @@ pub trait IntrsHandler {
     // Builds all the requisite buffers and groups
     fn vars<'a>(
         scene: &scene::Scene, 
-        device: &wgpu::Device) -> IntrsPack<'a>;
+        device: &wgpu::Device,
+    ) -> IntrsPack<'a>;
 
     // Contains all of the intersection logic
     fn logic() -> &'static str;
