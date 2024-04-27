@@ -212,18 +212,4 @@ impl Aabb {
 
         Ok(root)
     }
-
-    pub fn nodes(&self) -> usize {
-        let fst = match self.fst.get() {
-            Some(fst) => fst.nodes(),
-            None => 0,
-        };
-
-        let snd = match self.snd.get() {
-            Some(snd) => snd.nodes(),
-            None => 0,
-        };
-
-        1 + fst + snd
-    }
 }

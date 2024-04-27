@@ -3,65 +3,6 @@ mod aabb;
 // Needed for `device.create_buffer_init`
 use wgpu::util::DeviceExt as _;
 
-// The Aabb tree gets rendered down into an array of AabbUniform structs
-// It's placed at the module root to avoid importing items from siblings
-#[repr(C)]
-#[derive(Clone, Copy)]
-#[derive(bytemuck::Pod, bytemuck::Zeroable)]
-pub struct AabbUniform {
-    pub fst: u32,
-    pub snd: u32,
-    pub item_idx: u32,
-    pub item_count: u32,
-    pub bounds: aabb::Bounds,
-}
-
-// I've factored out the process of making the Aabb tree compute-friendly
-// for simplicity's sake
-#[derive(Default)]
-pub struct BvhData {
-    pub uniforms: Vec<AabbUniform>,
-    pub indices: Vec<u32>,
-}
-
-impl BvhData {
-    // Construct the shader data from the root node of the tree
-    pub fn new(aabb: &aabb::Aabb) -> Self {
-        let mut data = Self::default();
-
-        fn into_aabb_uniform(
-            data: &mut BvhData,
-            aabb: &aabb::Aabb
-        ) -> u32 {
-            let uniform = data.uniforms.len();
-        
-            data.uniforms.push(AabbUniform {
-                fst: 0,
-                snd: 0,
-                bounds: aabb.bounds,
-                item_idx: data.indices.len() as u32,
-                item_count: aabb.items.len() as u32,
-            });
-        
-            data.indices.extend(aabb.items.iter().map(|&i| i as u32));
-        
-            if let Some(fst) = aabb.fst.get() {
-                data.uniforms[uniform].fst = into_aabb_uniform(data, fst);
-            }
-        
-            if let Some(snd) = aabb.snd.get() {
-                data.uniforms[uniform].snd = into_aabb_uniform(data, snd);
-            }
-
-            uniform as u32
-        }
-        
-        into_aabb_uniform(&mut data, aabb);
-
-        data
-    }
-}
-
 // This stores all configuration options 
 // for construction of the BVH and its intersection logic
 #[derive(Clone, Copy)]
@@ -72,8 +13,12 @@ pub struct BvhConfig {
 // Since BvhIntrs is never actually initialized, we keep it in a global
 // This is safe, because it is only set once -> before any reads can occur
 static mut CONFIG: BvhConfig = BvhConfig {
-    eps: 0.000002,
+    eps: 0.02,
 };
+
+// This tracks the size of the tree
+// Populated after BvhIntrs::vars is called in State::new
+static mut NODES: usize = 0;
 
 // The dummy struct that the handler methods are implemented on
 pub struct BvhIntrs;
@@ -98,6 +43,12 @@ impl super::IntrsHandler for BvhIntrs {
         };
 
         let data = BvhData::new(&aabb);
+
+        unsafe {
+            // This is set before BvhIntrs::logic is called,
+            // enabling the stack to be sized correctly
+            NODES = data.uniforms.len();
+        }
 
         let aabb_uniforms = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -195,7 +146,15 @@ impl super::IntrsHandler for BvhIntrs {
             format!("{}", CONFIG.eps)
         };
 
-        Box::leak(LOGIC.replace("<EPS>", &eps).into_boxed_str())
+        let nodes = unsafe {
+            format!("{}", NODES)
+        };
+
+        let logic = LOGIC
+            .replace("<NODES>", &nodes)
+            .replace("<EPS>", &eps);
+
+        Box::leak(logic.into_boxed_str())
     }
     
     fn configure(config: Self::Config) {
@@ -298,8 +257,7 @@ const LOGIC: &str = "\
         return intrs;
     }
 
-    // TODO: This array needs to be sized using a format specifier like <EPS>
-    var<private> aabb_stack: array<u32, 200>;
+    var<private> aabb_stack: array<u32, <NODES>>;
 
     fn pop(idx: ptr<function, u32>, empty: ptr<function, bool>) -> u32 {
         if(*idx == 1u) {
@@ -318,30 +276,29 @@ const LOGIC: &str = "\
     }
 
     fn intrs(r: Ray, excl: Prim) -> Intrs {
-        var idx = 0u;
-        var empty = false;
+        var stack_idx = 0u;
+        var stack_empty = false;
 
-        push(&idx, 0u);
+        push(&stack_idx, 0u);
 
         var intrs = intrs_empty();
 
-        while(!empty) {
-            let bb_idx = pop(&idx, &empty);
-
+        while(!stack_empty) {
+            let bb_idx = pop(&stack_idx, &stack_empty);
             let bb = aabb_uniforms[bb_idx];
 
             if(collides(bb, r)) {
-                if(bb.fst == 0u && bb.snd == 0u) {
+                if(bb.item_count > 0u) {
                     let temp = intrs_bvh(bb, r, excl);
 
                     if(temp.t < intrs.t) {
                         intrs = temp;
                     }
                 } else {
-                    push(&idx, bb.fst);
-                    push(&idx, bb.snd);
+                    push(&stack_idx, bb.fst);
+                    push(&stack_idx, bb.snd);
 
-                    empty = false;
+                    stack_empty = false;
                 }
             }
         }
@@ -349,3 +306,62 @@ const LOGIC: &str = "\
         return intrs;
     }\
 ";
+
+// The Aabb tree gets rendered down into an array of AabbUniform structs
+// It's placed at the module root to avoid importing items from siblings
+#[repr(C)]
+#[derive(Clone, Copy)]
+#[derive(bytemuck::Pod, bytemuck::Zeroable)]
+pub struct AabbUniform {
+    pub fst: u32,
+    pub snd: u32,
+    pub item_idx: u32,
+    pub item_count: u32,
+    pub bounds: aabb::Bounds,
+}
+
+// I've factored out the process of making the Aabb tree compute-friendly
+// for simplicity's sake
+#[derive(Default)]
+pub struct BvhData {
+    pub uniforms: Vec<AabbUniform>,
+    pub indices: Vec<u32>,
+}
+
+impl BvhData {
+    // Construct the shader data from the root node of the tree
+    pub fn new(aabb: &aabb::Aabb) -> Self {
+        let mut data = Self::default();
+
+        fn into_aabb_uniform(
+            data: &mut BvhData,
+            aabb: &aabb::Aabb
+        ) -> u32 {
+            let uniform = data.uniforms.len();
+        
+            data.uniforms.push(AabbUniform {
+                fst: 0,
+                snd: 0,
+                bounds: aabb.bounds,
+                item_idx: data.indices.len() as u32,
+                item_count: aabb.items.len() as u32,
+            });
+        
+            data.indices.extend(aabb.items.iter().map(|&i| i as u32));
+        
+            if let Some(fst) = aabb.fst.get() {
+                data.uniforms[uniform].fst = into_aabb_uniform(data, fst);
+            }
+        
+            if let Some(snd) = aabb.snd.get() {
+                data.uniforms[uniform].snd = into_aabb_uniform(data, snd);
+            }
+
+            uniform as u32
+        }
+        
+        into_aabb_uniform(&mut data, aabb);
+
+        data
+    }
+}

@@ -1,6 +1,6 @@
 use std::{fs, io};
 
-use rt::handlers;
+use rt::handlers::{self, IntrsHandler};
 
 fn main() -> anyhow::Result<()> {
     let config = rt::Config {
@@ -9,8 +9,12 @@ fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
+    handlers::BvhIntrs::configure(handlers::BvhConfig {
+        eps: 0.2,
+    });
+
     let scene_reader = io::BufReader::new({
-        fs::File::open("scenes/default.json")?
+        fs::File::open("scenes/test.json")?
     });
     
     let scene: rt::scene::Scene = //

@@ -1,0 +1,8692 @@
+{
+  "camera": {
+    "pos": [
+      0.0,
+      0.0,
+      -30.0
+    ],
+    "at": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "camera_controller": "Orbit",
+  "prims": [
+    {
+      "indices": [
+        301,
+        55,
+        53
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        17,
+        102,
+        39
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        15,
+        16,
+        98
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        85,
+        60,
+        299
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        98,
+        303,
+        15
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        13,
+        303
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        98,
+        302,
+        303
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        16,
+        17,
+        98
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        301,
+        53,
+        99
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        57,
+        301,
+        99
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        99,
+        85,
+        299
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        17,
+        39,
+        98
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        99,
+        59,
+        57
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        99,
+        299,
+        59
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        100,
+        116,
+        110
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        100,
+        110,
+        81
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        100,
+        81
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        81,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        116,
+        38,
+        110
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        98,
+        99,
+        53
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        98,
+        53,
+        302
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        53,
+        97
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        97,
+        11
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        85,
+        99,
+        98
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        85,
+        98,
+        39
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        39,
+        102,
+        60
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        39,
+        60,
+        85
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        298,
+        60,
+        102
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        298,
+        102,
+        101
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        94,
+        2,
+        95
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        94,
+        95,
+        3
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        3,
+        286,
+        42
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        3,
+        42,
+        94
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        93,
+        1,
+        2
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        93,
+        2,
+        42
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        2,
+        1,
+        92
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        2,
+        92,
+        95
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        40,
+        0,
+        92
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        40,
+        92,
+        41
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        40,
+        41,
+        286
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        42,
+        2,
+        94
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        41,
+        93
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        93,
+        42
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        41,
+        92,
+        1
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        41,
+        1,
+        93
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        92,
+        0
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        274,
+        97,
+        53
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        222,
+        285
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        285,
+        286
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        276,
+        154
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        275,
+        280,
+        279
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        275,
+        279,
+        276
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        275,
+        274,
+        288
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        281,
+        127
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        127,
+        278
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        289,
+        274
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        256,
+        50,
+        247
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        281,
+        302,
+        96
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        5,
+        105
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        11,
+        96
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        103,
+        284,
+        222
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        154,
+        273
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        283,
+        281,
+        265
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        285,
+        287,
+        286
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        136,
+        127,
+        281
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        278,
+        277
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        247,
+        287,
+        285
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        5,
+        104,
+        105
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        274,
+        53,
+        282
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        283,
+        265,
+        284
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        286,
+        3
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        283,
+        284,
+        103
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        247,
+        50,
+        287
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        277,
+        289
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        273,
+        136,
+        281
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        288,
+        274,
+        289
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        11,
+        97
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        97,
+        274
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        47,
+        106,
+        44
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        95,
+        105,
+        103
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        281,
+        282,
+        256
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        281,
+        256,
+        265
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        274,
+        275
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        275,
+        276
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        103,
+        222,
+        95
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        256,
+        282,
+        50
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        96,
+        273,
+        281
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        127,
+        279,
+        280
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        127,
+        280,
+        278
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        287,
+        47
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        47,
+        44
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        250,
+        259,
+        258
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        250,
+        258,
+        249
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        208,
+        216,
+        215
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        208,
+        215,
+        207
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        156,
+        164,
+        165
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        156,
+        165,
+        157
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        131,
+        140,
+        141
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        131,
+        141,
+        132
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        178,
+        177,
+        175
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        178,
+        175,
+        176
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        214,
+        176,
+        174
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        214,
+        174,
+        213
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        269,
+        229,
+        227
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        269,
+        227,
+        268
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        226,
+        240,
+        239
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        226,
+        239,
+        224
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        190,
+        198,
+        197
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        190,
+        197,
+        189
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        149,
+        158,
+        159
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        149,
+        159,
+        150
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        130,
+        139,
+        140
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        130,
+        140,
+        131
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        176,
+        175,
+        173
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        176,
+        173,
+        174
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        229,
+        230,
+        228
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        229,
+        228,
+        227
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        268,
+        227,
+        225
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        268,
+        225,
+        267
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        228,
+        241,
+        240
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        228,
+        240,
+        226
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        191,
+        199,
+        198
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        191,
+        198,
+        190
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        138,
+        147,
+        148
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        138,
+        148,
+        139
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        129,
+        138,
+        139
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        129,
+        139,
+        130
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        179,
+        191,
+        190
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        179,
+        190,
+        177
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        227,
+        228,
+        226
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        227,
+        226,
+        225
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        267,
+        225,
+        223
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        267,
+        223,
+        266
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        230,
+        242,
+        241
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        230,
+        241,
+        228
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        175,
+        189,
+        188
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        175,
+        188,
+        173
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        139,
+        148,
+        149
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        139,
+        149,
+        140
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        148,
+        157,
+        158
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        148,
+        158,
+        149
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        189,
+        197,
+        196
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        189,
+        196,
+        188
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        242,
+        251,
+        250
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        242,
+        250,
+        241
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        258,
+        267,
+        266
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        258,
+        266,
+        257
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        215,
+        178,
+        176
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        215,
+        176,
+        214
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        180,
+        179,
+        177
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        180,
+        177,
+        178
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        120,
+        129,
+        130
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        120,
+        130,
+        121
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        166,
+        122,
+        123
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        166,
+        123,
+        167
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        207,
+        215,
+        214
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        207,
+        214,
+        206
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        249,
+        258,
+        257
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        249,
+        257,
+        248
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        251,
+        260,
+        259
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        251,
+        259,
+        250
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        197,
+        206,
+        205
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        197,
+        205,
+        196
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        157,
+        165,
+        166
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        157,
+        166,
+        158
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        122,
+        131,
+        132
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        122,
+        132,
+        123
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        165,
+        121,
+        122
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        165,
+        122,
+        166
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        206,
+        214,
+        213
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        206,
+        213,
+        205
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        260,
+        269,
+        268
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        260,
+        268,
+        259
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        240,
+        249,
+        248
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        240,
+        248,
+        239
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        198,
+        207,
+        206
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        198,
+        206,
+        197
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        158,
+        166,
+        167
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        158,
+        167,
+        159
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        121,
+        130,
+        131
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        121,
+        131,
+        122
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        164,
+        120,
+        121
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        164,
+        121,
+        165
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        216,
+        180,
+        178
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        216,
+        178,
+        215
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        259,
+        268,
+        267
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        259,
+        267,
+        258
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        241,
+        250,
+        249
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        241,
+        249,
+        240
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        199,
+        208,
+        207
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        199,
+        207,
+        198
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        147,
+        156,
+        157
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        147,
+        157,
+        148
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        140,
+        149,
+        150
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        140,
+        150,
+        141
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        177,
+        190,
+        189
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        177,
+        189,
+        175
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        225,
+        226,
+        224
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        225,
+        224,
+        223
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        254,
+        245
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        193,
+        201,
+        200
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        193,
+        200,
+        192
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        152,
+        161,
+        162
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        152,
+        162,
+        153
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        143,
+        152,
+        153
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        143,
+        153,
+        144
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        183,
+        193,
+        192
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        183,
+        192,
+        181
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        245,
+        236
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        271,
+        233,
+        231
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        271,
+        231,
+        270
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        235,
+        236,
+        234
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        235,
+        234,
+        233
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        194,
+        185
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        133,
+        142,
+        143
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        133,
+        143,
+        134
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        142,
+        151,
+        152
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        142,
+        152,
+        143
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        202,
+        194
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        236,
+        245,
+        244
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        236,
+        244,
+        234
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        272,
+        235,
+        233
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        272,
+        233,
+        271
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        236,
+        235
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        184,
+        183,
+        181
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        184,
+        181,
+        182
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        134,
+        143,
+        144
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        134,
+        144,
+        135
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        153,
+        162,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        194,
+        202,
+        201
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        194,
+        201,
+        193
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        234,
+        244,
+        243
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        234,
+        243,
+        232
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        263,
+        272,
+        271
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        263,
+        271,
+        262
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        218,
+        184,
+        182
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        218,
+        182,
+        217
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        186,
+        185,
+        183
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        186,
+        183,
+        184
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        135,
+        144,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        160,
+        168,
+        169
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        160,
+        169,
+        161
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        219,
+        211
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        254,
+        263,
+        262
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        254,
+        262,
+        253
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        233,
+        234,
+        232
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        233,
+        232,
+        231
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        185,
+        194,
+        193
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        185,
+        193,
+        183
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        144,
+        153,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        151,
+        160,
+        161
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        151,
+        161,
+        152
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        211,
+        202
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        245,
+        254,
+        253
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        245,
+        253,
+        244
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        235,
+        272
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        186,
+        219
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        168,
+        124,
+        125
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        168,
+        125,
+        169
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        125,
+        134,
+        135
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        125,
+        135,
+        126
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        162,
+        170,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        202,
+        211,
+        210
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        202,
+        210,
+        201
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        244,
+        253,
+        252
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        244,
+        252,
+        243
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        272,
+        263
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        210,
+        218,
+        217
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        210,
+        217,
+        209
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        169,
+        125,
+        126
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        169,
+        126,
+        170
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        126,
+        135,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        161,
+        169,
+        170
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        161,
+        170,
+        162
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        201,
+        210,
+        209
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        201,
+        209,
+        200
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        237,
+        263,
+        254
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        253,
+        262,
+        261
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        253,
+        261,
+        252
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        211,
+        219,
+        218
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        211,
+        218,
+        210
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        170,
+        126,
+        145
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        124,
+        133,
+        134
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        124,
+        134,
+        125
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        203,
+        185,
+        186
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        219,
+        186,
+        184
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        219,
+        184,
+        218
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        262,
+        271,
+        270
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        262,
+        270,
+        261
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        224,
+        239,
+        238
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        224,
+        238,
+        221
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        163,
+        119,
+        120
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        163,
+        120,
+        164
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        127,
+        136,
+        137
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        127,
+        137,
+        128
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        195,
+        204,
+        288
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        195,
+        288,
+        289
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        264,
+        220,
+        284
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        264,
+        284,
+        265
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        205,
+        213,
+        212
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        205,
+        212,
+        204
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        137,
+        146,
+        147
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        137,
+        147,
+        138
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        173,
+        188,
+        187
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        173,
+        187,
+        171
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        248,
+        257,
+        255
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        248,
+        255,
+        246
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        220,
+        221,
+        222
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        220,
+        222,
+        284
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        154,
+        276,
+        163
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        154,
+        163,
+        155
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        273,
+        154,
+        155
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        273,
+        155,
+        146
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        212,
+        172,
+        280
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        212,
+        280,
+        275
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        257,
+        266,
+        264
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        257,
+        264,
+        255
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        188,
+        196,
+        195
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        188,
+        195,
+        187
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        119,
+        128,
+        129
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        119,
+        129,
+        120
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        172,
+        171,
+        278
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        172,
+        278,
+        280
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        238,
+        246,
+        247
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        238,
+        247,
+        285
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        204,
+        212,
+        275
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        204,
+        275,
+        288
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        136,
+        273,
+        146
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        136,
+        146,
+        137
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        155,
+        163,
+        164
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        155,
+        164,
+        156
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        223,
+        224,
+        221
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        223,
+        221,
+        220
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        246,
+        255,
+        256
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        246,
+        256,
+        247
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        171,
+        187,
+        277
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        171,
+        277,
+        278
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        279,
+        127,
+        128
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        279,
+        128,
+        119
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        187,
+        195,
+        289
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        187,
+        289,
+        277
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        255,
+        264,
+        265
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        255,
+        265,
+        256
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        213,
+        174,
+        172
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        213,
+        172,
+        212
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        146,
+        155,
+        156
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        146,
+        156,
+        147
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        174,
+        173,
+        171
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        174,
+        171,
+        172
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        239,
+        248,
+        246
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        239,
+        246,
+        238
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        221,
+        238,
+        285
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        221,
+        285,
+        222
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        276,
+        279,
+        119
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        276,
+        119,
+        163
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        128,
+        137,
+        138
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        128,
+        138,
+        129
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        196,
+        205,
+        204
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        196,
+        204,
+        195
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        266,
+        223,
+        220
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        266,
+        220,
+        264
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        309,
+        31,
+        293
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        75,
+        307,
+        305
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        293,
+        87,
+        32
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        309,
+        30,
+        31
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        87,
+        293,
+        31
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        86,
+        32,
+        87
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        86,
+        87,
+        77
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        86,
+        77,
+        297
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        297,
+        75,
+        305
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        297,
+        77,
+        75
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        232,
+        243,
+        242
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        232,
+        242,
+        230
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        123,
+        132,
+        133
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        123,
+        133,
+        124
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        261,
+        270,
+        269
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        261,
+        269,
+        260
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        141,
+        150,
+        151
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        141,
+        151,
+        142
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        252,
+        261,
+        260
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        252,
+        260,
+        251
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        150,
+        159,
+        160
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        150,
+        160,
+        151
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        243,
+        252,
+        251
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        243,
+        251,
+        242
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        159,
+        167,
+        168
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        159,
+        168,
+        160
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        200,
+        209,
+        208
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        200,
+        208,
+        199
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        270,
+        231,
+        229
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        270,
+        229,
+        269
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        132,
+        141,
+        142
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        132,
+        142,
+        133
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        231,
+        232,
+        230
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        231,
+        230,
+        229
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        182,
+        181,
+        179
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        182,
+        179,
+        180
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        217,
+        182,
+        180
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        217,
+        180,
+        216
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        181,
+        192,
+        191
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        181,
+        191,
+        179
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        209,
+        217,
+        216
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        209,
+        216,
+        208
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        192,
+        200,
+        199
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        192,
+        199,
+        191
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        167,
+        123,
+        124
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        167,
+        124,
+        168
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        308,
+        30,
+        309
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        293,
+        32,
+        294
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        107,
+        117,
+        38
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        79,
+        78,
+        73
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        79,
+        73,
+        72
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        48,
+        46,
+        47
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        4,
+        0,
+        90
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        4,
+        90,
+        23
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        9,
+        290,
+        19
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        9,
+        19,
+        18
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        293,
+        294,
+        37
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        77,
+        76,
+        75
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        80,
+        81,
+        110
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        80,
+        110,
+        111
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        64,
+        65,
+        45
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        64,
+        45,
+        46
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        29,
+        308,
+        309
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        4,
+        104,
+        5
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        29,
+        28,
+        25
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        29,
+        25,
+        308
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        67,
+        61,
+        58
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        67,
+        58,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        77,
+        87,
+        88
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        77,
+        88,
+        76
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        117,
+        37,
+        294
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        117,
+        294,
+        118
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        82,
+        80,
+        111
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        82,
+        111,
+        112
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        63,
+        64,
+        46
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        63,
+        46,
+        48
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        34,
+        36,
+        35
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        22,
+        7,
+        6
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        23,
+        90,
+        89
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        23,
+        89,
+        304
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        61,
+        51,
+        52
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        61,
+        52,
+        58
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        295,
+        84,
+        108
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        295,
+        108,
+        113
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        78,
+        291,
+        74
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        78,
+        74,
+        73
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        49,
+        48,
+        287
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        21,
+        22,
+        26
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        281,
+        9,
+        10
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        281,
+        10,
+        302
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        292,
+        293,
+        296
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        70,
+        71,
+        91
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        70,
+        91,
+        66
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        111,
+        38,
+        112
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        309,
+        293,
+        292
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        304,
+        89,
+        88
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        307,
+        69,
+        306
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        295,
+        86,
+        297
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        113,
+        38,
+        118
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        70,
+        76,
+        71
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        44,
+        106,
+        43
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        7,
+        22,
+        21
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        6,
+        4,
+        23
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        6,
+        23,
+        22
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        43,
+        40
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        306,
+        68,
+        73
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        306,
+        73,
+        74
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        91,
+        90,
+        0
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        91,
+        0,
+        40
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        62,
+        61,
+        67
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        27,
+        28,
+        33
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        27,
+        33,
+        34
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        104,
+        6,
+        7
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        104,
+        7,
+        105
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        31,
+        88,
+        87
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        48,
+        47,
+        287
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        81,
+        80,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        114,
+        36,
+        296
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        114,
+        296,
+        107
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        112,
+        38,
+        109
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        72,
+        73,
+        68
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        72,
+        68,
+        67
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        28,
+        29,
+        292
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        28,
+        292,
+        33
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        290,
+        103,
+        8
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        21,
+        26,
+        308
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        53,
+        52,
+        51
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        53,
+        51,
+        282
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        82,
+        78,
+        79
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        82,
+        79,
+        80
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        47,
+        46,
+        45
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        47,
+        45,
+        106
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        24,
+        19,
+        20
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        24,
+        20,
+        25
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        300,
+        10,
+        9
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        300,
+        9,
+        18
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        38,
+        114,
+        107
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        305,
+        306,
+        74
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        109,
+        38,
+        108
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        291,
+        297,
+        305
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        305,
+        307,
+        306
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        69,
+        65,
+        64
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        293,
+        37,
+        296
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        4,
+        5,
+        95
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        84,
+        83,
+        109
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        84,
+        109,
+        108
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        61,
+        62,
+        49
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        61,
+        49,
+        51
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        24,
+        27
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        8,
+        105,
+        7
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        309,
+        292,
+        29
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        69,
+        70,
+        65
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        76,
+        88,
+        89
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        76,
+        89,
+        71
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        65,
+        70,
+        66
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        296,
+        36,
+        33
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        296,
+        33,
+        292
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        105,
+        8,
+        103
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        24,
+        18,
+        19
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        43,
+        106,
+        45
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        84,
+        295,
+        297
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        116,
+        100,
+        35
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        116,
+        35,
+        115
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        110,
+        38,
+        111
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        306,
+        69,
+        64
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        34,
+        33,
+        36
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        22,
+        304,
+        26
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        300,
+        18
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        18,
+        24
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        49,
+        287,
+        50
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        79,
+        72,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        83,
+        297,
+        291
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        48,
+        49,
+        62
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        48,
+        62,
+        63
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        31,
+        304,
+        88
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        0,
+        4,
+        95
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        31,
+        30,
+        26
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        31,
+        26,
+        304
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        65,
+        66,
+        43
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        65,
+        43,
+        45
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        295,
+        294,
+        32
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        295,
+        32,
+        86
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        290,
+        9,
+        281
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        80,
+        79,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        308,
+        26,
+        30
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        83,
+        84,
+        297
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        115,
+        35,
+        36
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        115,
+        36,
+        114
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        291,
+        78,
+        82
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        291,
+        82,
+        83
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        282,
+        51,
+        50
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        308,
+        25,
+        20
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        308,
+        20,
+        21
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        283,
+        290,
+        281
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        35,
+        100
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        64,
+        63,
+        68
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        64,
+        68,
+        306
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        294,
+        295,
+        113
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        294,
+        113,
+        118
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        72,
+        67,
+        298
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        38,
+        115,
+        114
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        104,
+        4,
+        6
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        22,
+        23,
+        304
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        38,
+        116,
+        115
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        76,
+        70,
+        75
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        108,
+        38,
+        113
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        296,
+        37,
+        117
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        296,
+        117,
+        107
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        74,
+        291,
+        305
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        38,
+        117,
+        118
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        20,
+        19,
+        290
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        20,
+        290,
+        8
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        8,
+        7,
+        21
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        8,
+        21,
+        20
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        286,
+        44,
+        43
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        70,
+        69,
+        307
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        70,
+        307,
+        75
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        83,
+        82,
+        112
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        83,
+        112,
+        109
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        66,
+        91,
+        40
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        66,
+        40,
+        43
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        24,
+        25,
+        28
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        24,
+        28,
+        27
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        103,
+        290,
+        283
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        27,
+        34
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        68,
+        63,
+        62
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        68,
+        62,
+        67
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        71,
+        89,
+        90
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        71,
+        90,
+        91
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        51,
+        49,
+        50
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        101,
+        34,
+        35
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        15,
+        14,
+        16
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        303,
+        14,
+        15
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        299,
+        56,
+        59
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        13,
+        12,
+        303
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        58,
+        52,
+        54
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        58,
+        54,
+        56
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        59,
+        56,
+        57
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        17,
+        300,
+        102
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        299,
+        58,
+        56
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        303,
+        12,
+        14
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        55,
+        54,
+        52
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        55,
+        52,
+        53
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        14,
+        12,
+        10
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        14,
+        10,
+        300
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        60,
+        58,
+        299
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        56,
+        54,
+        301
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        102,
+        300,
+        101
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        16,
+        14,
+        300
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        10,
+        12
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        302,
+        12,
+        13
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        57,
+        56,
+        301
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        301,
+        54,
+        55
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        16,
+        300,
+        17
+      ],
+      "material": 0
+    },
+    {
+      "indices": [
+        298,
+        58,
+        60
+      ],
+      "material": 0
+    }
+  ],
+  "vertices": [
+    {
+      "pos": [
+        3.070224,
+        -0.119728,
+        0.996443
+      ],
+      "normal": [
+        -0.26240152,
+        -0.34492603,
+        0.90120554
+      ]
+    },
+    {
+      "pos": [
+        5.942016,
+        -0.012019,
+        4.157199
+      ],
+      "normal": [
+        -0.32643333,
+        -0.58534014,
+        0.7421713
+      ]
+    },
+    {
+      "pos": [
+        6.614015,
+        -0.063428,
+        4.157199
+      ],
+      "normal": [
+        0.054557875,
+        -0.73309445,
+        0.6779351
+      ]
+    },
+    {
+      "pos": [
+        5.759114,
+        0.0,
+        1.6645
+      ],
+      "normal": [
+        0.8531124,
+        0.011247594,
+        -0.5216059
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -0.449143,
+        0.929434
+      ],
+      "normal": [
+        -0.100789085,
+        -0.24073198,
+        0.9653443
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -0.539011,
+        1.315104
+      ],
+      "normal": [
+        0.6407221,
+        0.20510614,
+        0.73986936
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -0.604752,
+        0.872464
+      ],
+      "normal": [
+        -0.15012029,
+        -0.4066996,
+        0.9011433
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -0.866525,
+        0.73069
+      ],
+      "normal": [
+        -0.15489115,
+        -0.5646423,
+        0.81067127
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -0.959007,
+        0.650256
+      ],
+      "normal": [
+        -0.15161887,
+        -0.78965646,
+        0.59452033
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -1.053631,
+        0.163277
+      ],
+      "normal": [
+        -0.040472627,
+        -0.99907,
+        0.014865939
+      ]
+    },
+    {
+      "pos": [
+        2.983248,
+        -1.080021,
+        -0.880639
+      ],
+      "normal": [
+        0.07488743,
+        -0.70257854,
+        0.70765483
+      ]
+    },
+    {
+      "pos": [
+        6.130317,
+        -1.100022,
+        -1.106943
+      ],
+      "normal": [
+        0.8966464,
+        -0.4412823,
+        0.035989683
+      ]
+    },
+    {
+      "pos": [
+        3.739287,
+        -4.334102,
+        -0.876958
+      ],
+      "normal": [
+        0.107354365,
+        -0.043010082,
+        0.9932901
+      ]
+    },
+    {
+      "pos": [
+        4.400283,
+        -4.6821,
+        -0.95294
+      ],
+      "normal": [
+        0.71614724,
+        -0.6979426,
+        -0.003046182
+      ]
+    },
+    {
+      "pos": [
+        3.038248,
+        -4.334102,
+        -0.811319
+      ],
+      "normal": [
+        -0.13486935,
+        -0.29675344,
+        0.94538224
+      ]
+    },
+    {
+      "pos": [
+        3.180259,
+        -4.55009,
+        -0.921939
+      ],
+      "normal": [
+        -0.2493572,
+        -0.9507518,
+        -0.18409808
+      ]
+    },
+    {
+      "pos": [
+        2.70025,
+        -4.334102,
+        -0.94794
+      ],
+      "normal": [
+        -0.6330774,
+        -0.75493324,
+        -0.17113931
+      ]
+    },
+    {
+      "pos": [
+        0.840214,
+        -2.480049,
+        -1.050312
+      ],
+      "normal": [
+        -0.62930435,
+        -0.77149373,
+        -0.09366668
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -1.060728,
+        0.20382
+      ],
+      "normal": [
+        -0.0018945695,
+        -0.9996671,
+        0.025730578
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -1.054148,
+        0.411073
+      ],
+      "normal": [
+        -0.0065333955,
+        -0.97120416,
+        0.2381591
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -0.958092,
+        0.610367
+      ],
+      "normal": [
+        -0.01726201,
+        -0.80167127,
+        0.59751594
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -0.875165,
+        0.685964
+      ],
+      "normal": [
+        -0.01773446,
+        -0.61740017,
+        0.78644925
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -0.621528,
+        0.854704
+      ],
+      "normal": [
+        -0.008874022,
+        -0.47899666,
+        0.87777185
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -0.467365,
+        0.922276
+      ],
+      "normal": [
+        -0.002110566,
+        -0.30912203,
+        0.95102
+      ]
+    },
+    {
+      "pos": [
+        -4.649089,
+        -1.039587,
+        0.209476
+      ],
+      "normal": [
+        -0.087960936,
+        -0.9647239,
+        0.2481344
+      ]
+    },
+    {
+      "pos": [
+        -4.649345,
+        -0.922345,
+        0.432259
+      ],
+      "normal": [
+        -0.13925546,
+        -0.80139816,
+        0.58169484
+      ]
+    },
+    {
+      "pos": [
+        -4.649708,
+        -0.652575,
+        0.75355
+      ],
+      "normal": [
+        -0.1263254,
+        -0.73273295,
+        0.6686885
+      ]
+    },
+    {
+      "pos": [
+        -4.999902,
+        -1.012545,
+        0.09453
+      ],
+      "normal": [
+        -0.20011742,
+        -0.9528222,
+        0.22821656
+      ]
+    },
+    {
+      "pos": [
+        -4.99924,
+        -0.870266,
+        0.347384
+      ],
+      "normal": [
+        -0.26870832,
+        -0.7703688,
+        0.57821083
+      ]
+    },
+    {
+      "pos": [
+        -4.999321,
+        -0.802315,
+        0.416133
+      ],
+      "normal": [
+        -0.2826736,
+        -0.71969503,
+        0.63414097
+      ]
+    },
+    {
+      "pos": [
+        -4.906714,
+        -0.620194,
+        0.686502
+      ],
+      "normal": [
+        -0.2598628,
+        -0.75046754,
+        0.6076758
+      ]
+    },
+    {
+      "pos": [
+        -4.999759,
+        -0.491153,
+        0.805206
+      ],
+      "normal": [
+        -0.35430145,
+        -0.5862675,
+        0.72853345
+      ]
+    },
+    {
+      "pos": [
+        -5.568033,
+        -0.1192,
+        0.568687
+      ],
+      "normal": [
+        -0.53387797,
+        -0.15893853,
+        0.8304895
+      ]
+    },
+    {
+      "pos": [
+        -5.349121,
+        -0.814175,
+        0.247113
+      ],
+      "normal": [
+        -0.31407046,
+        -0.77641475,
+        0.546388
+      ]
+    },
+    {
+      "pos": [
+        -5.3488,
+        -0.938377,
+        -0.030175
+      ],
+      "normal": [
+        -0.26405242,
+        -0.9465818,
+        0.1850925
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        -0.676,
+        -0.4335
+      ],
+      "normal": [
+        -0.3445265,
+        -0.9306096,
+        0.12356073
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        -0.61,
+        -0.1648
+      ],
+      "normal": [
+        -0.38945028,
+        -0.83460677,
+        0.38956398
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        -0.24,
+        0.1096
+      ],
+      "normal": [
+        -0.42966086,
+        -0.29746512,
+        0.8525879
+      ]
+    },
+    {
+      "pos": [
+        -7.649984,
+        0.0,
+        -0.62
+      ],
+      "normal": [
+        -0.9699364,
+        -1.921012e-8,
+        -0.24335875
+      ]
+    },
+    {
+      "pos": [
+        1.209237,
+        -1.080021,
+        -1.321617
+      ],
+      "normal": [
+        -0.10715365,
+        -0.07025517,
+        -0.99175715
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        0.119728,
+        0.996443
+      ],
+      "normal": [
+        -0.26299706,
+        0.34530482,
+        0.90088683
+      ]
+    },
+    {
+      "pos": [
+        3.093016,
+        0.040804,
+        1.2763
+      ],
+      "normal": [
+        -0.71994007,
+        0.5601464,
+        0.40978312
+      ]
+    },
+    {
+      "pos": [
+        6.614015,
+        0.063428,
+        4.157199
+      ],
+      "normal": [
+        0.055651437,
+        0.73840505,
+        0.6720573
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        0.449143,
+        0.929434
+      ],
+      "normal": [
+        -0.102708794,
+        0.24112639,
+        0.9650435
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        0.539011,
+        1.315104
+      ],
+      "normal": [
+        0.6407221,
+        -0.20510614,
+        0.73986936
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        0.604752,
+        0.872464
+      ],
+      "normal": [
+        -0.15561314,
+        0.40705046,
+        0.9000525
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        0.866525,
+        0.73069
+      ],
+      "normal": [
+        -0.15950148,
+        0.5630466,
+        0.81088704
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        1.149023,
+        1.260104
+      ],
+      "normal": [
+        0.5469496,
+        0.538637,
+        0.6408715
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        0.959007,
+        0.650256
+      ],
+      "normal": [
+        -0.15175287,
+        0.7894188,
+        0.59480166
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        1.053627,
+        0.449897
+      ],
+      "normal": [
+        -0.121126324,
+        0.97112465,
+        0.20553643
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        1.428028,
+        0.442095
+      ],
+      "normal": [
+        0.6129174,
+        0.7176132,
+        -0.33070177
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        1.053631,
+        0.163277
+      ],
+      "normal": [
+        -0.06827358,
+        0.9976664,
+        0.0005088618
+      ]
+    },
+    {
+      "pos": [
+        2.983248,
+        1.080021,
+        -0.880639
+      ],
+      "normal": [
+        0.06991542,
+        0.7019286,
+        0.7088074
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        1.302926,
+        -1.259946
+      ],
+      "normal": [
+        0.12708746,
+        0.69644755,
+        -0.70626456
+      ]
+    },
+    {
+      "pos": [
+        3.739287,
+        4.334102,
+        -0.876958
+      ],
+      "normal": [
+        0.099893875,
+        0.055572864,
+        0.993445
+      ]
+    },
+    {
+      "pos": [
+        4.400283,
+        4.6821,
+        -0.95294
+      ],
+      "normal": [
+        0.68484795,
+        0.72867393,
+        -0.0041839355
+      ]
+    },
+    {
+      "pos": [
+        3.038248,
+        4.334102,
+        -0.811319
+      ],
+      "normal": [
+        -0.13152687,
+        0.30822113,
+        0.94217855
+      ]
+    },
+    {
+      "pos": [
+        3.180259,
+        4.55009,
+        -0.921939
+      ],
+      "normal": [
+        -0.2493572,
+        0.9507518,
+        -0.1840979
+      ]
+    },
+    {
+      "pos": [
+        1.209237,
+        1.080021,
+        -0.636414
+      ],
+      "normal": [
+        -0.045803025,
+        0.7798631,
+        0.624272
+      ]
+    },
+    {
+      "pos": [
+        2.70025,
+        4.334102,
+        -0.94794
+      ],
+      "normal": [
+        -0.5967155,
+        0.77973056,
+        -0.18960714
+      ]
+    },
+    {
+      "pos": [
+        0.169216,
+        1.990039,
+        -1.063281
+      ],
+      "normal": [
+        -0.47396964,
+        0.8678298,
+        -0.1490775
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        1.060728,
+        0.20382
+      ],
+      "normal": [
+        -0.0009064128,
+        0.99964136,
+        0.026763573
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        1.054148,
+        0.411073
+      ],
+      "normal": [
+        -0.008301193,
+        0.9709854,
+        0.2389946
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        0.958092,
+        0.610367
+      ],
+      "normal": [
+        -0.017755223,
+        0.8014724,
+        0.597768
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        0.875165,
+        0.685964
+      ],
+      "normal": [
+        -0.014423299,
+        0.6159605,
+        0.78764504
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        0.621528,
+        0.854704
+      ],
+      "normal": [
+        -0.0042611565,
+        0.48025358,
+        0.87711936
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        0.467365,
+        0.922276
+      ],
+      "normal": [
+        -0.0014945487,
+        0.30875495,
+        0.95114046
+      ]
+    },
+    {
+      "pos": [
+        -4.649089,
+        1.039587,
+        0.209476
+      ],
+      "normal": [
+        -0.08489778,
+        0.96523637,
+        0.24720648
+      ]
+    },
+    {
+      "pos": [
+        -4.649345,
+        0.922345,
+        0.432259
+      ],
+      "normal": [
+        -0.1350058,
+        0.80064106,
+        0.5837356
+      ]
+    },
+    {
+      "pos": [
+        -4.649708,
+        0.652575,
+        0.75355
+      ],
+      "normal": [
+        -0.13839878,
+        0.72539395,
+        0.67427695
+      ]
+    },
+    {
+      "pos": [
+        -4.649856,
+        0.51467,
+        0.885149
+      ],
+      "normal": [
+        -0.096522175,
+        0.52600247,
+        0.8449881
+      ]
+    },
+    {
+      "pos": [
+        -4.649964,
+        0.160748,
+        0.9945
+      ],
+      "normal": [
+        -0.01921391,
+        0.1492215,
+        0.9886171
+      ]
+    },
+    {
+      "pos": [
+        -4.999902,
+        1.012545,
+        0.09453
+      ],
+      "normal": [
+        -0.21660604,
+        0.9477415,
+        0.234239
+      ]
+    },
+    {
+      "pos": [
+        -4.99924,
+        0.870266,
+        0.347384
+      ],
+      "normal": [
+        -0.2803289,
+        0.77145165,
+        0.5712075
+      ]
+    },
+    {
+      "pos": [
+        -4.999321,
+        0.802315,
+        0.416133
+      ],
+      "normal": [
+        -0.28318995,
+        0.7190029,
+        0.6346955
+      ]
+    },
+    {
+      "pos": [
+        -4.999759,
+        0.491153,
+        0.805206
+      ],
+      "normal": [
+        -0.34745735,
+        0.59088945,
+        0.72809553
+      ]
+    },
+    {
+      "pos": [
+        -4.999948,
+        0.16072,
+        0.980689
+      ],
+      "normal": [
+        -0.2858547,
+        0.20199202,
+        0.9367424
+      ]
+    },
+    {
+      "pos": [
+        -5.299752,
+        0.147914,
+        0.811038
+      ],
+      "normal": [
+        -0.5784339,
+        0.21933925,
+        0.7856873
+      ]
+    },
+    {
+      "pos": [
+        -5.349121,
+        0.814175,
+        0.247113
+      ],
+      "normal": [
+        -0.30612665,
+        0.78370786,
+        0.54045206
+      ]
+    },
+    {
+      "pos": [
+        -5.3488,
+        0.938377,
+        -0.030175
+      ],
+      "normal": [
+        -0.25781128,
+        0.9465697,
+        0.19375001
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        0.676,
+        -0.4335
+      ],
+      "normal": [
+        -0.3445265,
+        0.9306097,
+        0.12356073
+      ]
+    },
+    {
+      "pos": [
+        -6.499931,
+        0.693962,
+        -0.748535
+      ],
+      "normal": [
+        -0.3144096,
+        0.7037651,
+        -0.63707244
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        0.61,
+        -0.1648
+      ],
+      "normal": [
+        -0.38751155,
+        0.83450574,
+        0.39170784
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        0.523,
+        -0.0488
+      ],
+      "normal": [
+        -0.4158512,
+        0.61171025,
+        0.6729624
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        0.24,
+        0.1096
+      ],
+      "normal": [
+        -0.43028897,
+        0.2978231,
+        0.852146
+      ]
+    },
+    {
+      "pos": [
+        1.209237,
+        1.080021,
+        -1.321617
+      ],
+      "normal": [
+        -0.10715365,
+        0.070255175,
+        -0.99175715
+      ]
+    },
+    {
+      "pos": [
+        -5.568033,
+        0.1192,
+        0.568687
+      ],
+      "normal": [
+        -0.53387797,
+        0.15893854,
+        0.8304895
+      ]
+    },
+    {
+      "pos": [
+        -5.299752,
+        -0.147914,
+        0.811038
+      ],
+      "normal": [
+        -0.57843375,
+        -0.2193392,
+        0.7856873
+      ]
+    },
+    {
+      "pos": [
+        -4.999948,
+        -0.16072,
+        0.980689
+      ],
+      "normal": [
+        -0.2858547,
+        -0.201992,
+        0.9367424
+      ]
+    },
+    {
+      "pos": [
+        -4.649964,
+        -0.160748,
+        0.9945
+      ],
+      "normal": [
+        -0.020427417,
+        -0.14843744,
+        0.9887108
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        -0.130179,
+        0.996071
+      ],
+      "normal": [
+        -0.00024952582,
+        -0.10711583,
+        0.99424654
+      ]
+    },
+    {
+      "pos": [
+        1.208789,
+        0.130179,
+        0.996071
+      ],
+      "normal": [
+        -0.00092514855,
+        0.10837386,
+        0.99410975
+      ]
+    },
+    {
+      "pos": [
+        3.093016,
+        -0.040804,
+        1.2763
+      ],
+      "normal": [
+        -0.72047645,
+        -0.5598967,
+        0.40918133
+      ]
+    },
+    {
+      "pos": [
+        5.942016,
+        0.012019,
+        4.157199
+      ],
+      "normal": [
+        -0.32618946,
+        0.59280735,
+        0.73632866
+      ]
+    },
+    {
+      "pos": [
+        7.043714,
+        0.0,
+        4.157199
+      ],
+      "normal": [
+        0.92348033,
+        0.003428188,
+        0.3836303
+      ]
+    },
+    {
+      "pos": [
+        4.998233,
+        -0.130896,
+        1.1931
+      ],
+      "normal": [
+        0.8595965,
+        -0.5029756,
+        0.09005276
+      ]
+    },
+    {
+      "pos": [
+        5.171283,
+        -1.310384,
+        -1.055942
+      ],
+      "normal": [
+        0.35110804,
+        -0.8998462,
+        0.2588436
+      ]
+    },
+    {
+      "pos": [
+        6.130317,
+        1.100022,
+        -1.106943
+      ],
+      "normal": [
+        0.89664626,
+        0.4412823,
+        0.035989683
+      ]
+    },
+    {
+      "pos": [
+        2.983248,
+        -1.080021,
+        -1.351649
+      ],
+      "normal": [
+        0.0025362505,
+        -0.06135271,
+        -0.9981129
+      ]
+    },
+    {
+      "pos": [
+        2.983248,
+        1.080021,
+        -1.351649
+      ],
+      "normal": [
+        0.0025362454,
+        0.06135272,
+        -0.9981129
+      ]
+    },
+    {
+      "pos": [
+        -6.499931,
+        -0.693962,
+        -0.748535
+      ],
+      "normal": [
+        -0.31440958,
+        -0.7037651,
+        -0.63707244
+      ]
+    },
+    {
+      "pos": [
+        -4.999902,
+        -1.00002,
+        -0.943979
+      ],
+      "normal": [
+        -0.13070588,
+        -0.70313936,
+        -0.6989357
+      ]
+    },
+    {
+      "pos": [
+        0.169216,
+        -1.990039,
+        -1.063281
+      ],
+      "normal": [
+        -0.47396967,
+        -0.8678299,
+        -0.1490772
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -1.51003,
+        0.750093
+      ],
+      "normal": [
+        0.52929115,
+        -0.8317358,
+        0.1675306
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -0.874017,
+        1.399122
+      ],
+      "normal": [
+        0.5350001,
+        -0.12395261,
+        0.8357097
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -1.149023,
+        1.260104
+      ],
+      "normal": [
+        0.5461655,
+        -0.53816974,
+        0.64193183
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        0.874017,
+        1.399122
+      ],
+      "normal": [
+        0.53581434,
+        0.122875065,
+        0.83534706
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        -0.304058,
+        -0.264426
+      ],
+      "normal": [
+        -0.547571,
+        -0.5579685,
+        0.62356806
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        0.139529,
+        -0.169387
+      ],
+      "normal": [
+        -0.54364043,
+        0.28519973,
+        0.7893771
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        0.304058,
+        -0.264426
+      ],
+      "normal": [
+        -0.5465634,
+        0.55761445,
+        0.62476766
+      ]
+    },
+    {
+      "pos": [
+        -7.074957,
+        0.40345,
+        -0.684268
+      ],
+      "normal": [
+        -0.43936867,
+        0.62046593,
+        -0.64959764
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        0.393008,
+        -0.495246
+      ],
+      "normal": [
+        -0.512596,
+        0.84946185,
+        0.1251393
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        0.354637,
+        -0.334026
+      ],
+      "normal": [
+        -0.5346929,
+        0.76681775,
+        0.35509717
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        0.057454,
+        -0.155083
+      ],
+      "normal": [
+        -0.5419298,
+        0.07220744,
+        0.83731616
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        -0.354637,
+        -0.334026
+      ],
+      "normal": [
+        -0.53469294,
+        -0.76681775,
+        0.35509717
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        -0.393008,
+        -0.495246
+      ],
+      "normal": [
+        -0.5125961,
+        -0.84946185,
+        0.12513928
+      ]
+    },
+    {
+      "pos": [
+        -7.074957,
+        -0.40345,
+        -0.684268
+      ],
+      "normal": [
+        -0.4393687,
+        -0.62046593,
+        -0.6495977
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        -0.139529,
+        -0.169387
+      ],
+      "normal": [
+        -0.544593,
+        -0.28402162,
+        0.7891453
+      ]
+    },
+    {
+      "pos": [
+        -7.074984,
+        -0.057454,
+        -0.155083
+      ],
+      "normal": [
+        -0.54192966,
+        -0.0722074,
+        0.8373161
+      ]
+    },
+    {
+      "pos": [
+        5.25718,
+        -0.24426,
+        -0.448877
+      ],
+      "normal": [
+        0.86244524,
+        0.49150214,
+        0.120887704
+      ]
+    },
+    {
+      "pos": [
+        5.275361,
+        -0.389797,
+        -0.446328
+      ],
+      "normal": [
+        0.61489844,
+        0.7838835,
+        0.08617705
+      ]
+    },
+    {
+      "pos": [
+        5.534085,
+        -0.255527,
+        -0.410058
+      ],
+      "normal": [
+        -0.33959317,
+        0.93936557,
+        -0.04763121
+      ]
+    },
+    {
+      "pos": [
+        5.858724,
+        -0.171973,
+        -0.364548
+      ],
+      "normal": [
+        -0.17495604,
+        0.98427004,
+        -0.0245529
+      ]
+    },
+    {
+      "pos": [
+        6.246687,
+        -0.127423,
+        -0.310161
+      ],
+      "normal": [
+        0.56497335,
+        0.82130116,
+        0.079180144
+      ]
+    },
+    {
+      "pos": [
+        6.245811,
+        -0.209802,
+        -0.310283
+      ],
+      "normal": [
+        0.85219306,
+        -0.5094036,
+        0.119478144
+      ]
+    },
+    {
+      "pos": [
+        5.957494,
+        -0.242908,
+        -0.350702
+      ],
+      "normal": [
+        0.25087473,
+        -0.9673795,
+        0.035195466
+      ]
+    },
+    {
+      "pos": [
+        5.684797,
+        -0.367023,
+        -0.38893
+      ],
+      "normal": [
+        0.57706296,
+        -0.8126809,
+        0.08092032
+      ]
+    },
+    {
+      "pos": [
+        5.030259,
+        -0.310424,
+        -0.039389
+      ],
+      "normal": [
+        0.9298418,
+        0.123422846,
+        0.34664232
+      ]
+    },
+    {
+      "pos": [
+        5.218888,
+        -0.403501,
+        -0.175729
+      ],
+      "normal": [
+        0.8033546,
+        0.24575578,
+        0.5424255
+      ]
+    },
+    {
+      "pos": [
+        5.254566,
+        -0.476272,
+        -0.297997
+      ],
+      "normal": [
+        0.5206424,
+        0.39195615,
+        0.75848657
+      ]
+    },
+    {
+      "pos": [
+        5.497149,
+        -0.409135,
+        -0.146573
+      ],
+      "normal": [
+        -0.45253527,
+        0.4696961,
+        0.758022
+      ]
+    },
+    {
+      "pos": [
+        5.811742,
+        -0.367356,
+        -0.029404
+      ],
+      "normal": [
+        -0.2932977,
+        0.4921503,
+        0.8196124
+      ]
+    },
+    {
+      "pos": [
+        6.194348,
+        -0.345081,
+        0.063191
+      ],
+      "normal": [
+        0.46622866,
+        0.410662,
+        0.78357357
+      ]
+    },
+    {
+      "pos": [
+        6.203377,
+        -0.386271,
+        -0.007583
+      ],
+      "normal": [
+        0.91343665,
+        -0.25471237,
+        -0.31741953
+      ]
+    },
+    {
+      "pos": [
+        5.91904,
+        -0.402825,
+        -0.076394
+      ],
+      "normal": [
+        0.36718425,
+        -0.48370403,
+        -0.79448485
+      ]
+    },
+    {
+      "pos": [
+        5.661265,
+        -0.464884,
+        -0.221067
+      ],
+      "normal": [
+        0.6747737,
+        -0.40635315,
+        -0.6160824
+      ]
+    },
+    {
+      "pos": [
+        5.030257,
+        -0.815056,
+        -0.039376
+      ],
+      "normal": [
+        0.9298366,
+        -0.12349833,
+        0.34662953
+      ]
+    },
+    {
+      "pos": [
+        5.218887,
+        -0.721987,
+        -0.175721
+      ],
+      "normal": [
+        0.80335325,
+        -0.24573123,
+        0.5424387
+      ]
+    },
+    {
+      "pos": [
+        5.254566,
+        -0.649223,
+        -0.297993
+      ],
+      "normal": [
+        0.5206332,
+        -0.39192456,
+        0.7585092
+      ]
+    },
+    {
+      "pos": [
+        5.497147,
+        -0.716354,
+        -0.146565
+      ],
+      "normal": [
+        -0.45253885,
+        -0.4696537,
+        0.75804615
+      ]
+    },
+    {
+      "pos": [
+        5.81174,
+        -0.758129,
+        -0.029394
+      ],
+      "normal": [
+        -0.2933018,
+        -0.4921057,
+        0.8196377
+      ]
+    },
+    {
+      "pos": [
+        6.194347,
+        -0.780403,
+        0.063202
+      ],
+      "normal": [
+        0.46622714,
+        -0.4106251,
+        0.78359383
+      ]
+    },
+    {
+      "pos": [
+        6.203376,
+        -0.739216,
+        -0.007574
+      ],
+      "normal": [
+        0.9134375,
+        0.25469148,
+        -0.31743383
+      ]
+    },
+    {
+      "pos": [
+        5.919039,
+        -0.722663,
+        -0.076386
+      ],
+      "normal": [
+        0.3671885,
+        0.48365974,
+        -0.7945098
+      ]
+    },
+    {
+      "pos": [
+        5.661264,
+        -0.66061,
+        -0.221062
+      ],
+      "normal": [
+        0.6747761,
+        0.4063173,
+        -0.6161035
+      ]
+    },
+    {
+      "pos": [
+        5.533661,
+        -0.562752,
+        -0.410117
+      ],
+      "normal": [
+        0.99031603,
+        -0.0000012367622,
+        0.13883115
+      ]
+    },
+    {
+      "pos": [
+        5.257178,
+        -0.881243,
+        -0.44886
+      ],
+      "normal": [
+        0.8624434,
+        -0.49149534,
+        0.12092857
+      ]
+    },
+    {
+      "pos": [
+        5.275359,
+        -0.735706,
+        -0.446319
+      ],
+      "normal": [
+        0.6148839,
+        -0.78388786,
+        0.08624252
+      ]
+    },
+    {
+      "pos": [
+        5.534083,
+        -0.869976,
+        -0.410042
+      ],
+      "normal": [
+        -0.33960366,
+        -0.93936557,
+        -0.047556978
+      ]
+    },
+    {
+      "pos": [
+        5.858722,
+        -0.95353,
+        -0.364528
+      ],
+      "normal": [
+        -0.17496671,
+        -0.98427016,
+        -0.024476124
+      ]
+    },
+    {
+      "pos": [
+        6.246684,
+        -0.99808,
+        -0.310138
+      ],
+      "normal": [
+        0.5649672,
+        -0.82129925,
+        0.079244085
+      ]
+    },
+    {
+      "pos": [
+        6.245809,
+        -0.915701,
+        -0.310265
+      ],
+      "normal": [
+        0.8521938,
+        0.5094114,
+        0.119439855
+      ]
+    },
+    {
+      "pos": [
+        5.957492,
+        -0.882595,
+        -0.350685
+      ],
+      "normal": [
+        0.25088507,
+        0.96737957,
+        0.035120193
+      ]
+    },
+    {
+      "pos": [
+        5.684796,
+        -0.75848,
+        -0.38892
+      ],
+      "normal": [
+        0.57707196,
+        0.8126811,
+        0.08085499
+      ]
+    },
+    {
+      "pos": [
+        5.151601,
+        -0.815102,
+        -0.904963
+      ],
+      "normal": [
+        0.988911,
+        -0.12387179,
+        -0.081920415
+      ]
+    },
+    {
+      "pos": [
+        5.29547,
+        -0.722016,
+        -0.722016
+      ],
+      "normal": [
+        0.9215367,
+        -0.24577685,
+        -0.30060574
+      ]
+    },
+    {
+      "pos": [
+        5.296154,
+        -0.649239,
+        -0.594654
+      ],
+      "normal": [
+        0.7091279,
+        -0.39198986,
+        -0.58607304
+      ]
+    },
+    {
+      "pos": [
+        5.571022,
+        -0.716382,
+        -0.673535
+      ],
+      "normal": [
+        -0.22666228,
+        -0.46973845,
+        -0.8532115
+      ]
+    },
+    {
+      "pos": [
+        5.905705,
+        -0.758165,
+        -0.699682
+      ],
+      "normal": [
+        -0.05662621,
+        -0.49219504,
+        -0.8686412
+      ]
+    },
+    {
+      "pos": [
+        6.299025,
+        -0.780442,
+        -0.6835
+      ],
+      "normal": [
+        0.66371614,
+        -0.41069877,
+        -0.6251459
+      ]
+    },
+    {
+      "pos": [
+        6.288245,
+        -0.739248,
+        -0.612975
+      ],
+      "normal": [
+        0.7909461,
+        0.2547362,
+        0.55633956
+      ]
+    },
+    {
+      "pos": [
+        5.995947,
+        -0.722692,
+        -0.625
+      ],
+      "normal": [
+        0.13457613,
+        0.48374757,
+        0.8647991
+      ]
+    },
+    {
+      "pos": [
+        5.708329,
+        -0.660628,
+        -0.556788
+      ],
+      "normal": [
+        0.47936094,
+        0.40638945,
+        0.77785647
+      ]
+    },
+    {
+      "pos": [
+        5.295474,
+        -0.40353,
+        -0.722041
+      ],
+      "normal": [
+        0.92153996,
+        0.2457252,
+        -0.30063814
+      ]
+    },
+    {
+      "pos": [
+        5.296155,
+        -0.476288,
+        -0.594668
+      ],
+      "normal": [
+        0.7091519,
+        0.39189428,
+        -0.5861079
+      ]
+    },
+    {
+      "pos": [
+        5.571025,
+        -0.409163,
+        -0.673559
+      ],
+      "normal": [
+        -0.22665183,
+        0.46963218,
+        -0.8532728
+      ]
+    },
+    {
+      "pos": [
+        5.90571,
+        -0.367392,
+        -0.699712
+      ],
+      "normal": [
+        -0.056617346,
+        0.49208257,
+        -0.86870545
+      ]
+    },
+    {
+      "pos": [
+        6.299029,
+        -0.34512,
+        -0.683534
+      ],
+      "normal": [
+        0.663716,
+        0.41060856,
+        -0.6252053
+      ]
+    },
+    {
+      "pos": [
+        6.288249,
+        -0.386303,
+        -0.613002
+      ],
+      "normal": [
+        0.7909522,
+        -0.2546689,
+        0.5563616
+      ]
+    },
+    {
+      "pos": [
+        5.995951,
+        -0.402854,
+        -0.625025
+      ],
+      "normal": [
+        0.13456677,
+        -0.48363736,
+        0.8648622
+      ]
+    },
+    {
+      "pos": [
+        5.708331,
+        -0.464902,
+        -0.556803
+      ],
+      "normal": [
+        0.47935238,
+        -0.4062987,
+        0.7779091
+      ]
+    },
+    {
+      "pos": [
+        5.218888,
+        0.403501,
+        -0.175729
+      ],
+      "normal": [
+        0.80335486,
+        -0.24575405,
+        0.54242593
+      ]
+    },
+    {
+      "pos": [
+        5.25718,
+        0.24426,
+        -0.448877
+      ],
+      "normal": [
+        0.86244607,
+        -0.49150142,
+        0.12088481
+      ]
+    },
+    {
+      "pos": [
+        5.254566,
+        0.476272,
+        -0.297997
+      ],
+      "normal": [
+        0.52064246,
+        -0.39195156,
+        0.7584889
+      ]
+    },
+    {
+      "pos": [
+        5.275361,
+        0.389797,
+        -0.446328
+      ],
+      "normal": [
+        0.6148984,
+        -0.78388447,
+        0.08616963
+      ]
+    },
+    {
+      "pos": [
+        5.497149,
+        0.409135,
+        -0.146573
+      ],
+      "normal": [
+        -0.45253503,
+        -0.46969628,
+        0.758022
+      ]
+    },
+    {
+      "pos": [
+        5.534085,
+        0.255527,
+        -0.410058
+      ],
+      "normal": [
+        -0.3395928,
+        -0.93936574,
+        -0.047630627
+      ]
+    },
+    {
+      "pos": [
+        5.811742,
+        0.367356,
+        -0.029404
+      ],
+      "normal": [
+        -0.29329824,
+        -0.4921507,
+        0.819612
+      ]
+    },
+    {
+      "pos": [
+        5.858724,
+        0.171973,
+        -0.364548
+      ],
+      "normal": [
+        -0.17495643,
+        -0.98427,
+        -0.024552582
+      ]
+    },
+    {
+      "pos": [
+        6.194348,
+        0.345081,
+        0.063191
+      ],
+      "normal": [
+        0.46622896,
+        -0.41066223,
+        0.7835732
+      ]
+    },
+    {
+      "pos": [
+        6.246687,
+        0.127423,
+        -0.310161
+      ],
+      "normal": [
+        0.5649732,
+        -0.8213013,
+        0.079180576
+      ]
+    },
+    {
+      "pos": [
+        6.203377,
+        0.386271,
+        -0.007583
+      ],
+      "normal": [
+        0.9134366,
+        0.2547117,
+        -0.31742
+      ]
+    },
+    {
+      "pos": [
+        6.245811,
+        0.209802,
+        -0.310283
+      ],
+      "normal": [
+        0.85219294,
+        0.5094032,
+        0.11948047
+      ]
+    },
+    {
+      "pos": [
+        5.91904,
+        0.402825,
+        -0.076394
+      ],
+      "normal": [
+        0.36718452,
+        0.483704,
+        -0.79448473
+      ]
+    },
+    {
+      "pos": [
+        5.957494,
+        0.242908,
+        -0.350702
+      ],
+      "normal": [
+        0.25087422,
+        0.9673797,
+        0.035195787
+      ]
+    },
+    {
+      "pos": [
+        5.661265,
+        0.464884,
+        -0.221067
+      ],
+      "normal": [
+        0.67477334,
+        0.40635347,
+        -0.61608255
+      ]
+    },
+    {
+      "pos": [
+        5.684797,
+        0.367023,
+        -0.38893
+      ],
+      "normal": [
+        0.57706314,
+        0.8126809,
+        0.08091959
+      ]
+    },
+    {
+      "pos": [
+        5.218887,
+        0.721987,
+        -0.175721
+      ],
+      "normal": [
+        0.803353,
+        0.24573186,
+        0.54243886
+      ]
+    },
+    {
+      "pos": [
+        5.254566,
+        0.649223,
+        -0.297993
+      ],
+      "normal": [
+        0.5206335,
+        0.39191958,
+        0.75851154
+      ]
+    },
+    {
+      "pos": [
+        5.497147,
+        0.716354,
+        -0.146565
+      ],
+      "normal": [
+        -0.45253977,
+        0.46965277,
+        0.7580462
+      ]
+    },
+    {
+      "pos": [
+        5.81174,
+        0.758129,
+        -0.029394
+      ],
+      "normal": [
+        -0.29330143,
+        0.4921056,
+        0.8196379
+      ]
+    },
+    {
+      "pos": [
+        6.194347,
+        0.780403,
+        0.063202
+      ],
+      "normal": [
+        0.46622723,
+        0.4106253,
+        0.78359365
+      ]
+    },
+    {
+      "pos": [
+        6.203376,
+        0.739216,
+        -0.007574
+      ],
+      "normal": [
+        0.91343766,
+        -0.2546913,
+        -0.31743354
+      ]
+    },
+    {
+      "pos": [
+        5.919039,
+        0.722663,
+        -0.076386
+      ],
+      "normal": [
+        0.36718774,
+        -0.48365983,
+        -0.7945101
+      ]
+    },
+    {
+      "pos": [
+        5.661264,
+        0.66061,
+        -0.221062
+      ],
+      "normal": [
+        0.67477655,
+        -0.40631628,
+        -0.61610365
+      ]
+    },
+    {
+      "pos": [
+        5.257178,
+        0.881243,
+        -0.44886
+      ],
+      "normal": [
+        0.86244327,
+        0.49149525,
+        0.12092971
+      ]
+    },
+    {
+      "pos": [
+        5.275359,
+        0.735706,
+        -0.446319
+      ],
+      "normal": [
+        0.6148843,
+        0.78388804,
+        0.08623796
+      ]
+    },
+    {
+      "pos": [
+        5.534083,
+        0.869976,
+        -0.410042
+      ],
+      "normal": [
+        -0.33960325,
+        0.9393656,
+        -0.047558356
+      ]
+    },
+    {
+      "pos": [
+        5.858722,
+        0.95353,
+        -0.364528
+      ],
+      "normal": [
+        -0.17496704,
+        0.98427004,
+        -0.024476519
+      ]
+    },
+    {
+      "pos": [
+        6.246684,
+        0.99808,
+        -0.310138
+      ],
+      "normal": [
+        0.56496716,
+        0.8212992,
+        0.07924474
+      ]
+    },
+    {
+      "pos": [
+        6.245809,
+        0.915701,
+        -0.310265
+      ],
+      "normal": [
+        0.8521935,
+        -0.50941175,
+        0.11943946
+      ]
+    },
+    {
+      "pos": [
+        5.957492,
+        0.882595,
+        -0.350685
+      ],
+      "normal": [
+        0.25088537,
+        -0.96737957,
+        0.035119493
+      ]
+    },
+    {
+      "pos": [
+        5.684796,
+        0.75848,
+        -0.38892
+      ],
+      "normal": [
+        0.5770717,
+        -0.81268096,
+        0.0808566
+      ]
+    },
+    {
+      "pos": [
+        5.533661,
+        0.562752,
+        -0.410117
+      ],
+      "normal": [
+        0.99031603,
+        0.0000012450074,
+        0.13883118
+      ]
+    },
+    {
+      "pos": [
+        5.29547,
+        0.722016,
+        -0.722016
+      ],
+      "normal": [
+        0.9215367,
+        0.24577647,
+        -0.3006061
+      ]
+    },
+    {
+      "pos": [
+        5.296154,
+        0.649239,
+        -0.594654
+      ],
+      "normal": [
+        0.7091278,
+        0.39199522,
+        -0.5860697
+      ]
+    },
+    {
+      "pos": [
+        5.571022,
+        0.716382,
+        -0.673535
+      ],
+      "normal": [
+        -0.22666189,
+        0.46973962,
+        -0.85321105
+      ]
+    },
+    {
+      "pos": [
+        5.905705,
+        0.758165,
+        -0.699682
+      ],
+      "normal": [
+        -0.056626603,
+        0.49219492,
+        -0.8686412
+      ]
+    },
+    {
+      "pos": [
+        6.299025,
+        0.780442,
+        -0.6835
+      ],
+      "normal": [
+        0.66371644,
+        0.41069758,
+        -0.6251464
+      ]
+    },
+    {
+      "pos": [
+        6.288245,
+        0.739248,
+        -0.612975
+      ],
+      "normal": [
+        0.790946,
+        -0.25473705,
+        0.55633926
+      ]
+    },
+    {
+      "pos": [
+        5.995947,
+        0.722692,
+        -0.625
+      ],
+      "normal": [
+        0.13457683,
+        -0.4837469,
+        0.86479944
+      ]
+    },
+    {
+      "pos": [
+        5.708329,
+        0.660628,
+        -0.556788
+      ],
+      "normal": [
+        0.47936055,
+        -0.4063903,
+        0.7778562
+      ]
+    },
+    {
+      "pos": [
+        5.295474,
+        0.40353,
+        -0.722041
+      ],
+      "normal": [
+        0.92153966,
+        -0.2457267,
+        -0.30063778
+      ]
+    },
+    {
+      "pos": [
+        5.296155,
+        0.476288,
+        -0.594668
+      ],
+      "normal": [
+        0.70915085,
+        -0.3919025,
+        -0.5861037
+      ]
+    },
+    {
+      "pos": [
+        5.571025,
+        0.409163,
+        -0.673559
+      ],
+      "normal": [
+        -0.22665216,
+        -0.4696324,
+        -0.8532726
+      ]
+    },
+    {
+      "pos": [
+        5.90571,
+        0.367392,
+        -0.699712
+      ],
+      "normal": [
+        -0.056616742,
+        -0.49208254,
+        -0.8687055
+      ]
+    },
+    {
+      "pos": [
+        6.299029,
+        0.34512,
+        -0.683534
+      ],
+      "normal": [
+        0.663716,
+        -0.4106077,
+        -0.6252059
+      ]
+    },
+    {
+      "pos": [
+        6.288249,
+        0.386303,
+        -0.613002
+      ],
+      "normal": [
+        0.7909529,
+        0.25467092,
+        0.55635977
+      ]
+    },
+    {
+      "pos": [
+        5.995951,
+        0.402854,
+        -0.625025
+      ],
+      "normal": [
+        0.13456574,
+        0.48363772,
+        0.86486226
+      ]
+    },
+    {
+      "pos": [
+        5.708331,
+        0.464902,
+        -0.556803
+      ],
+      "normal": [
+        0.47935277,
+        0.4062983,
+        0.77790916
+      ]
+    },
+    {
+      "pos": [
+        5.165639,
+        -0.318491,
+        0.637328
+      ],
+      "normal": [
+        0.8708768,
+        -0.49149907,
+        -0.001477976
+      ]
+    },
+    {
+      "pos": [
+        5.166101,
+        -0.15925,
+        0.913146
+      ],
+      "normal": [
+        0.8715928,
+        -0.24575482,
+        0.42418233
+      ]
+    },
+    {
+      "pos": [
+        4.998497,
+        -0.252327,
+        1.074635
+      ],
+      "normal": [
+        0.9691901,
+        -0.122611925,
+        0.21362805
+      ]
+    },
+    {
+      "pos": [
+        5.183997,
+        -0.172954,
+        0.637297
+      ],
+      "normal": [
+        0.6209085,
+        -0.7838824,
+        -0.0010674781
+      ]
+    },
+    {
+      "pos": [
+        5.184248,
+        -0.08648,
+        0.787078
+      ],
+      "normal": [
+        0.6220378,
+        -0.3919594,
+        0.6778176
+      ]
+    },
+    {
+      "pos": [
+        5.445252,
+        -0.307224,
+        0.636859
+      ],
+      "normal": [
+        -0.34291688,
+        -0.93936557,
+        0.0005495726
+      ]
+    },
+    {
+      "pos": [
+        5.445698,
+        -0.153617,
+        0.90292
+      ],
+      "normal": [
+        -0.3415528,
+        -0.46969754,
+        0.8140798
+      ]
+    },
+    {
+      "pos": [
+        5.773065,
+        -0.390779,
+        0.63631
+      ],
+      "normal": [
+        -0.1766706,
+        -0.98427,
+        0.00027217882
+      ]
+    },
+    {
+      "pos": [
+        5.773632,
+        -0.195395,
+        0.97473
+      ],
+      "normal": [
+        -0.17524132,
+        -0.4921489,
+        0.85268974
+      ]
+    },
+    {
+      "pos": [
+        6.164821,
+        -0.435329,
+        0.635652
+      ],
+      "normal": [
+        0.5704926,
+        -0.8213022,
+        -0.0009786141
+      ]
+    },
+    {
+      "pos": [
+        6.165453,
+        -0.217671,
+        1.012654
+      ],
+      "normal": [
+        0.57168585,
+        -0.41066357,
+        0.71030325
+      ]
+    },
+    {
+      "pos": [
+        6.163937,
+        -0.35295,
+        0.635654
+      ],
+      "normal": [
+        0.86052936,
+        0.5093988,
+        -0.0014306987
+      ]
+    },
+    {
+      "pos": [
+        6.16445,
+        -0.17648,
+        0.941314
+      ],
+      "normal": [
+        0.85978717,
+        0.2547081,
+        -0.44259444
+      ]
+    },
+    {
+      "pos": [
+        5.8728,
+        -0.319843,
+        0.636142
+      ],
+      "normal": [
+        0.2533308,
+        0.9673796,
+        -0.00040015648
+      ]
+    },
+    {
+      "pos": [
+        5.873264,
+        -0.159926,
+        0.913131
+      ],
+      "normal": [
+        0.2519268,
+        0.483704,
+        -0.8381905
+      ]
+    },
+    {
+      "pos": [
+        5.597437,
+        -0.195729,
+        0.636604
+      ],
+      "normal": [
+        0.5827084,
+        0.8126808,
+        -0.00095575984
+      ]
+    },
+    {
+      "pos": [
+        5.597722,
+        -0.097867,
+        0.806108
+      ],
+      "normal": [
+        0.58152866,
+        0.40635034,
+        -0.7047722
+      ]
+    },
+    {
+      "pos": [
+        5.444824,
+        0.0,
+        0.63686
+      ],
+      "normal": [
+        0.99999857,
+        0.0000027620913,
+        -0.001676441
+      ]
+    },
+    {
+      "pos": [
+        5.166102,
+        0.159236,
+        0.913155
+      ],
+      "normal": [
+        0.87159276,
+        0.24573135,
+        0.42419603
+      ]
+    },
+    {
+      "pos": [
+        5.184248,
+        0.086472,
+        0.787083
+      ],
+      "normal": [
+        0.62204194,
+        0.39191988,
+        0.67783684
+      ]
+    },
+    {
+      "pos": [
+        5.445698,
+        0.153603,
+        0.902928
+      ],
+      "normal": [
+        -0.34155247,
+        0.4696552,
+        0.81410444
+      ]
+    },
+    {
+      "pos": [
+        5.773632,
+        0.195378,
+        0.97474
+      ],
+      "normal": [
+        -0.17524135,
+        0.49210596,
+        0.8527146
+      ]
+    },
+    {
+      "pos": [
+        6.165453,
+        0.217651,
+        1.012665
+      ],
+      "normal": [
+        0.5716862,
+        0.41062567,
+        0.7103249
+      ]
+    },
+    {
+      "pos": [
+        6.16445,
+        0.176464,
+        0.941323
+      ],
+      "normal": [
+        0.85978615,
+        -0.25468665,
+        -0.44260877
+      ]
+    },
+    {
+      "pos": [
+        5.873265,
+        0.159912,
+        0.91314
+      ],
+      "normal": [
+        0.2519266,
+        -0.48365992,
+        -0.838216
+      ]
+    },
+    {
+      "pos": [
+        5.597722,
+        0.097858,
+        0.806113
+      ],
+      "normal": [
+        0.5815285,
+        -0.4063144,
+        -0.7047931
+      ]
+    },
+    {
+      "pos": [
+        5.165639,
+        0.318491,
+        0.637345
+      ],
+      "normal": [
+        0.8708796,
+        0.49149427,
+        -0.0014357907
+      ]
+    },
+    {
+      "pos": [
+        4.997765,
+        0.504639,
+        0.637636
+      ],
+      "normal": [
+        0.9694604,
+        0.24524356,
+        -0.0014046853
+      ]
+    },
+    {
+      "pos": [
+        5.183997,
+        0.172954,
+        0.637307
+      ],
+      "normal": [
+        0.6208978,
+        0.78389084,
+        -0.0009971899
+      ]
+    },
+    {
+      "pos": [
+        5.445252,
+        0.307224,
+        0.636875
+      ],
+      "normal": [
+        -0.34291685,
+        0.9393655,
+        0.000623851
+      ]
+    },
+    {
+      "pos": [
+        5.773065,
+        0.390779,
+        0.63633
+      ],
+      "normal": [
+        -0.1766711,
+        0.98426986,
+        0.00034818897
+      ]
+    },
+    {
+      "pos": [
+        6.164821,
+        0.435329,
+        0.635675
+      ],
+      "normal": [
+        0.57049656,
+        0.8212995,
+        -0.0009142218
+      ]
+    },
+    {
+      "pos": [
+        6.163937,
+        0.35295,
+        0.635673
+      ],
+      "normal": [
+        0.86052305,
+        -0.50940937,
+        -0.0014722983
+      ]
+    },
+    {
+      "pos": [
+        5.8728,
+        0.319843,
+        0.636159
+      ],
+      "normal": [
+        0.25333178,
+        -0.96737933,
+        -0.00047534052
+      ]
+    },
+    {
+      "pos": [
+        5.597437,
+        0.195729,
+        0.636614
+      ],
+      "normal": [
+        0.5827098,
+        -0.8126797,
+        -0.001020914
+      ]
+    },
+    {
+      "pos": [
+        5.165176,
+        0.159265,
+        0.361518
+      ],
+      "normal": [
+        0.8701643,
+        0.2457782,
+        -0.42709145
+      ]
+    },
+    {
+      "pos": [
+        4.997031,
+        0.25235,
+        0.200598
+      ],
+      "normal": [
+        0.9798933,
+        0.12481983,
+        -0.15565702
+      ]
+    },
+    {
+      "pos": [
+        5.183746,
+        0.086488,
+        0.487521
+      ],
+      "normal": [
+        0.6197598,
+        0.39199498,
+        -0.67988074
+      ]
+    },
+    {
+      "pos": [
+        5.444806,
+        0.153631,
+        0.370806
+      ],
+      "normal": [
+        -0.34428084,
+        0.46973988,
+        -0.8129054
+      ]
+    },
+    {
+      "pos": [
+        5.772497,
+        0.195413,
+        0.297899
+      ],
+      "normal": [
+        -0.17810094,
+        0.49219462,
+        -0.85207075
+      ]
+    },
+    {
+      "pos": [
+        6.164188,
+        0.217691,
+        0.258662
+      ],
+      "normal": [
+        0.5693011,
+        0.41070035,
+        -0.7121948
+      ]
+    },
+    {
+      "pos": [
+        6.163424,
+        0.176496,
+        0.330003
+      ],
+      "normal": [
+        0.86126506,
+        -0.25473407,
+        0.43969652
+      ]
+    },
+    {
+      "pos": [
+        5.872335,
+        0.159941,
+        0.359162
+      ],
+      "normal": [
+        0.25473654,
+        -0.4837494,
+        0.8373146
+      ]
+    },
+    {
+      "pos": [
+        5.597153,
+        0.097876,
+        0.467105
+      ],
+      "normal": [
+        0.5838898,
+        -0.40638715,
+        0.702796
+      ]
+    },
+    {
+      "pos": [
+        5.165176,
+        -0.159221,
+        0.361493
+      ],
+      "normal": [
+        0.87016267,
+        -0.24572675,
+        -0.42712447
+      ]
+    },
+    {
+      "pos": [
+        4.997031,
+        -0.252281,
+        0.200558
+      ],
+      "normal": [
+        0.97993344,
+        -0.12480116,
+        -0.15541907
+      ]
+    },
+    {
+      "pos": [
+        5.183746,
+        -0.086464,
+        0.487507
+      ],
+      "normal": [
+        0.6197704,
+        -0.39190304,
+        -0.6799241
+      ]
+    },
+    {
+      "pos": [
+        5.444806,
+        -0.153589,
+        0.370782
+      ],
+      "normal": [
+        -0.34428078,
+        -0.46963355,
+        -0.8129668
+      ]
+    },
+    {
+      "pos": [
+        5.772497,
+        -0.19536,
+        0.297868
+      ],
+      "normal": [
+        -0.17810047,
+        -0.4920831,
+        -0.85213524
+      ]
+    },
+    {
+      "pos": [
+        6.164188,
+        -0.217631,
+        0.258628
+      ],
+      "normal": [
+        0.5692981,
+        -0.4106071,
+        -0.712251
+      ]
+    },
+    {
+      "pos": [
+        6.163424,
+        -0.176448,
+        0.329975
+      ],
+      "normal": [
+        0.86127096,
+        0.2546714,
+        0.43972126
+      ]
+    },
+    {
+      "pos": [
+        5.872335,
+        -0.159897,
+        0.359136
+      ],
+      "normal": [
+        0.25473657,
+        0.4836366,
+        0.83737975
+      ]
+    },
+    {
+      "pos": [
+        5.597153,
+        -0.09785,
+        0.46709
+      ],
+      "normal": [
+        0.5838884,
+        0.4062996,
+        0.70284784
+      ]
+    },
+    {
+      "pos": [
+        5.090927,
+        -1.067391,
+        -0.472156
+      ],
+      "normal": [
+        0.95919293,
+        -0.24898958,
+        0.1339892
+      ]
+    },
+    {
+      "pos": [
+        5.171283,
+        1.310384,
+        -1.055942
+      ],
+      "normal": [
+        0.35110804,
+        0.89984614,
+        0.25884366
+      ]
+    },
+    {
+      "pos": [
+        5.151606,
+        0.31047,
+        -0.905003
+      ],
+      "normal": [
+        0.9889709,
+        -0.12328223,
+        -0.08208597
+      ]
+    },
+    {
+      "pos": [
+        5.151606,
+        -0.31047,
+        -0.905003
+      ],
+      "normal": [
+        0.9889708,
+        0.12328233,
+        -0.0820864
+      ]
+    },
+    {
+      "pos": [
+        5.030257,
+        0.815056,
+        -0.039376
+      ],
+      "normal": [
+        0.9298367,
+        0.12349838,
+        0.34662926
+      ]
+    },
+    {
+      "pos": [
+        5.030259,
+        0.310424,
+        -0.039389
+      ],
+      "normal": [
+        0.9298417,
+        -0.123422824,
+        0.34664285
+      ]
+    },
+    {
+      "pos": [
+        5.09093,
+        -0.058113,
+        -0.472183
+      ],
+      "normal": [
+        0.9596688,
+        0.24685651,
+        0.13452701
+      ]
+    },
+    {
+      "pos": [
+        5.09093,
+        0.058113,
+        -0.472183
+      ],
+      "normal": [
+        0.959669,
+        -0.24685666,
+        0.13452652
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -1.210004,
+        0.173074
+      ],
+      "normal": [
+        0.75123966,
+        -0.6469357,
+        -0.13081767
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        1.210004,
+        0.173074
+      ],
+      "normal": [
+        0.76909167,
+        0.62320715,
+        -0.14181282
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -1.428028,
+        0.442095
+      ],
+      "normal": [
+        0.59799856,
+        -0.7181027,
+        -0.35598624
+      ]
+    },
+    {
+      "pos": [
+        4.997764,
+        -0.504639,
+        0.63761
+      ],
+      "normal": [
+        0.969462,
+        -0.24523763,
+        -0.0014224078
+      ]
+    },
+    {
+      "pos": [
+        4.998497,
+        0.252304,
+        1.074648
+      ],
+      "normal": [
+        0.9691896,
+        0.12260127,
+        0.21363652
+      ]
+    },
+    {
+      "pos": [
+        4.998233,
+        0.130896,
+        1.1931
+      ],
+      "normal": [
+        0.8592825,
+        0.50269926,
+        0.09448333
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        1.51003,
+        0.750093
+      ],
+      "normal": [
+        0.52929103,
+        0.83173585,
+        0.16753072
+      ]
+    },
+    {
+      "pos": [
+        5.151601,
+        0.815102,
+        -0.904963
+      ],
+      "normal": [
+        0.9889109,
+        0.12387168,
+        -0.081920676
+      ]
+    },
+    {
+      "pos": [
+        5.090927,
+        1.067391,
+        -0.472156
+      ],
+      "normal": [
+        0.95919293,
+        0.24898958,
+        0.13398954
+      ]
+    },
+    {
+      "pos": [
+        3.070224,
+        -1.053627,
+        0.449897
+      ],
+      "normal": [
+        -0.09720466,
+        -0.97737086,
+        0.18787628
+      ]
+    },
+    {
+      "pos": [
+        -5.349205,
+        0.737229,
+        0.323968
+      ],
+      "normal": [
+        -0.33809197,
+        0.6595059,
+        0.67137605
+      ]
+    },
+    {
+      "pos": [
+        -5.349205,
+        -0.737229,
+        0.323968
+      ],
+      "normal": [
+        -0.33473325,
+        -0.658788,
+        0.67375964
+      ]
+    },
+    {
+      "pos": [
+        -5.349476,
+        -0.470935,
+        0.566062
+      ],
+      "normal": [
+        -0.45479938,
+        -0.52435064,
+        0.71987075
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        -0.098825,
+        0.133439
+      ],
+      "normal": [
+        -0.4308363,
+        -0.081879355,
+        0.8987078
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        0.098825,
+        0.133439
+      ],
+      "normal": [
+        -0.43083635,
+        0.081879385,
+        0.8987078
+      ]
+    },
+    {
+      "pos": [
+        -6.499984,
+        -0.523,
+        -0.0488
+      ],
+      "normal": [
+        -0.4182165,
+        -0.6097582,
+        0.6732681
+      ]
+    },
+    {
+      "pos": [
+        -5.349476,
+        0.470935,
+        0.566062
+      ],
+      "normal": [
+        -0.45479947,
+        0.52435064,
+        0.71987075
+      ]
+    },
+    {
+      "pos": [
+        -4.999902,
+        1.00002,
+        -0.943979
+      ],
+      "normal": [
+        -0.13246505,
+        0.70241135,
+        -0.6993364
+      ]
+    },
+    {
+      "pos": [
+        0.840214,
+        2.480049,
+        -1.050312
+      ],
+      "normal": [
+        -0.642792,
+        0.759629,
+        -0.09890516
+      ]
+    },
+    {
+      "pos": [
+        1.209237,
+        -1.080021,
+        -0.636414
+      ],
+      "normal": [
+        -0.04679647,
+        -0.7798438,
+        0.6242224
+      ]
+    },
+    {
+      "pos": [
+        3.804262,
+        4.6821,
+        -0.93896
+      ],
+      "normal": [
+        0.040721275,
+        0.9981314,
+        -0.045557935
+      ]
+    },
+    {
+      "pos": [
+        5.000295,
+        -1.302926,
+        -1.259946
+      ],
+      "normal": [
+        0.12158975,
+        -0.6999969,
+        -0.7037189
+      ]
+    },
+    {
+      "pos": [
+        3.804262,
+        -4.6821,
+        -0.93896
+      ],
+      "normal": [
+        0.04072133,
+        -0.9981314,
+        -0.045558337
+      ]
+    },
+    {
+      "pos": [
+        -4.649856,
+        -0.51467,
+        0.885149
+      ],
+      "normal": [
+        -0.089569174,
+        -0.52049583,
+        0.84915334
+      ]
+    },
+    {
+      "pos": [
+        -4.999492,
+        0.68171,
+        0.569242
+      ],
+      "normal": [
+        -0.31900734,
+        0.7281201,
+        0.60669225
+      ]
+    },
+    {
+      "pos": [
+        -4.649417,
+        0.860391,
+        0.497003
+      ],
+      "normal": [
+        -0.14433137,
+        0.74354434,
+        0.65292436
+      ]
+    },
+    {
+      "pos": [
+        -4.906714,
+        0.620194,
+        0.686502
+      ],
+      "normal": [
+        -0.24876072,
+        0.74124205,
+        0.6234407
+      ]
+    },
+    {
+      "pos": [
+        -4.649417,
+        -0.860391,
+        0.497003
+      ],
+      "normal": [
+        -0.14544782,
+        -0.7437118,
+        0.6524857
+      ]
+    },
+    {
+      "pos": [
+        -4.999492,
+        -0.68171,
+        0.569242
+      ],
+      "normal": [
+        -0.31900734,
+        -0.72812,
+        0.6066922
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "pos": [
+        0.0,
+        30.0,
+        0.0
+      ],
+      "strength": 2.0
+    }
+  ],
+  "materials": [
+    {
+      "color": [
+        0.7,
+        0.2,
+        0.3
+      ],
+      "albedo": [
+        0.9,
+        0.1,
+        0.0
+      ],
+      "spec": 50.0
+    }
+  ]
+}
