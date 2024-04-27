@@ -4,62 +4,11 @@ use once_cell::unsync::OnceCell;
 
 use crate::{geom, scene};
 
-#[repr(C)]
-#[derive(Clone, Copy)]
-#[derive(bytemuck::Pod, bytemuck::Zeroable)]
-#[derive(Debug)]
-pub struct Bounds {
-    min: [f32; 3],
-    _p0: u32,
-    max: [f32; 3],
-    _p1: u32,
-}
-
-impl Bounds {
-    fn new<P>(prims: P, vertices: &[geom::PrimVertex]) -> Self
-        where P: Iterator<Item = geom::Prim> {
-
-        let mut min = [std::f32::MAX; 3];
-        let mut max = [std::f32::MAX * -1.; 3];
-
-        fn extrema_vertex(vertex: [f32; 3], minima: &mut [f32; 3], maxima: &mut [f32; 3]) {
-            if vertex[0] < minima[0] { minima[0] = vertex[0]; }
-            if vertex[1] < minima[1] { minima[1] = vertex[1]; }
-            if vertex[2] < minima[2] { minima[2] = vertex[2]; }
-
-            if vertex[0] > maxima[0] { maxima[0] = vertex[0]; }
-            if vertex[1] > maxima[1] { maxima[1] = vertex[1]; }
-            if vertex[2] > maxima[2] { maxima[2] = vertex[2]; }
-        }
-
-        for geom::Prim { indices: [a, b, c], .. } in prims {
-            let a = vertices[a as usize].pos;
-            let b = vertices[b as usize].pos;
-            let c = vertices[c as usize].pos;
-
-            extrema_vertex(a, &mut min, &mut max);
-            extrema_vertex(b, &mut min, &mut max);
-            extrema_vertex(c, &mut min, &mut max);
-        }
-
-        Self { min, _p0: 0, max, _p1: 0 }
-    }
-
-    fn contains(&self, point: [f32; 3]) -> bool {
-        point[0] >= self.min[0] &&
-        point[0] <= self.max[0] &&
-        point[1] >= self.min[1] &&
-        point[1] <= self.max[1] &&
-        point[2] >= self.min[2] &&
-        point[2] <= self.max[2]
-    }
-}
-
 pub struct Aabb {
-    fst: OnceCell<Box<Aabb>>,
-    snd: OnceCell<Box<Aabb>>,
-    bounds: Bounds,
-    items: Vec<usize>,
+    pub fst: OnceCell<Box<Aabb>>,
+    pub snd: OnceCell<Box<Aabb>>,
+    pub bounds: super::Bounds,
+    pub items: Vec<usize>,
 }
 
 impl fmt::Debug for Aabb {
@@ -162,12 +111,12 @@ impl Aabb {
         } else {
             self.items.clear();
 
-            fst.bounds = Bounds::new(
+            fst.bounds = super::Bounds::new(
                 fst.items.iter().map(|&i| prims[i]), 
                 vertices
             );
 
-            snd.bounds = Bounds::new(
+            snd.bounds = super::Bounds::new(
                 snd.items.iter().map(|&i| prims[i]), 
                 vertices
             );
@@ -199,7 +148,7 @@ impl Aabb {
         let mut root = Self {
             fst: OnceCell::new(),
             snd: OnceCell::new(),
-            bounds: Bounds::new(prims.iter().copied(), vertices),
+            bounds: super::Bounds::new(prims.iter().copied(), vertices),
             items: (0..prims.len()).collect()
         };
 

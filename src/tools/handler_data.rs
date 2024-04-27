@@ -6,7 +6,7 @@ fn main() -> anyhow::Result<()> {
         eps: 0.000002,
     };
 
-    handlers::BvhIntrs::set_data(config);
+    handlers::BvhIntrs::configure(config);
 
     Ok(())
 }

@@ -35,6 +35,5 @@ pub trait IntrsHandler {
     // Contains all of the intersection logic
     fn logic() -> &'static str;
 
-    fn set_data(config: Self::Config);
-    fn get_data() -> Self::Config;
+    fn configure(config: Self::Config);
 }

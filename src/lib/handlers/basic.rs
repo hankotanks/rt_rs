@@ -98,7 +98,5 @@ impl super::IntrsHandler for BasicIntrs {
         }
     "}
     
-    fn set_data(_config: Self::Config) { /*  */ }
-    
-    fn get_data() -> Self::Config { /*  */ }
+    fn configure(_config: Self::Config) { /*  */ }
 }

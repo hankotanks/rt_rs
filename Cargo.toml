@@ -28,6 +28,10 @@ path = "src/tools/bb.rs"
 name = "handler_data"
 path = "src/tools/handler_data.rs"
 
+[[bin]]
+name = "bvh"
+path = "src/tools/bvh.rs"
+
 [profile.release]
 lto = true
 
