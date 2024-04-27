@@ -2,9 +2,7 @@ mod basic;
 pub use basic::BasicIntrs;
 
 mod bvh;
-// TODO: Remove Aabb from this export once
-// The testing binary `bb` is deleted
-pub use bvh::{BvhIntrs, BvhConfig, Aabb};
+pub use bvh::{BvhIntrs, BvhConfig};
 
 use crate::scene;
 

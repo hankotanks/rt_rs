@@ -236,8 +236,7 @@ impl<H: handlers::IntrsHandler> State<H> {
             present_mode: present_modes[0],
             alpha_mode: alpha_modes[0],
             view_formats: vec![
-                Self::TEXTURE_FORMAT, 
-                #[cfg(not(target_arch = "wasm32"))] // TODO: Check if this can be removed
+                Self::TEXTURE_FORMAT,
                 Self::TEXTURE_FORMAT.add_srgb_suffix(),
             ],
             desired_maximum_frame_latency: 1,
@@ -511,13 +510,7 @@ impl<H: handlers::IntrsHandler> State<H> {
                 view: &view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    // TODO: Should decide on a proper clear color
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
+                    load: wgpu::LoadOp::Load,
                     store: wgpu::StoreOp::Store,
                 },
             };

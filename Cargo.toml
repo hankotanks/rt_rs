@@ -21,10 +21,6 @@ name = "load"
 path = "src/tools/load.rs"
 
 [[bin]]
-name = "bb"
-path = "src/tools/bb.rs"
-
-[[bin]]
 name = "handler_data"
 path = "src/tools/handler_data.rs"
 

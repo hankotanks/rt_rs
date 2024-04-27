@@ -41,7 +41,6 @@ impl PipelinePackage {
                      | wgpu::TextureUsages::TEXTURE_BINDING,
                 view_formats: &[
                     tex_format,
-                    #[cfg(not(target_arch = "wasm32"))] // TODO: See if this can be removed
                     tex_format.add_srgb_suffix(),
                 ],
             }

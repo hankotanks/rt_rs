@@ -109,7 +109,7 @@ impl ComputeConfig {
             t_min: 0.01,
             t_max: 1000.,
             camera_light_source: 1.,
-            bounces: 4,
+            bounces: 1,
             eps: 0.0000001,
             ambience: 0.2,
         }
@@ -125,7 +125,6 @@ pub struct Config {
     pub resolution: Resolution,
     pub fps: u32,
     pub canvas_raw_handle: u32,
-    pub eps: f32, // NOTE: This is used differently by different handlers
 }
 
 impl Default for Config {
@@ -141,8 +140,6 @@ impl Config {
             resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
             fps: 60,
             canvas_raw_handle: 2024,
-            // TODO: I have a fundamental problem with carrying a 
-            eps: 0.000002,
         }
     }
 }
@@ -165,7 +162,7 @@ pub async fn run_wasm() -> Result<(), Failed> {
 
         // TODO: Switch this to the handler with the best performance
         // Likely BvhHandler
-        run_internal::<handlers::basic::BasicIntrs>(config, scene).await
+        run_internal::<handlers::BasicIntrs>(config, scene).await
     }
 }
 
