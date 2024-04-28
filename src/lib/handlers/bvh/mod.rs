@@ -209,31 +209,33 @@ const LOGIC: &str = "\
         return Intrs(tri, w);
     }
 
+    const INF_POS: f32 = 0x1.p+38f;
+    const INF_NEG: f32 = 0x1.p-38f;
     fn collides(bb: Aabb, ray: Ray) -> bool {
-        var t_min: f32 = bitcast<f32>(0x7F7FFFFF) * -1.0;
-        var t_max: f32 = bitcast<f32>(0x7F7FFFFF);
-
         var t0 = (bb.bounds.min.x - <EPS> - ray.origin.x) / ray.dir.x;
         var t1 = (bb.bounds.max.x + <EPS> - ray.origin.x) / ray.dir.x;
 
-        t_min = max(t_min, min(t0, t1));
-        t_max = min(t_max, max(t0, t1));
+        var t_min = min(t0, t1);
+        var t_max = max(t0, t1);
         
         t0 = (bb.bounds.min.y - <EPS> - ray.origin.y) / ray.dir.y;
         t1 = (bb.bounds.max.y + <EPS> - ray.origin.y) / ray.dir.y;
 
-        t_min = max(t_min, min(t0, t1));
-        t_max = min(t_max, max(t0, t1));
+        t_min = max(t_min, min(min(t0, t1), INF_NEG));
+        t_max = min(t_max, max(max(t0, t1), INF_POS));
         
         t0 = (bb.bounds.min.z - <EPS> - ray.origin.z) / ray.dir.z;
         t1 = (bb.bounds.max.z + <EPS> - ray.origin.z) / ray.dir.z;
 
-        t_min = max(t_min, min(t0, t1));
-        t_max = min(t_max, max(t0, t1));
+        t_min = max(t_min, min(min(t0, t1), INF_NEG));
+        t_max = min(t_max, max(max(t0, t1), INF_POS));
 
         return (t_min < t_max);
     }
 
+    // TODO: The vector-based collision method is faster,
+    // but does not yet incorporate the INF_POS/_NEG testing.
+    // Implement the edge case, then switch to this algorithm
     fn collides_wiche(bb: Aabb, ray: Ray) -> bool {
         let t0s = (bb.bounds.min - ray.origin) / ray.dir;
         let t1s = (bb.bounds.max - ray.origin) / ray.dir;
@@ -261,10 +263,6 @@ const LOGIC: &str = "\
         }
 
         return intrs;
-    }
-
-    fn intrs_bvh_smits(bb: Aabb, ray: Ray, excl: Prim) -> Intrs {
-        // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
     }
 
     var<private> aabb_stack: array<u32, <NODES>>;
@@ -297,7 +295,7 @@ const LOGIC: &str = "\
             let bb_idx = pop(&stack_idx, &stack_empty);
             let bb = aabb_uniforms[bb_idx];
 
-            if(collides_wiche(bb, r)) {
+            if(collides(bb, r)) {
                 if(bb.item_count > 0u) {
                     let temp = intrs_bvh(bb, r, excl);
 
