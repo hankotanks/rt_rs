@@ -14,7 +14,7 @@ fn main() -> anyhow::Result<()> {
     });
 
     let scene_reader = io::BufReader::new({
-        fs::File::open("scenes/test.json")?
+        fs::File::open("scenes/default.json")?
     });
     
     let scene: rt::scene::Scene = //

@@ -19,8 +19,8 @@ impl Bounds {
     fn new<P>(prims: P, vertices: &[geom::PrimVertex]) -> Self
         where P: Iterator<Item = geom::Prim> {
 
-        let mut min = [std::f32::MAX; 3];
-        let mut max = [std::f32::MAX * -1.; 3];
+        let mut min = [f32::MAX; 3];
+        let mut max = [f32::MAX * -1.; 3];
 
         fn extrema_vertex(
             vertex: [f32; 3], 
@@ -98,7 +98,7 @@ impl Aabb {
     ) -> anyhow::Result<()> {
         use geom::v3::V3Ops as _;
 
-        if self.items.len() == 1 { 
+        if self.items.len() <= 2 { 
             return Ok(()); 
         }
 
@@ -142,8 +142,12 @@ impl Aabb {
             let b = vertices[b as usize].pos;
             let c = vertices[c as usize].pos;
 
+            let ab = a.add(b).scale(0.5);
+            let bc = b.add(c).scale(0.5);
+            let ca = c.add(a).scale(0.5);
+
             // I'll let the compiler figure out the precision
-            a.add(b).add(c).scale(1. / 3.)
+            (ab.add(bc).add(ca)).scale(1. / 3.)
         };
 
         for (idx, tri) in self.items.iter().map(|&idx| (idx, prims[idx])) {

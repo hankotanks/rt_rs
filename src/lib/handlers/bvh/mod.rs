@@ -179,41 +179,34 @@ const LOGIC: &str = "\
         bounds: Bounds,
     }
 
-    fn intrs_tri(r: Ray, s: Prim) -> Intrs {
-        let e1: vec3<f32> = vertices[s.b].pos - vertices[s.a].pos;
-        let e2: vec3<f32> = vertices[s.c].pos - vertices[s.a].pos;
+    fn intrs_tri(ray: Ray, tri: Prim) -> Intrs {
+        let a = vertices[tri.a].pos;
+        let b = vertices[tri.b].pos;
+        let c = vertices[tri.c].pos;
 
-        let p: vec3<f32> = cross(r.dir, e2);
-        let t: vec3<f32> = r.origin - vertices[s.a].pos;
-        let q: vec3<f32> = cross(t, e1);
+        let ab = b - a;
+        let ac = c - a;
 
-        let det = dot(e1, p);
+        let p = cross(ray.dir, ac);
+        let det = dot(ab, p);
 
-        var u: f32 = 0.0;
-        var v: f32 = 0.0;
-        if(det > config.eps) {
-            u = dot(t, p);
-            if(u < 0.0 || u > det) { return intrs_empty(); }
+        if (det < config.eps) { return intrs_empty(); }
 
-            v = dot(r.dir, q);
-            if(v < 0.0 || u + v > det) { return intrs_empty(); }
-        } else if(det < -1.0 * config.eps) {
-            u = dot(t, p);
-            if(u > 0.0 || u < det) { return intrs_empty(); }
+        if(abs(det) < config.eps) { return intrs_empty(); }
 
-            v = dot(r.dir, q);
-            if(v > 0.0 || u + v < det) { return intrs_empty(); }
-        } else {
-            return intrs_empty();
-        }
+        let det_inv = 1.0 / det;
 
-        let w: f32 = dot(e2, q) / det;
-        
-        if(w > config.t_max || w < config.t_min) {
-            return intrs_empty();
-        } else {
-            return Intrs(s, w);
-        }
+        let t = ray.origin - a;
+        let u = dot(t, p) * det_inv;
+        if(u < 0.0 || u > 1.0) { return intrs_empty(); }
+
+        let q = cross(t, ab);
+        let v = dot(ray.dir, q) * det_inv;
+        if(v < 0.0 || (u + v) > 1.0) { return intrs_empty(); }
+
+        let w = dot(ac, q) * det_inv;
+
+        return Intrs(tri, w);
     }
 
     fn collides(bb: Aabb, ray: Ray) -> bool {
@@ -241,6 +234,19 @@ const LOGIC: &str = "\
         return (t_min < t_max);
     }
 
+    fn collides_wiche(bb: Aabb, ray: Ray) -> bool {
+        let t0s = (bb.bounds.min - ray.origin) / ray.dir;
+        let t1s = (bb.bounds.max - ray.origin) / ray.dir;
+
+        let t_mins = min(t0s, t1s);
+        let t_maxs = max(t0s, t1s);
+
+        let t_min = max(config.t_min, max(t_mins.x, max(t_mins.y, t_mins.z)));
+        let t_max = min(config.t_max, min(t_maxs.x, min(t_maxs.y, t_maxs.z)));
+
+        return (t_min < t_max);
+    }
+
     fn intrs_bvh(bb: Aabb, ray: Ray, excl: Prim) -> Intrs {
         var intrs: Intrs = intrs_empty();
 
@@ -249,12 +255,16 @@ const LOGIC: &str = "\
 
             let temp: Intrs = intrs_tri(ray, prim);
 
-            if(temp.t < intrs.t && !eq(temp.s, excl)) {
+            if(temp.t < intrs.t) {
                 intrs = temp;
             }
         }
 
         return intrs;
+    }
+
+    fn intrs_bvh_smits(bb: Aabb, ray: Ray, excl: Prim) -> Intrs {
+        // https://people.csail.mit.edu/amy/papers/box-jgt.pdf
     }
 
     var<private> aabb_stack: array<u32, <NODES>>;
@@ -287,7 +297,7 @@ const LOGIC: &str = "\
             let bb_idx = pop(&stack_idx, &stack_empty);
             let bb = aabb_uniforms[bb_idx];
 
-            if(collides(bb, r)) {
+            if(collides_wiche(bb, r)) {
                 if(bb.item_count > 0u) {
                     let temp = intrs_bvh(bb, r, excl);
 
