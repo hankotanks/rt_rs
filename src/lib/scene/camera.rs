@@ -166,7 +166,15 @@ impl CameraController {
 
     #[allow(dead_code)]
     pub fn update(&mut self, uniform: &mut CameraUniform) -> bool {
-        const SPEED: f32 = 0.05;
+        // Arbitrary multiplier I've decided on to set default
+        // rotation speed
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                const SPEED: f32 = 0.005;
+            } else {
+                const SPEED: f32 = 0.001;
+            }
+        }
 
         let Self::Orbit { 
             left, right, ..
@@ -187,13 +195,13 @@ impl CameraController {
         }
 
         if *left {
-            orbit(uniform, 1.);
+            orbit(uniform, SPEED);
 
             return true;
         }
 
         if *right {
-            orbit(uniform, -1.);
+            orbit(uniform, -1. * SPEED);
 
             return true;
         }

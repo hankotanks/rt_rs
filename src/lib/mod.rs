@@ -173,6 +173,7 @@ pub async fn run_native<H: handlers::IntrsHandler>(
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen)]
 pub async fn run_wasm() -> Result<(), Failed> {
     unsafe {
+        #[allow(static_mut_refs)]
         let web::WebState {
             config,
             scene, ..
@@ -228,12 +229,15 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     let mut resize_instant = chrono::Local::now();
     let mut resize_dim = None;
 
-    let mut curr_frame_instant = chrono::Local::now();
-    let mut curr_frame_duration = 0.;
+    let mut prev_frame_instant = chrono::Local::now();
+    let mut prev_frame_duration = 0.;
 
     // This keep track of failures
     // if failure.is_err(), target.exit()
     let mut failure = Ok(());
+
+    // Indicates whether the camera has changed
+    let mut update_required_camera = false;
 
     // Enter the event loop
     BAIL(event_loop.run(|event, target| {
@@ -241,20 +245,21 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         let frame_instant = chrono::Local::now();
         let frame_duration = 1_000. * (config.fps as f64).recip();
 
-        let temp = curr_frame_instant.signed_duration_since(frame_instant);
+        let temp = prev_frame_instant.signed_duration_since(frame_instant);
         let temp = temp
             .num_microseconds()
             .map(|micros| 0.001 * micros as f64)
             .unwrap_or(temp.num_milliseconds() as f64)
             .abs();
 
-        curr_frame_instant = frame_instant;
-        curr_frame_duration += temp;
+        prev_frame_instant = frame_instant;
+        prev_frame_duration += temp;
 
         // We are only updating config options live on the web
         // So it can be disabled on native
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] { 
+                #[allow(unused_mut)]
                 let mut update_required_web = unsafe { 
                     web::update(&mut state) 
                 };
@@ -274,7 +279,15 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
                 };
 
                 if handled {
-                    update_required_web = true;
+                    cfg_if::cfg_if! {
+                        if #[cfg(target_arch = "wasm32")] {
+                            let temp = true;
+                        } else {
+                            let temp = false;
+                        }
+                    }
+
+                    update_required_web |= temp;
                 } else {
                     match event {
                         event::WindowEvent::CloseRequested | //
@@ -306,26 +319,20 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
             _ => { /*  */ },
         }
 
-        // Indicates whether the camera has changed
-        let mut update_required_camera = false;
-
         // Update the camera
         // NOTE: Camera updates are tied to FPS
         if let scene::Scene::Active { 
             camera, 
             camera_controller, .. 
         } = scene {
-            #[allow(clippy::collapsible_if)]
-            if curr_frame_duration >= frame_duration {
-                if camera_controller.update(camera) {
-                    state.update_camera_buffer(*camera);
-    
-                    update_required_camera = true;
-                }
+            if camera_controller.update(camera) {
+                state.update_camera_buffer(*camera);
+
+                update_required_camera = true;
             }
         }
 
-        // Indicates that its time for the next frame
+        #[allow(unused_mut)] // Indicates that its time for the next frame
         let mut update_required_framerate = false;
 
         #[cfg(not(target_arch = "wasm32"))] {
@@ -351,19 +358,36 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
             }
         }
 
-        // Check if it's time for an update
-        if curr_frame_duration >= frame_duration {
-            curr_frame_duration -= frame_duration;
-
-            update_required_framerate = true;
+        if !(update_required_camera || update_required_framerate) {
+            // If no update is required, discard the frame
+            if prev_frame_duration > frame_duration {
+                prev_frame_duration -= frame_duration;
+            }
         }
 
-        // Perform the update only if the camera and FPS call for it
-        if (update_required_framerate && update_required_camera) || 
-            update_required_web {
+        // Force an update if `web` requests it
+        if update_required_web {
+            prev_frame_duration += frame_duration;
+        }
+
+        let mut requested = false;
+        while prev_frame_duration > frame_duration {
             state.update(*config);
 
-            window.request_redraw();
+            if !requested {
+                // Anytime we update, we need to request a redraw
+                window.request_redraw();
+
+                // Don't submit any more requests
+                requested = true;
+            }
+            
+            // We need to state that we've handled the camera update
+            // Since it resides outside of the event loop
+            update_required_camera = false;
+
+            // Decrement the frame
+            prev_frame_duration -= frame_duration;
         }
 
         // If we've ran into an error, start the process of exiting
