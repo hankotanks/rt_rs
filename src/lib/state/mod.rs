@@ -461,6 +461,7 @@ impl State {
 
         self.queue.submit(Some(encoder.finish()));
 
+        #[cfg(not(target_arch = "wasm32"))]
         self.queue.on_submitted_work_done(move || {
             completed.store(true, sync::atomic::Ordering::Relaxed);
         });

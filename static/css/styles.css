@@ -15,6 +15,10 @@ html {
     padding: 5px;
 }
 
+.note {
+  color: darksalmon;
+}
+
 canvas {
     display: block;
     background-color: black;
