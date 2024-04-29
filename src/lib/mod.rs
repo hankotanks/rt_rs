@@ -109,7 +109,7 @@ impl ComputeConfig {
             t_min: 0.01,
             t_max: 1000.,
             camera_light_source: 1.,
-            bounces: 1,
+            bounces: 4,
             eps: 0.0000001,
             ambience: 0.2,
         }

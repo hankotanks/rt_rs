@@ -179,34 +179,41 @@ const LOGIC: &str = "\
         bounds: Bounds,
     }
 
-    fn intrs_tri(ray: Ray, tri: Prim) -> Intrs {
-        let a = vertices[tri.a].pos;
-        let b = vertices[tri.b].pos;
-        let c = vertices[tri.c].pos;
+    fn intrs_tri(r: Ray, s: Prim) -> Intrs {
+        let e1: vec3<f32> = vertices[s.b].pos - vertices[s.a].pos;
+        let e2: vec3<f32> = vertices[s.c].pos - vertices[s.a].pos;
 
-        let ab = b - a;
-        let ac = c - a;
+        let p: vec3<f32> = cross(r.dir, e2);
+        let t: vec3<f32> = r.origin - vertices[s.a].pos;
+        let q: vec3<f32> = cross(t, e1);
 
-        let p = cross(ray.dir, ac);
-        let det = dot(ab, p);
+        let det = dot(e1, p);
 
-        if (det < config.eps) { return intrs_empty(); }
+        var u: f32 = 0.0;
+        var v: f32 = 0.0;
+        if(det > config.eps) {
+            u = dot(t, p);
+            if(u < 0.0 || u > det) { return intrs_empty(); }
 
-        if(abs(det) < config.eps) { return intrs_empty(); }
+            v = dot(r.dir, q);
+            if(v < 0.0 || u + v > det) { return intrs_empty(); }
+        } else if(det < -1.0 * config.eps) {
+            u = dot(t, p);
+            if(u > 0.0 || u < det) { return intrs_empty(); }
 
-        let det_inv = 1.0 / det;
+            v = dot(r.dir, q);
+            if(v > 0.0 || u + v < det) { return intrs_empty(); }
+        } else {
+            return intrs_empty();
+        }
 
-        let t = ray.origin - a;
-        let u = dot(t, p) * det_inv;
-        if(u < 0.0 || u > 1.0) { return intrs_empty(); }
-
-        let q = cross(t, ab);
-        let v = dot(ray.dir, q) * det_inv;
-        if(v < 0.0 || (u + v) > 1.0) { return intrs_empty(); }
-
-        let w = dot(ac, q) * det_inv;
-
-        return Intrs(tri, w);
+        let w: f32 = dot(e2, q) / det;
+        
+        if(w > config.t_max || w < config.t_min) {
+            return intrs_empty();
+        } else {
+            return Intrs(s, w);
+        }
     }
 
     const INF_POS: f32 = 0x1.p+38f;
