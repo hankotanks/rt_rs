@@ -144,11 +144,11 @@ impl Config {
     }
 }
 
-pub async fn run_native(
+pub async fn run_native<H: handlers::IntrsHandler>(
     mut config: Config, 
     mut scene: scene::Scene
 ) -> Result<(), Failed> {
-    unsafe { run_internal(&mut config, &mut scene).await }
+    unsafe { run_internal::<H>(&mut config, &mut scene).await }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -160,11 +160,13 @@ pub async fn run_wasm() -> Result<(), Failed> {
             scene, ..
         } = &mut web::WEB_STATE;
 
-        run_internal(config, scene).await
+        // TODO: Switch this to the handler with the best performance
+        // Likely BvhHandler
+        run_internal::<handlers::BasicIntrs>(config, scene).await
     }
 }
 
-async unsafe fn run_internal(
+async unsafe fn run_internal<H: handlers::IntrsHandler>(
     config: &mut Config, 
     scene: &mut scene::Scene
 ) -> Result<(), Failed> {
@@ -196,11 +198,9 @@ async unsafe fn run_internal(
 
     // Initialize the state (bail on failure)
     let mut state = {
-        use handlers::basic::BasicIntrs;
-
         let window = window.clone();
         BAIL({
-            state::State::<BasicIntrs>::new(*config, scene, window).await
+            state::State::<H>::new(*config, scene, window).await
         })?
     };
 

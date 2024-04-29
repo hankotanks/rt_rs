@@ -20,6 +20,18 @@ path = "src/demo.rs"
 name = "load"
 path = "src/tools/load.rs"
 
+[[bin]]
+name = "handler_data"
+path = "src/tools/handler_data.rs"
+
+[[bin]]
+name = "builder"
+path = "src/tools/builder.rs"
+
+[[bin]]
+name = "bvh"
+path = "src/tools/bvh.rs"
+
 [profile.release]
 lto = true
 

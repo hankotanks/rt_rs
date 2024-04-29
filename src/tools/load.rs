@@ -1,5 +1,7 @@
 use std::{fs, io, env};
 
+use rt::handlers;
+
 fn main() -> anyhow::Result<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -26,5 +28,5 @@ fn main() -> anyhow::Result<()> {
     let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    pollster::block_on(rt::run_native(config, scene))
+    pollster::block_on(rt::run_native::<handlers::BasicIntrs>(config, scene))
 }

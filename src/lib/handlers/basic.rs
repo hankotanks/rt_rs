@@ -5,10 +5,11 @@ use crate::scene;
 pub struct BasicIntrs;
 
 impl super::IntrsHandler for BasicIntrs {
+    type Config = ();
+    
     fn vars<'a>(
-        _scene: &scene::Scene, 
-        device: &wgpu::Device,
-    ) -> super::IntrsPack<'a> {
+        _scene: &scene::Scene, device: &wgpu::Device,
+    ) -> anyhow::Result<super::IntrsPack<'a>> {
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -24,11 +25,11 @@ impl super::IntrsHandler for BasicIntrs {
             }
         );
 
-        super::IntrsPack {
+        Ok(super::IntrsPack {
             vars: Vec::with_capacity(0),
             group,
             layout,
-        }
+        })
     }
 
     fn logic() -> &'static str {"\
@@ -96,4 +97,6 @@ impl super::IntrsHandler for BasicIntrs {
             return intrs;
         }
     "}
+    
+    fn configure(_config: Self::Config) { /*  */ }
 }

@@ -1,4 +1,8 @@
-pub mod basic;
+mod basic;
+pub use basic::BasicIntrs;
+
+mod bvh;
+pub use bvh::{BvhIntrs, BvhConfig};
 
 use crate::scene;
 
@@ -18,11 +22,16 @@ pub struct IntrsPack<'a> {
 }
 
 pub trait IntrsHandler {
+    type Config;
+
     // Builds all the requisite buffers and groups
     fn vars<'a>(
         scene: &scene::Scene, 
-        device: &wgpu::Device) -> IntrsPack<'a>;
+        device: &wgpu::Device,
+    ) -> anyhow::Result<IntrsPack<'a>>;
 
     // Contains all of the intersection logic
     fn logic() -> &'static str;
+
+    fn configure(config: Self::Config);
 }

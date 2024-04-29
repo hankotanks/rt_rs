@@ -211,6 +211,11 @@ fn shadowed(pack: LightingPack) -> bool {
     return false;
 }
 
+fn eq(a: Prim, b: Prim) -> bool {
+    // No need to match materials
+    return a.a == b.a && a.b == b.b && a.c == b.c;
+}
+
 fn lighting(camera_ray: Ray) -> vec3<f32> {
     var ray: Ray = camera_ray;
 
