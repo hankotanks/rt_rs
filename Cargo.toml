@@ -12,6 +12,9 @@ name = "rt"
 path = "src/lib/mod.rs"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+cli = ["clap"]
+
 [[bin]]
 name = "demo"
 path = "src/demo.rs"
@@ -19,6 +22,7 @@ path = "src/demo.rs"
 [[bin]]
 name = "load"
 path = "src/tools/load.rs"
+required-features = ["cli"]
 
 [[bin]]
 name = "handler_data"
@@ -52,6 +56,8 @@ num-traits = "0.2.18"
 chrono = "0.4.35"
 pollster = "0.3.0"
 simple_logger = "4.3.3"
+clap = { version = "3.2.23", features = ["derive"], optional = true }
+
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { version = "0.4.35", features = ["wasmbind"] }

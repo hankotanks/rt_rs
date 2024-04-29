@@ -49,6 +49,7 @@ pub fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed
 // The target texture resolution
 #[derive(Clone, Copy)]
 #[derive(serde::Deserialize)]
+#[derive(Debug)]
 #[serde(untagged)]
 pub enum Resolution {
     Dynamic(u32),
@@ -57,6 +58,16 @@ pub enum Resolution {
         size: dpi::PhysicalSize<u32>, 
         wg: u32 
     }
+}
+
+impl Resolution {
+    const fn new() -> Self {
+        Self::Dynamic(16)
+    }
+}
+
+impl Default for Resolution {
+    fn default() -> Self { Self::new() }
 }
 
 impl Resolution {
@@ -90,9 +101,10 @@ impl Resolution {
 
 // These config options will be passed to the compute shader
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 #[derive(serde::Deserialize)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug)]
 #[serde(default)]
 pub struct ComputeConfig {
     pub t_min: f32,
@@ -108,17 +120,22 @@ impl ComputeConfig {
         Self {
             t_min: 0.01,
             t_max: 1000.,
-            camera_light_source: 1.,
-            bounces: 4,
+            camera_light_source: 0.0,
+            bounces: 1,
             eps: 0.0000001,
             ambience: 0.2,
         }
     }
 }
 
+impl Default for ComputeConfig {
+    fn default() -> Self { Self::new() }
+}
+
 // Config declaration
 #[derive(Clone, Copy)]
 #[derive(serde::Deserialize)]
+#[derive(Debug)]
 #[serde(default)]
 pub struct Config {
     pub compute: ComputeConfig,
@@ -137,7 +154,7 @@ impl Config {
     const fn new() -> Self {
         Self {
             compute: ComputeConfig::new(),
-            resolution: Resolution::Sized(dpi::PhysicalSize::new(640, 480)),
+            resolution: Resolution::new(),
             fps: 60,
             canvas_raw_handle: 2024,
         }
