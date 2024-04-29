@@ -13,7 +13,7 @@ mod web;
 #[cfg(target_arch = "wasm32")]
 pub use web::{update_config, update_scene, update_viewport};
 
-use std::sync;
+use std::{marker, sync};
 
 use winit::{dpi, event, event_loop, keyboard, window};
 
@@ -138,35 +138,39 @@ impl Default for ComputeConfig {
 #[derive(serde::Deserialize)]
 #[derive(Debug)]
 #[serde(default)]
-pub struct Config {
+pub struct Config<H: handlers::IntrsHandler> {
     pub compute: ComputeConfig,
     pub resolution: Resolution,
     pub fps: u32,
     pub canvas_raw_handle: u32,
+
+    #[serde(skip)]
+    pub handler: marker::PhantomData<fn() -> H>
 }
 
-impl Default for Config {
+impl<H: handlers::IntrsHandler> Default for Config<H> {
     fn default() -> Self { Self::new() }
 }
 
 // Config::update defaults to true, so deserialization automatically
 // sets the flag
-impl Config {
+impl<H: handlers::IntrsHandler> Config<H> {
     const fn new() -> Self {
         Self {
             compute: ComputeConfig::new(),
             resolution: Resolution::new(),
             fps: 60,
             canvas_raw_handle: 2024,
+            handler: marker::PhantomData,
         }
     }
 }
 
 pub async fn run_native<H: handlers::IntrsHandler>(
-    mut config: Config, 
+    mut config: Config<H>, 
     mut scene: scene::Scene
 ) -> Result<(), Failed> {
-    unsafe { run_internal::<H>(&mut config, &mut scene).await }
+    unsafe { run_internal(&mut config, &mut scene).await }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -181,12 +185,12 @@ pub async fn run_wasm() -> Result<(), Failed> {
 
         // TODO: Switch this to the handler with the best performance
         // Likely BvhHandler
-        run_internal::<handlers::BasicIntrs>(config, scene).await
+        run_internal(config, scene).await
     }
 }
 
 async unsafe fn run_internal<H: handlers::IntrsHandler>(
-    config: &mut Config, 
+    config: &mut Config<H>,
     scene: &mut scene::Scene
 ) -> Result<(), Failed> {
     cfg_if::cfg_if! {
@@ -218,9 +222,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Initialize the state (bail on failure)
     let mut state = {
         let window = window.clone();
-        BAIL({
-            state::State::<H>::new(*config, scene, window).await
-        })?
+        BAIL(state::State::new(*config, scene, window).await)?
     };
 
     // Keeps track of resize actions. 
@@ -239,22 +241,12 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Indicates whether the camera has changed
     let mut update_required_camera = false;
 
+    let update_completed = sync::Arc::new({
+        sync::atomic::AtomicBool::new(true)
+    });
+
     // Enter the event loop
     BAIL(event_loop.run(|event, target| {
-        // Take a snapshot of the current Instant
-        let frame_instant = chrono::Local::now();
-        let frame_duration = 1_000. * (config.fps as f64).recip();
-
-        let temp = prev_frame_instant.signed_duration_since(frame_instant);
-        let temp = temp
-            .num_microseconds()
-            .map(|micros| 0.001 * micros as f64)
-            .unwrap_or(temp.num_milliseconds() as f64)
-            .abs();
-
-        prev_frame_instant = frame_instant;
-        prev_frame_duration += temp;
-
         // We are only updating config options live on the web
         // So it can be disabled on native
         cfg_if::cfg_if! {
@@ -285,9 +277,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
                         } else {
                             let temp = false;
                         }
-                    }
-
-                    update_required_web |= temp;
+                    }; update_required_web |= temp;
                 } else {
                     match event {
                         event::WindowEvent::CloseRequested | //
@@ -319,18 +309,32 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
             _ => { /*  */ },
         }
 
+        // Take a snapshot of the current Instant
+        let frame_instant = chrono::Local::now();
+        let frame_duration = 1_000. * (config.fps as f64).recip();
+
+        let temp = prev_frame_instant.signed_duration_since(frame_instant);
+        let temp = temp
+            .num_microseconds()
+            .map(|micros| 0.001 * micros as f64)
+            .unwrap_or(temp.num_milliseconds() as f64)
+            .abs();
+
         // Update the camera
         // NOTE: Camera updates are tied to FPS
         if let scene::Scene::Active { 
             camera, 
             camera_controller, .. 
         } = scene {
-            if camera_controller.update(camera) {
+            if camera_controller.update(camera, temp as f32) {
                 state.update_camera_buffer(*camera);
 
                 update_required_camera = true;
             }
         }
+
+        prev_frame_instant = frame_instant;
+        prev_frame_duration += temp;
 
         #[allow(unused_mut)] // Indicates that its time for the next frame
         let mut update_required_framerate = false;
@@ -372,7 +376,9 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
 
         let mut requested = false;
         while prev_frame_duration > frame_duration {
-            state.update(*config);
+            if update_completed.fetch_and(false, sync::atomic::Ordering::Relaxed) {
+                state.update(*config, update_completed.clone());
+            }
 
             if !requested {
                 // Anytime we update, we need to request a redraw

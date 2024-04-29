@@ -21,6 +21,7 @@ static mut CONFIG: BvhConfig = BvhConfig {
 static mut NODES: usize = 0;
 
 // The dummy struct that the handler methods are implemented on
+#[derive(Clone, Copy)]
 pub struct BvhIntrs;
 
 impl BvhIntrs {

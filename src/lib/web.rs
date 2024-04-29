@@ -29,19 +29,23 @@ mod err {
     }
 }
 
-pub struct WebState {
+pub struct WebState<H: handlers::IntrsHandler> {
     // These members are used for run_internal dispatch
-    pub config: crate::Config,
+    pub config: crate::Config<H>,
+
+    // Scene no longer carries the IntrsHandler
     pub scene: scene::Scene,
 
     // Information related to updates
     update_config: bool,
     update_scene: bool,
+
+    // This value is only set when a resize event has occurred
     viewport: Option<dpi::PhysicalSize<u32>>,
 }
 
-pub static mut WEB_STATE: WebState = WebState {
-    config: crate::Config::new(),
+pub static mut WEB_STATE: WebState<handlers::BasicIntrs> = WebState {
+    config: crate::Config::<handlers::BasicIntrs>::new(),
     update_config: true,
     scene: scene::Scene::Unloaded,
     update_scene: false,
@@ -49,8 +53,8 @@ pub static mut WEB_STATE: WebState = WebState {
 };
 
 // Initialize all web-related stuff
-pub fn init(
-    config: crate::Config, 
+pub fn init<H: handlers::IntrsHandler>(
+    config: crate::Config<H>, 
     window: &window::Window
 ) -> anyhow::Result<()> {    
     let dom = web_sys::window()
@@ -80,9 +84,7 @@ pub fn init(
 
 // Update all web-related stuff
 // Returns true if a re-render is necessary
-pub unsafe fn update<H>(state: &mut state::State<H>) -> bool
-    where H: handlers::IntrsHandler {
-
+pub unsafe fn update(state: &mut state::State) -> bool {
     let mut update = false;
 
     if WEB_STATE.update_config {
@@ -119,7 +121,7 @@ pub fn update_config(
     match serialized.as_string() {
         Some(temp) => unsafe {
             WEB_STATE.config = crate::BAIL({
-                serde_json::from_str::<crate::Config>(&temp)
+                serde_json::from_str::<crate::Config<handlers::BasicIntrs>>(&temp)
             })?;
 
             WEB_STATE.update_config = true;

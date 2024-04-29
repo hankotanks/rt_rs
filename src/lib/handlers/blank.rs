@@ -3,7 +3,6 @@ use crate::scene;
 // This handler just renders a blank screen
 // Used to test benchmarking baseline
 #[derive(Clone, Copy)]
-#[derive(Debug)]
 pub struct BlankIntrs;
 
 impl super::IntrsHandler for BlankIntrs {

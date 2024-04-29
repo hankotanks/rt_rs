@@ -1,6 +1,6 @@
 mod package;
 
-use std::{marker, sync};
+use std::sync;
 
 use wgpu::util::DeviceExt as _;
 
@@ -10,7 +10,7 @@ use crate::{handlers, shaders, vertex};
 use crate::scene;
 
 #[derive(Debug)]
-pub struct State<H: handlers::IntrsHandler> {
+pub struct State {
     // WGPU interface
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -53,17 +53,14 @@ pub struct State<H: handlers::IntrsHandler> {
 
     // Window
     window_size: winit::dpi::PhysicalSize<u32>,
-
-    // PhantomData
-    _p: marker::PhantomData<fn() -> H>,
 }
 
-impl<H: handlers::IntrsHandler> State<H> {
+impl State {
     const TEXTURE_FORMAT: wgpu::TextureFormat = //
         wgpu::TextureFormat::Rgba8Unorm;
 
-    pub async fn new(
-        config: crate::Config, 
+    pub async fn new<H: handlers::IntrsHandler>(
+        config: crate::Config<H>, 
         scene: &scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
@@ -94,7 +91,9 @@ impl<H: handlers::IntrsHandler> State<H> {
         // Helper function to construct the surface target on WASM
         // It depends on the canvas having a particular data field
         #[cfg(target_arch = "wasm32")]
-        unsafe fn target(config: crate::Config) -> anyhow::Result<wgpu::SurfaceTargetUnsafe> {
+        unsafe fn target<H: handlers::IntrsHandler>(
+            config: crate::Config<H>
+        ) -> anyhow::Result<wgpu::SurfaceTargetUnsafe> {
             use wgpu::rwh;
 
             Ok(wgpu::SurfaceTargetUnsafe::RawHandle { 
@@ -341,8 +340,6 @@ impl<H: handlers::IntrsHandler> State<H> {
             render_pipeline,
 
             window_size,
-
-            _p: marker::PhantomData,
         })
     }
 
@@ -392,9 +389,9 @@ impl<H: handlers::IntrsHandler> State<H> {
         self.render_pipeline = render_pipeline;
     }
 
-    pub fn resize(
+    pub fn resize<H: handlers::IntrsHandler>(
         &mut self,
-        config: crate::Config,
+        config: crate::Config<H>,
         size: winit::dpi::PhysicalSize<u32>
     ) {
         if size.width > 0 && size.height > 0 {
@@ -411,7 +408,11 @@ impl<H: handlers::IntrsHandler> State<H> {
         }
     }
 
-    pub fn update(&mut self, config: crate::Config) {
+    pub fn update<H: handlers::IntrsHandler>(
+        &mut self, 
+        config: crate::Config<H>,
+        completed: sync::Arc<sync::atomic::AtomicBool>,
+    ) {
         let mut encoder = self.device.create_command_encoder(&{
             wgpu::CommandEncoderDescriptor::default()
         });
@@ -459,6 +460,10 @@ impl<H: handlers::IntrsHandler> State<H> {
         }
 
         self.queue.submit(Some(encoder.finish()));
+
+        self.queue.on_submitted_work_done(move || {
+            completed.store(true, sync::atomic::Ordering::Relaxed);
+        });
     }
 
     pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {

@@ -25,7 +25,7 @@ pub struct IntrsPack<'a> {
     pub layout: wgpu::BindGroupLayout,
 }
 
-pub trait IntrsHandler {
+pub trait IntrsHandler: Copy {
     type Config;
 
     // Builds all the requisite buffers and groups

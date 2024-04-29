@@ -1,4 +1,4 @@
-use std::{fs, io};
+use std::{fs, io, marker};
 
 use winit::dpi;
 
@@ -27,11 +27,11 @@ struct Args {
     #[clap(long, value_parser, default_value_t = String::from("scenes/default.json"))]
     path: String,
 
-    #[clap(long = "handler-bvh", action)]
-    handler_bvh: bool,
-
     #[clap(long = "handler-blank", action)]
     handler_blank: bool,
+
+    #[clap(long = "handler-bvh", action)]
+    handler_bvh: bool,
 
     #[clap(long, short, value_parser)]
     width: Option<u32>,
@@ -55,6 +55,25 @@ struct Args {
     compute_ambience: Option<f32>,
 }
 
+fn start<H: rt::handlers::IntrsHandler>(
+    resolution: rt::Resolution, 
+    fps: Option<u32>,
+    compute: rt::ComputeConfig, 
+    scene: rt::scene::Scene,
+) -> anyhow::Result<()> {
+    let config_default = rt::Config::<H>::default();
+    let config: rt::Config<H> = rt::Config {
+        resolution,
+        compute,
+        fps: fps.unwrap_or(config_default.fps),
+        ..Default::default()
+    };
+
+    pollster::block_on({
+        rt::run_native(config, scene)
+    })
+}
+
 fn main() -> anyhow::Result<()> {
     use clap::Parser as _;
 
@@ -62,6 +81,8 @@ fn main() -> anyhow::Result<()> {
 
     let Args {
         path,
+        handler_blank,
+        handler_bvh,
         width,
         height,
         workgroup_size,
@@ -95,14 +116,6 @@ fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    let config_default = rt::Config::default();
-    let config = rt::Config {
-        resolution,
-        compute,
-        fps: fps.unwrap_or(config_default.fps),
-        ..Default::default()
-    };
-    
     let scene_reader = io::BufReader::new({
         fs::File::open(path)?
     });
@@ -110,22 +123,11 @@ fn main() -> anyhow::Result<()> {
     let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    let Args {
-        handler_bvh,
-        handler_blank, ..
-    } = args;
-
-    if handler_bvh {
-        pollster::block_on({
-            rt::run_native::<rt::handlers::BvhIntrs>(config, scene)
-        })
-    } else if handler_blank {
-        pollster::block_on({
-            rt::run_native::<rt::handlers::BlankIntrs>(config, scene)
-        })
+    if handler_blank {
+        start::<rt::handlers::BlankIntrs>(resolution, fps, compute, scene)
+    } else if handler_bvh {
+        start::<rt::handlers::BvhIntrs>(resolution, fps, compute, scene)
     } else {
-        pollster::block_on({
-            rt::run_native::<rt::handlers::BasicIntrs>(config, scene)
-        })
+        start::<rt::handlers::BasicIntrs>(resolution, fps, compute, scene)
     }
 }

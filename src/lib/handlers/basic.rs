@@ -1,7 +1,6 @@
 use crate::scene;
 
 #[derive(Clone, Copy)]
-#[derive(Debug)]
 pub struct BasicIntrs;
 
 impl super::IntrsHandler for BasicIntrs {
