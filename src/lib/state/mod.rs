@@ -1,6 +1,6 @@
 mod package;
 
-use std::{marker, mem, sync};
+use std::{marker, sync};
 
 use wgpu::util::DeviceExt as _;
 
@@ -468,6 +468,7 @@ impl<H: handlers::IntrsHandler> State<H> {
         );
     }
 
+    #[cfg(target_arch = "wasm32")]
     pub fn update_config(&mut self, config: crate::ComputeConfig) {
         self.queue.write_buffer(
             &self.config_buffer, 0,
@@ -475,7 +476,10 @@ impl<H: handlers::IntrsHandler> State<H> {
         );
     }
 
+    #[cfg(target_arch = "wasm32")]
     pub fn update_scene(&mut self, scene: &scene::Scene) {
+        use std::mem;
+        
         let scene::ScenePack {
             camera_buffer,
             buffers,

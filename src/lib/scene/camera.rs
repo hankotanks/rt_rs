@@ -1,4 +1,4 @@
-use winit::{dpi, event, keyboard};
+use winit::{event, keyboard};
 
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]

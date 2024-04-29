@@ -25,8 +25,8 @@ path = "src/tools/load.rs"
 required-features = ["cli"]
 
 [[bin]]
-name = "builder"
-path = "src/tools/builder.rs"
+name = "construct"
+path = "src/tools/construct.rs"
 required-features = ["cli"]
 
 [profile.release]

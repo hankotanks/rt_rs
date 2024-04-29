@@ -3,6 +3,7 @@ use std::io::Write as _;
 
 use rt::geom;
 use rt::geom::light as light;
+
 use rt::scene;
 
 fn main() -> anyhow::Result<()> {
@@ -94,16 +95,6 @@ fn main() -> anyhow::Result<()> {
             ))
         }).collect::<Result<Vec<_>, anyhow::Error>>()?;
 
-    if materials.is_empty() {
-        let red = geom::PrimMat::new(
-            [0.5, 0.1, 0.1],
-            [0.9, 0.1, 0.],
-            10.,
-        ); 
-
-        materials.push(red);
-    }
-
     let models = parsed
         .get_many::<String>("model")
         .unwrap_or_default()
@@ -115,14 +106,34 @@ fn main() -> anyhow::Result<()> {
                 anyhow::bail!("\
                     Flag --model expects 2 arguments:
                         [0] Path to OBJ file
-                        [1] Material index to apply\
+                        [1] Material index to apply (or 'default')\
                 ");
             };
 
-            let material = material.parse::<u32>().unwrap();
+            let material = if material.contains("default") {
+                None
+            } else if let Ok(idx) = material.parse::<u32>() {
+                Some(idx)
+            } else {
+                anyhow::bail!("\
+                    Flag --model expects 2 arguments:
+                        [0] Path to OBJ file
+                        [1] Material index to apply (or 'default')\
+                ");
+            };
 
             Ok((path::PathBuf::from(model), material))
         }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+    if materials.is_empty() || models.iter().any(|(_, idx)| idx.is_none()) {
+        let red = geom::PrimMat::new(
+            [0.5, 0.1, 0.1],
+            [0.9, 0.1, 0.],
+            10.,
+        ); 
+
+        materials.insert(0, red);
+    }
 
     if models.is_empty() {
         anyhow::bail!("At least one model must be provided");
@@ -162,7 +173,12 @@ fn main() -> anyhow::Result<()> {
     for (path, idx) in models {
         let obj = wavefront::Obj::from_file(path)?;
 
-        scene.add_mesh(obj, idx as i32)?;
+        let idx = match idx {
+            Some(idx) => (idx + 1) as i32,
+            None => 0,
+        };
+
+        scene.add_mesh(obj, idx)?;
     }
 
     let out = parsed

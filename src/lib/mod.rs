@@ -1,10 +1,11 @@
-pub mod geom;
-pub mod pipelines;
+mod pipelines;
+mod vertex;
+mod state;
+mod shaders;
+
 pub mod scene;
-pub mod vertex;
-pub mod state;
+pub mod geom;
 pub mod handlers;
-pub mod shaders;
 
 #[cfg(target_arch = "wasm32")]
 mod web;
@@ -121,9 +122,9 @@ impl ComputeConfig {
             t_min: 0.01,
             t_max: 1000.,
             camera_light_source: 0.0,
-            bounces: 1,
+            bounces: 4,
             eps: 0.0000001,
-            ambience: 0.2,
+            ambience: 0.1,
         }
     }
 }
