@@ -210,7 +210,7 @@ const LOGIC: &str = "\
     }
 
     const INF_POS: f32 = 0x1.p+38f;
-    const INF_NEG: f32 = 0x1.p-38f;
+    const INF_NEG: f32 = -1.0 * INF_POS;
     fn collides(bb: Aabb, ray: Ray) -> bool {
         var t0 = (bb.bounds.min.x - <EPS> - ray.origin.x) / ray.dir.x;
         var t1 = (bb.bounds.max.x + <EPS> - ray.origin.x) / ray.dir.x;
