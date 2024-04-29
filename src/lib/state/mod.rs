@@ -8,7 +8,6 @@ use winit::{dpi, window};
 
 use crate::{handlers, shaders, vertex};
 use crate::scene;
-use crate::scene::camera as camera;
 
 #[derive(Debug)]
 pub struct State<H: handlers::IntrsHandler> {
@@ -462,7 +461,7 @@ impl<H: handlers::IntrsHandler> State<H> {
         self.queue.submit(Some(encoder.finish()));
     }
 
-    pub fn update_camera_buffer(&mut self, camera: camera::CameraUniform) {
+    pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {
         self.queue.write_buffer(
             &self.scene_camera_buffer, 0, 
             bytemuck::cast_slice(&[camera])

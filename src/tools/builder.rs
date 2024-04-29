@@ -1,10 +1,17 @@
 use std::{fs, path};
 use std::io::Write as _;
 
-use rt::{geom::{self, light}, scene};
+use rt::geom;
+use rt::geom::light as light;
+use rt::scene;
 
 fn main() -> anyhow::Result<()> {
-    let cmd = clap::Command::new(env!("CARGO_BIN_NAME"))
+    let parsed = clap::Command::new(env!("CARGO_BIN_NAME"))
+        .arg(
+            clap::Arg::new("out")
+                .long("out")
+                .number_of_values(1)
+                .required(true))
         .arg(
             clap::Arg::new("light")
                 .long("light")
@@ -12,12 +19,36 @@ fn main() -> anyhow::Result<()> {
                 .value_parser(clap::value_parser!(f32))
                 .action(clap::ArgAction::Append))
         .arg(
-            clap::Arg::new("models")
-                .long("models")
-                .min_values(1))
+            clap::Arg::new("model")
+                .long("model")
+                .required(true)
+                .min_values(1)
+                .action(clap::ArgAction::Append))
+        .arg(
+            clap::Arg::new("camera-pos")
+                .long("camera-pos")
+                .number_of_values(6)
+                .value_parser(clap::value_parser!(f32))
+                .required(true))
+        .arg(
+            clap::Arg::new("camera-fixed")
+                .long("camera-fixed")
+                .conflicts_with("camera-orbit")
+                .action(clap::ArgAction::SetTrue))
+        .arg(
+            clap::Arg::new("camera-orbit")
+                .long("camera-orbit")
+                .conflicts_with("camera-fixed")
+                .action(clap::ArgAction::SetTrue))
+        .arg(
+            clap::Arg::new("material")
+                .long("material")
+                .number_of_values(7)
+                .value_parser(clap::value_parser!(f32))
+                .action(clap::ArgAction::Append))
         .get_matches();
 
-    let lights = cmd
+    let mut lights = parsed
         .get_many::<f32>("light")
         .unwrap_or_default()
         .copied()
@@ -25,41 +56,122 @@ fn main() -> anyhow::Result<()> {
         .as_slice()
         .chunks_exact(4)
         .map(|values| {
-            let [x, y, z, strength] = values else { panic!(); };
+            let [x, y, z, strength] = values else {
+                anyhow::bail!("Flag --light expects 4 float values");
+            };
 
-            rt::geom::light::Light { 
+            Ok(geom::light::Light { 
                 pos: [*x, *y, *z], 
                 strength: *strength,
-            }
-        }).collect::<Vec<_>>();
+            })
+        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
 
-    let models = cmd
-        .values_of("models")
+    if lights.is_empty() {
+        let dummy = light::Light {
+            pos: [0.; 3],
+            strength: 0.,
+        };
+
+        lights.push(dummy);
+    }
+
+    let mut materials = parsed
+        .get_many::<f32>("material")
         .unwrap_or_default()
-        .map(|model| path::PathBuf::from(model))
-        .map(|model_path| wavefront::Obj::from_file(model_path))
-        .collect::<Result<Vec<_>, wavefront::Error>>()?;
+        .copied()
+        .collect::<Vec<_>>()
+        .as_slice()
+        .chunks(7)
+        .map(|values| {
+            let [r, g, b, a0, a1, a2, spec] = values else {
+                anyhow::bail!("Flag --material expects 7 float values");
+            };
 
-    /*
-    let mut scene = scene::Scene::Active {
-        camera: scene::camera::CameraUniform::new([0., 0., -30.], [0.; 3]),
-        camera_controller: scene::camera::CameraController::Orbit { left: false, right: false, scroll: 0 },
-        prims: vec![],
-        vertices: vec![],
-        lights: vec![
-            geom::light::Light { pos: [0., 30., 0.], strength: 2. }
-        ],
-        materials: vec![
-            geom::PrimMat::new([0.7, 0.2, 0.3], [0.9, 0.1, 0.], 50.)
-        ],
+            Ok(geom::PrimMat::new(
+                [*r, *g, *b],
+                [*a0, *a1, *a2],
+                *spec
+            ))
+        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+    if materials.is_empty() {
+        let red = geom::PrimMat::new(
+            [0.5, 0.1, 0.1],
+            [0.9, 0.1, 0.],
+            10.,
+        ); 
+
+        materials.push(red);
+    }
+
+    let models = parsed
+        .get_many::<String>("model")
+        .unwrap_or_default()
+        .collect::<Vec<_>>()
+        .as_slice()
+        .chunks_exact(2)
+        .map(|data| {
+            let [model, material] = data else {
+                anyhow::bail!("\
+                    Flag --model expects 2 arguments:
+                        [0] Path to OBJ file
+                        [1] Material index to apply\
+                ");
+            };
+
+            let material = material.parse::<u32>().unwrap();
+
+            Ok((path::PathBuf::from(model), material))
+        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+    if models.is_empty() {
+        anyhow::bail!("At least one model must be provided");
+    }
+    
+    let camera = {
+        let values = parsed
+            .get_many::<f32>("camera-pos")
+            .unwrap_or_default()
+            .copied()
+            .collect::<Vec<_>>();
+
+        let [p0, p1, p2, a0, a1, a2] = values[..] else {
+            anyhow::bail!("Flag --camera-pos expects 6 float values");
+        };
+
+        scene::CameraUniform::new([p0, p1, p2], [a0, a1, a2])
     };
 
-    scene.add_mesh(wavefront::Obj::from_file("meshes/shuttle.obj")?, 0)?;
+    let camera_controller = if *parsed.get_one::<bool>("camera-fixed").unwrap() {
+        scene::CameraController::Fixed
+    } else if *parsed.get_one::<bool>("camera-orbit").unwrap() {
+        scene::CameraController::Orbit { left: false, right: false, }
+    } else {
+        anyhow::bail!("Camera controller must be specified");
+    };
 
-    let scene_serialized = serde_json::to_string_pretty(&scene)?;
+    let mut scene = scene::Scene::Active {
+        camera,
+        camera_controller,
+        prims: Vec::new(),
+        vertices: Vec::new(),
+        lights,
+        materials,
+    };
 
-    fs::File::create("scenes/test.json")?
-        .write(scene_serialized.as_bytes())?;*/
+    for (path, idx) in models {
+        let obj = wavefront::Obj::from_file(path)?;
+
+        scene.add_mesh(obj, idx as i32)?;
+    }
+
+    let out = parsed
+        .get_one::<String>("out")
+        .map(|temp| path::PathBuf::from(temp))
+        .unwrap();
+
+    fs::File::create(out)?
+        .write(serde_json::to_string_pretty(&scene)?.as_bytes())?;
 
     Ok(())
 }

@@ -96,7 +96,7 @@ impl Aabb {
         prims: &[geom::Prim], 
         vertices: &[geom::PrimVertex],
     ) -> anyhow::Result<()> {
-        use geom::v3::V3Ops as _;
+        use geom::V3Ops as _;
 
         if self.items.len() <= 2 { 
             return Ok(()); 

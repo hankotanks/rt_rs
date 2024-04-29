@@ -1,5 +1,6 @@
 pub mod light;
-pub mod v3;
+
+mod v3; pub use v3::V3Ops;
 
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]

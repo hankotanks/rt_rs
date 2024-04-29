@@ -78,7 +78,7 @@ impl<'de> serde::Deserialize<'de> for CameraUniform {
 #[derive(Clone, Copy)]
 #[derive(Debug)]
 pub enum CameraController {
-    Orbit { left: bool, right: bool, scroll: i32, },
+    Orbit { left: bool, right: bool, },
     Fixed,
 }
 
@@ -99,8 +99,7 @@ impl<'de> serde::Deserialize<'de> for CameraController {
                     Intermediate::Orbit => //
                         CameraController::Orbit { 
                             left: false, 
-                            right: false, 
-                            scroll: 0, 
+                            right: false,
                         },
                     Intermediate::Fixed => //
                         CameraController::Fixed,
@@ -140,7 +139,7 @@ impl CameraController {
     pub fn handle_event(&mut self, event: &event::WindowEvent) -> bool {
         // The fixed camera never consumes an event
         let Self::Orbit {
-            left, right, scroll, ..
+            left, right, ..
         } = self else { return false; };
 
         match event {
@@ -161,27 +160,16 @@ impl CameraController {
     
                 handled
             },
-            event::WindowEvent::MouseWheel { 
-                delta: event::MouseScrollDelta::PixelDelta(
-                    dpi::PhysicalPosition { y, .. }
-                ), .. 
-            } => {
-                *scroll = match y.signum() as i32 { -1 => -1, 1 => 1, _ => 0, };
-
-                true
-            },
             _ => false
         }
     }
 
     #[allow(dead_code)]
     pub fn update(&mut self, uniform: &mut CameraUniform) -> bool {
-        use crate::geom::v3::V3Ops as _;
-
         const SPEED: f32 = 0.05;
 
         let Self::Orbit { 
-            left, right, scroll, ..
+            left, right, ..
         } = self else { return false; };
 
         fn orbit(uni: &mut CameraUniform, mult: f32) {
@@ -208,33 +196,6 @@ impl CameraController {
             orbit(uniform, -1.);
 
             return true;
-        }
-
-        match scroll {
-            -1 => {
-                let v = uniform.at.sub(uniform.pos);
-
-                uniform.pos = uniform.pos.sub(v.normalize().scale(SPEED));
-
-                *scroll = 0;
-
-                return true;
-            },
-            1 => {
-                let v = uniform.at.sub(uniform.pos);
-
-                let pos = uniform.pos.add(v.normalize().scale(SPEED));
-
-                let dist = uniform.at.sub(pos).mag();
-                if dist.abs() > 0. && dist.signum() > -0. {
-                    uniform.pos = pos;
-                }
-
-                *scroll = 0;
-
-                return true;
-            },
-            _ => { /*  */ },
         }
 
         false

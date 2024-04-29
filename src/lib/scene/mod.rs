@@ -1,4 +1,7 @@
-pub mod camera;
+mod camera;
+
+// Export for use in `builder` binary
+pub use camera::{CameraUniform, CameraController};
 
 use crate::geom;
 use crate::geom::light as light;
@@ -13,7 +16,6 @@ pub struct ScenePack {
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Debug)]
 #[serde(untagged)]
-
 pub enum Scene {
     Unloaded,
     Active {
@@ -189,7 +191,7 @@ impl Scene {
         obj: wavefront::Obj,
         material: i32,
     ) -> anyhow::Result<()> {
-        use crate::geom::v3::V3Ops as _;
+        use crate::geom::V3Ops as _;
 
         let Self::Active {
             vertices,
