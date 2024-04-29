@@ -17,10 +17,21 @@ use winit::dpi;
         .requires_all(&["width", "height"])
         .multiple(true)
 ))]
+#[clap(group(
+    clap::ArgGroup::new("handler")
+        .args(&["handler-bvh", "handler-blank"])
+        .multiple(false)
+))]
 struct Args {
     // The path to the desired scene (JSON)
     #[clap(long, value_parser, default_value_t = String::from("scenes/default.json"))]
     path: String,
+
+    #[clap(long = "handler-bvh", action)]
+    handler_bvh: bool,
+
+    #[clap(long = "handler-blank", action)]
+    handler_blank: bool,
 
     #[clap(long, short, value_parser)]
     width: Option<u32>,
@@ -40,25 +51,27 @@ struct Args {
     #[clap(long = "camera-light-strength", value_parser)]
     compute_camera_light_source: Option<f32>,
 
-    #[clap(long = "ambience-strength", value_parser)]
+    #[clap(long = "ambience", value_parser)]
     compute_ambience: Option<f32>,
 }
 
 fn main() -> anyhow::Result<()> {
     use clap::Parser as _;
 
+    let args = Args::parse();
+
     let Args {
         path,
         width,
         height,
-        workgroup_size: wg,
+        workgroup_size,
         fps,
         compute_bounces,
         compute_camera_light_source,
         compute_ambience, ..
-    } = Args::parse();
+    } = args;
 
-    let resolution =  match (width, height, wg) {
+    let resolution =  match (width, height, workgroup_size) {
         (None, None, Some(wg)) => //
             rt::Resolution::Dynamic(wg),
         (Some(width), Some(height), None) => //
@@ -97,7 +110,22 @@ fn main() -> anyhow::Result<()> {
     let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    pollster::block_on({
-        rt::run_native::<rt::handlers::BasicIntrs>(config, scene)
-    })
+    let Args {
+        handler_bvh,
+        handler_blank, ..
+    } = args;
+
+    if handler_bvh {
+        pollster::block_on({
+            rt::run_native::<rt::handlers::BvhIntrs>(config, scene)
+        })
+    } else if handler_blank {
+        pollster::block_on({
+            rt::run_native::<rt::handlers::BlankIntrs>(config, scene)
+        })
+    } else {
+        pollster::block_on({
+            rt::run_native::<rt::handlers::BasicIntrs>(config, scene)
+        })
+    }
 }

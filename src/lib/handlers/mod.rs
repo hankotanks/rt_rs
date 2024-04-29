@@ -4,6 +4,10 @@ pub use basic::BasicIntrs;
 mod bvh;
 pub use bvh::{BvhIntrs, BvhConfig};
 
+mod blank;
+// NOTE: Dummy intersection handler used for benchmarking
+pub use blank::BlankIntrs;
+
 use crate::scene;
 
 #[derive(Debug)]
