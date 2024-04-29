@@ -27,6 +27,7 @@ required-features = ["cli"]
 [[bin]]
 name = "builder"
 path = "src/tools/builder.rs"
+required-features = ["cli"]
 
 [profile.release]
 lto = true
