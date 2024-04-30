@@ -40,6 +40,9 @@ pub struct State {
     config_buffer: wgpu::Buffer,
     config_group_layout: wgpu::BindGroupLayout,
     config_group: wgpu::BindGroup,
+    // Buffer to read state of compute pass
+    config_block_buffer: wgpu::Buffer,
+    config_block_buffer_read: wgpu::Buffer,
 
     // Texture binding group and compute pipeline
     compute_group: wgpu::BindGroup,
@@ -157,6 +160,24 @@ impl State {
             }
         );
 
+        // This buffer is used to query the completion of compute passes
+        // to prevent submitting a new one before the previous completes
+        let config_block_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: wgpu::MAP_ALIGNMENT,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+
+        // Since reading from uniforms requires MAPPABLE_PRIMARY_BUFFERS,
+        // We need a second buffer to copy into, then read from
+        let config_block_buffer_read = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: wgpu::MAP_ALIGNMENT,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: true,
+        });
+
         // Get all the buffers, groups associated with the scene
         // These fill group(3)
         let scene::ScenePack {
@@ -171,8 +192,7 @@ impl State {
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[config.compute]),
-                usage: wgpu::BufferUsages::UNIFORM 
-                     | wgpu::BufferUsages::COPY_DST,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }
         );
 
@@ -182,6 +202,16 @@ impl State {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
+                        visibility: wgpu::ShaderStages::COMPUTE,
+                        count: None,
+                        ty: wgpu::BindingType::Buffer {
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                            ty: wgpu::BufferBindingType::Uniform,
+                        }
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
                         visibility: wgpu::ShaderStages::COMPUTE,
                         count: None,
                         ty: wgpu::BindingType::Buffer {
@@ -203,6 +233,10 @@ impl State {
                         binding: 0,
                         resource: config_buffer.as_entire_binding(),
                     },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: config_block_buffer.as_entire_binding(),
+                    },
                 ],
             }
         );
@@ -217,6 +251,7 @@ impl State {
             }
         }
 
+        // Bail immediately if we don't support the given format
         if !surface_capabilities.formats.contains(&format) {
             anyhow::bail!(wgpu::SurfaceError::Lost);
         }
@@ -226,6 +261,7 @@ impl State {
             alpha_modes, ..
         } = surface_capabilities;
 
+        // Construct the surface configuration
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -240,6 +276,7 @@ impl State {
             desired_maximum_frame_latency: 1,
         };
 
+        // Configure the surface (no longer platform-specific)
         surface.configure(&device, &surface_config);
 
         // Build the render shader module
@@ -330,6 +367,8 @@ impl State {
             config_buffer,
             config_group_layout,
             config_group,
+            config_block_buffer,
+            config_block_buffer_read,
 
             compute_group,
             compute_pipeline,
@@ -413,6 +452,10 @@ impl State {
         config: crate::Config<H>,
         completed: sync::Arc<sync::atomic::AtomicBool>,
     ) {
+        if !completed.fetch_or(false, sync::atomic::Ordering::Relaxed) {
+            self.config_block_buffer_read.unmap();
+        }
+
         let mut encoder = self.device.create_command_encoder(&{
             wgpu::CommandEncoderDescriptor::default()
         });
@@ -429,7 +472,7 @@ impl State {
             let Self {
                 config_group, 
                 scene_group,
-                compute_group, 
+                compute_group,
                 pack: handlers::IntrsPack { vars, group, .. }, ..
             } = self;
 
@@ -459,12 +502,23 @@ impl State {
             );
         }
 
+        let Self {
+            config_block_buffer,
+            config_block_buffer_read, ..
+        } = self;
+
+        encoder.copy_buffer_to_buffer(
+            config_block_buffer, 0, 
+            config_block_buffer_read, 0, 
+            wgpu::MAP_ALIGNMENT
+        );
+
         self.queue.submit(Some(encoder.finish()));
 
-        #[cfg(not(target_arch = "wasm32"))]
-        self.queue.on_submitted_work_done(move || {
-            completed.store(true, sync::atomic::Ordering::Relaxed);
-        });
+        self.config_block_buffer_read.slice(..)
+            .map_async(wgpu::MapMode::Read, move |_| {
+                completed.store(true, sync::atomic::Ordering::Relaxed);
+            });
     }
 
     pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {

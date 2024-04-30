@@ -377,18 +377,12 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
 
         let mut requested = false;
         while prev_frame_duration > frame_duration {
-            cfg_if::cfg_if! {
-                if #[cfg(target_arch = "wasm32")] {
-                    let ready = true;
-                } else {
-                    let ready = update_completed
-                        .fetch_and(false, sync::atomic::Ordering::Relaxed);
-                }
-            }
-
-            // This is platform specific
+            // This is platform-specific
             // Queue::on_submitted_work_done is not available on WASM
-            if ready { state.update(*config, update_completed.clone()); }
+            // So we implement compute pass completion checking with map_async
+            if update_completed.fetch_and(false, sync::atomic::Ordering::Relaxed) { 
+                state.update(*config, update_completed.clone());
+            }
 
             if !requested {
                 // Anytime we update, we need to request a redraw
