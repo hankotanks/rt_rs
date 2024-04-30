@@ -1,7 +1,9 @@
-mod aabb;
-
 // Needed for `device.create_buffer_init`
 use wgpu::util::DeviceExt as _;
+
+use once_cell::sync::OnceCell;
+
+use crate::bvh;
 
 // This stores all configuration options 
 // for construction of the BVH and its intersection logic
@@ -39,11 +41,15 @@ impl super::IntrsHandler for BvhIntrs {
         scene: &crate::scene::Scene, 
         device: &wgpu::Device
     ) -> anyhow::Result<super::IntrsPack<'a>> {
-        let aabb = unsafe {
-            aabb::Aabb::from_scene(CONFIG.eps, scene)?
+        let data = unsafe {
+            if let Some(data) = LOADED.get() {
+                data.to_owned()
+            } else {
+                let aabb = bvh::Aabb::from_scene(CONFIG.eps, scene)?;
+        
+                bvh::BvhData::new(&aabb)
+            }
         };
-
-        let data = BvhData::new(&aabb);
 
         unsafe {
             // This is set before BvhIntrs::logic is called,
@@ -323,61 +329,18 @@ const LOGIC: &str = "\
     }\
 ";
 
-// The Aabb tree gets rendered down into an array of AabbUniform structs
-// It's placed at the module root to avoid importing items from siblings
-#[repr(C)]
-#[derive(Clone, Copy)]
-#[derive(bytemuck::Pod, bytemuck::Zeroable)]
-pub struct AabbUniform {
-    pub fst: u32,
-    pub snd: u32,
-    pub item_idx: u32,
-    pub item_count: u32,
-    pub bounds: aabb::Bounds,
-}
+// BvhIntrs::prepare pre-calculates the BvhData from a bytestream,
+// Then stores it in here
+static mut LOADED: OnceCell<bvh::BvhData> = OnceCell::new();
 
-// I've factored out the process of making the Aabb tree compute-friendly
-// for simplicity's sake
-#[derive(Default)]
-pub struct BvhData {
-    pub uniforms: Vec<AabbUniform>,
-    pub indices: Vec<u32>,
-}
+impl BvhIntrs {
+    pub fn prepare(bytes: &[u8]) -> anyhow::Result<()> {
+        let data = serde_json::from_slice::<bvh::BvhData>(bytes)?;
 
-impl BvhData {
-    // Construct the shader data from the root node of the tree
-    pub fn new(aabb: &aabb::Aabb) -> Self {
-        let mut data = Self::default();
+        let _ = unsafe { 
+            LOADED.set(data)
+        };
 
-        fn into_aabb_uniform(
-            data: &mut BvhData,
-            aabb: &aabb::Aabb
-        ) -> u32 {
-            let uniform = data.uniforms.len();
-        
-            data.uniforms.push(AabbUniform {
-                fst: 0,
-                snd: 0,
-                bounds: aabb.bounds,
-                item_idx: data.indices.len() as u32,
-                item_count: aabb.items.len() as u32,
-            });
-        
-            data.indices.extend(aabb.items.iter().map(|&i| i as u32));
-        
-            if let Some(fst) = aabb.fst.get() {
-                data.uniforms[uniform].fst = into_aabb_uniform(data, fst);
-            }
-        
-            if let Some(snd) = aabb.snd.get() {
-                data.uniforms[uniform].snd = into_aabb_uniform(data, snd);
-            }
-
-            uniform as u32
-        }
-        
-        into_aabb_uniform(&mut data, aabb);
-
-        data
+        Ok(())
     }
 }

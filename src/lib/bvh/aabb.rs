@@ -1,18 +1,76 @@
 use std::{fmt, io};
 
-use once_cell::unsync::OnceCell;
+use once_cell::sync::OnceCell;
 
 use crate::{geom, scene};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(serde::Serialize)]
 #[derive(Debug)]
 pub struct Bounds {
     min: [f32; 3],
+    #[serde(skip)]
     _p0: u32,
     max: [f32; 3],
+    #[serde(skip)]
     _p1: u32,
+}
+
+impl<'de> serde::Deserialize<'de> for Bounds {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de> {
+        
+        #[derive(serde::Deserialize)]
+        struct Intermediate {
+            min: Vec<f32>,
+            max: Vec<f32>,
+        }
+
+        let intermediate = Intermediate::deserialize(deserializer)?;
+
+        let min = match intermediate.min.len() {
+            3 => {
+                let mut min = [0.; 3];
+
+                min.copy_from_slice(&intermediate.min);
+                min
+            },
+            _ => {
+                use serde::de;
+
+                return Err(de::Error::invalid_length(
+                    intermediate.min.len(), 
+                    &"an array of len 3",
+                ));
+            }
+        };
+
+        let max = match intermediate.max.len() {
+            3 => {
+                let mut max = [0.; 3];
+
+                max.copy_from_slice(&intermediate.max);
+                max
+            },
+            _ => {
+                use serde::de;
+
+                return Err(de::Error::invalid_length(
+                    intermediate.max.len(), 
+                    &"an array of len 3",
+                ));
+            }
+        };
+
+        Ok(Self {
+            min, 
+            _p0: 0,
+            max, 
+            _p1: 0,
+        })
+    }
 }
 
 impl Bounds {
@@ -58,7 +116,6 @@ impl Bounds {
         point[2] <= self.max[2]
     }
 }
-
 
 pub struct Aabb {
     pub fst: OnceCell<Box<Aabb>>,

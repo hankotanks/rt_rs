@@ -13,9 +13,7 @@ pub struct ScenePack {
     pub bg_layout: wgpu::BindGroupLayout,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Debug)]
-#[serde(untagged)]
 pub enum Scene {
     Unloaded,
     Active {
@@ -25,6 +23,88 @@ pub enum Scene {
         vertices: Vec<geom::PrimVertex>,
         lights: Vec<light::Light>,
         materials: Vec<geom::PrimMat>,
+    },
+}
+
+impl<'de> serde::Deserialize<'de> for Scene {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de> {
+        
+        #[derive(serde::Deserialize)]
+        struct Intermediate {
+            camera: camera::CameraUniform,
+            camera_controller: camera::CameraController,
+            prims: Vec<geom::Prim>,
+            vertices: Vec<geom::PrimVertex>,
+            lights: Vec<light::Light>,
+            materials: Vec<geom::PrimMat>,
+        }
+
+        impl From<Intermediate> for Scene {
+            fn from(value: Intermediate) -> Scene {
+                let Intermediate {
+                    camera,
+                    camera_controller,
+                    prims,
+                    vertices,
+                    lights,
+                    materials,
+                } = value;
+
+                Self::Active {
+                    camera,
+                    camera_controller,
+                    prims,
+                    vertices,
+                    lights,
+                    materials,
+                }
+            }
+        }
+
+        Ok(Intermediate::deserialize(deserializer)?.into())
+    }
+}
+
+impl serde::Serialize for Scene {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: serde::Serializer {
+    
+        #[derive(serde::Serialize)]
+        struct Intermediate<'a> {
+            camera: &'a camera::CameraUniform,
+            camera_controller: &'a camera::CameraController,
+            prims: &'a [geom::Prim],
+            vertices: &'a [geom::PrimVertex],
+            lights: &'a [light::Light],
+            materials: &'a [geom::PrimMat],
+        }
+
+        #[allow(clippy::from_over_into)]
+        impl<'a> Into<Intermediate<'a>> for &'a Scene {
+            fn into(self) -> Intermediate<'a> {
+                match self {
+                    Scene::Unloaded => unreachable!(),
+                    Scene::Active {
+                        camera,
+                        camera_controller,
+                        prims,
+                        vertices,
+                        lights,
+                        materials,
+                    } => Intermediate {
+                        camera,
+                        camera_controller,
+                        prims,
+                        vertices,
+                        lights,
+                        materials,
+                    },
+                }
+            }
+        }
+
+        Into::<Intermediate>::into(self).serialize(serializer)
     }
 }
 

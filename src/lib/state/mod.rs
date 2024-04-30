@@ -2,12 +2,9 @@ mod package;
 
 use std::sync;
 
-use wgpu::util::DeviceExt as _;
-
 use winit::{dpi, window};
 
-use crate::{handlers, shaders, vertex};
-use crate::scene;
+use crate::{scene, handlers, shaders, vertex};
 
 #[derive(Debug)]
 pub struct State {
@@ -67,6 +64,8 @@ impl State {
         scene: &scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
+        use wgpu::util::DeviceExt as _;
+
         let window_size = match window.inner_size() {
             // This value can later be used as an Extent3D for a texture
             // We never want texture dimensions to be 0,

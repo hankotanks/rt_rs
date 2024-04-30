@@ -6,6 +6,7 @@ mod shaders;
 pub mod scene;
 pub mod geom;
 pub mod handlers;
+pub mod bvh;
 
 #[cfg(target_arch = "wasm32")]
 mod web;
@@ -314,12 +315,19 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         let frame_instant = chrono::Local::now();
         let frame_duration = 1_000. * (config.fps as f64).recip();
 
-        let temp = prev_frame_instant.signed_duration_since(frame_instant);
-        let temp = temp
+        #[allow(unused_mut)]
+        let mut temp = prev_frame_instant.signed_duration_since(frame_instant);
+        let mut temp = temp
             .num_microseconds()
             .map(|micros| 0.001 * micros as f64)
             .unwrap_or(temp.num_milliseconds() as f64)
             .abs();
+
+        // Prevent death spiral
+        // https://cs.pomona.edu/classes/cs181g/notes/controlling-time.html
+        if temp > frame_duration * 10. {
+            temp = frame_duration; prev_frame_duration = 0.;
+        }
 
         // Update the camera
         // NOTE: Camera updates are tied to FPS
@@ -371,7 +379,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         }
 
         // Force an update if `web` requests it
-        if update_required_web {
+        if update_required_web && prev_frame_duration < frame_duration {
             prev_frame_duration += frame_duration;
         }
 

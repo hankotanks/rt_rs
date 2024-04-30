@@ -33,6 +33,9 @@ struct Args {
     #[clap(long = "handler-bvh", action)]
     handler_bvh: bool,
 
+    #[clap(long = "data", value_parser)]
+    path_data: Option<String>,
+
     #[clap(long, short, value_parser)]
     width: Option<u32>,
 
@@ -83,6 +86,7 @@ fn main() -> anyhow::Result<()> {
         path,
         handler_blank,
         handler_bvh,
+        path_data,
         width,
         height,
         workgroup_size,
@@ -126,6 +130,16 @@ fn main() -> anyhow::Result<()> {
     if handler_blank {
         start::<rt::handlers::BlankIntrs>(resolution, fps, compute, scene)
     } else if handler_bvh {
+        use io::Read as _;
+
+        if let Some(path_data) = path_data {
+            let bytes: Result<Vec<u8>, io::Error> = fs::File::open(path_data)?
+                .bytes()
+                .collect();
+
+            rt::handlers::BvhIntrs::prepare(bytes?.as_slice())?;
+        }
+
         start::<rt::handlers::BvhIntrs>(resolution, fps, compute, scene)
     } else {
         start::<rt::handlers::BasicIntrs>(resolution, fps, compute, scene)

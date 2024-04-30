@@ -14,6 +14,16 @@ fn main() -> anyhow::Result<()> {
                 .number_of_values(1)
                 .required(true))
         .arg(
+            clap::Arg::new("bvh")
+                .long("bvh")
+                .action(clap::ArgAction::SetTrue))
+        .arg(
+            clap::Arg::new("bvh-eps")
+                .long("bvh-eps")
+                .number_of_values(1)
+                .requires("bvh")
+                .value_parser(clap::value_parser!(f32)))
+        .arg(
             clap::Arg::new("light")
                 .long("light")
                 .number_of_values(4)
@@ -186,6 +196,21 @@ fn main() -> anyhow::Result<()> {
         .map(|temp| path::PathBuf::from(temp))
         .unwrap();
 
+    if *parsed.get_one::<bool>("bvh").unwrap() {
+        let aabb = rt::bvh::Aabb::from_scene(
+            parsed.get_one::<f32>("bvh-eps").copied().unwrap_or(0.02), 
+            &scene
+        )?;
+
+        let bvh = rt::bvh::BvhData::new(&aabb);
+
+        let path = String::from(out.to_str().unwrap());
+        let path = path.replace(".json", "_bvh.json");
+
+        fs::File::create(path)?
+            .write(serde_json::to_string(&bvh)?.as_bytes())?;
+    }
+        
     fs::File::create(out)?
         .write(serde_json::to_string_pretty(&scene)?.as_bytes())?;
 
