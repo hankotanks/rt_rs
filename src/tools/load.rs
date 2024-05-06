@@ -1,5 +1,6 @@
 use std::{fs, io};
 
+use rt::handlers::{self, IntrsHandler};
 use winit::dpi;
 
 #[derive(clap::Parser)]
@@ -30,7 +31,10 @@ struct Args {
     #[clap(long = "handler-blank", action)]
     handler_blank: bool,
 
-    #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 1)]
+    // This argument can take up to 2 arguments
+    // One is the epsilon used to wobble intersection tests
+    // The other is the path to a precomputed BVH structure
+    #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 2)]
     handler_bvh: Option<Vec<String>>,
 
     #[clap(long, short, value_parser)]
@@ -125,19 +129,46 @@ fn main() -> anyhow::Result<()> {
 
     if handler_blank {
         start::<rt::handlers::BlankIntrs>(resolution, fps, compute, scene)
-    } else if let Some(path) = handler_bvh {
+    } else if let Some(args) = handler_bvh {
         use io::Read as _;
 
-        if !path.is_empty() {
-            let bytes: Result<Vec<u8>, io::Error> = fs::File::open(&path[0])?
-                .bytes()
-                .collect();
+        let (config, file) = match args.len() {
+            0 => (handlers::BvhConfig::default(), None),
+            1 => match args[0].parse::<f32>() {
+                Ok(eps) => (handlers::BvhConfig { eps, }, None),
+                Err(_) => match fs::File::open(&args[0]) {
+                    Ok(file) => (handlers::BvhConfig::default(), Some(file)),
+                    Err(e) => anyhow::bail!(e),
+                },
+            },
+            2 => match args[0].parse::<f32>() {
+                Ok(eps) => match fs::File::open(&args[1]) {
+                    Ok(file) => (handlers::BvhConfig { eps, }, Some(file)),
+                    Err(e) => anyhow::bail!(e),
+                },
+                Err(_) => match fs::File::open(&args[0]) {
+                    Ok(file) => match args[1].parse::<f32>() {
+                        Ok(eps) => (handlers::BvhConfig { eps, }, Some(file)),
+                        Err(e) => anyhow::bail!(e),
+                    },
+                    Err(e) => anyhow::bail!(e),
+                },
+            },
+            _ => unreachable!(),
+        };
 
-            rt::handlers::BvhIntrs::prepare(bytes?.as_slice())?;
+        handlers::BvhIntrs::configure(config);
+
+        if let Some(file) = file {
+            let bytes = file
+                .bytes()
+                .collect::<Result<Vec<_>, io::Error>>()?;
+
+            handlers::BvhIntrs::prepare(bytes.as_slice())?;
         }
 
-        start::<rt::handlers::BvhIntrs>(resolution, fps, compute, scene)
+        start::<handlers::BvhIntrs>(resolution, fps, compute, scene)
     } else {
-        start::<rt::handlers::BasicIntrs>(resolution, fps, compute, scene)
+        start::<handlers::BasicIntrs>(resolution, fps, compute, scene)
     }
 }

@@ -23,7 +23,7 @@ fn main() -> anyhow::Result<()> {
 
     let out = parsed
         .get_one::<String>("out")
-        .map(|temp| path::PathBuf::from(temp))
+        .map(path::PathBuf::from)
         .unwrap();
 
     let scene_reader = parsed
@@ -46,7 +46,7 @@ fn main() -> anyhow::Result<()> {
     });
     
     fs::File::create(out)?
-        .write(serde_json::to_string(&bvh)?.as_bytes())?;
+        .write_all(serde_json::to_string(&bvh)?.as_bytes())?;
 
     Ok(())
 }
