@@ -12,11 +12,17 @@ pub struct BvhConfig {
     pub eps: f32,
 }
 
+impl BvhConfig {
+    pub const fn new() -> Self { Self { eps: 0.02, } }
+}
+
+impl Default for BvhConfig {
+    fn default() -> Self { Self::new() }
+}
+
 // Since BvhIntrs is never actually initialized, we keep it in a global
 // This is safe, because it is only set once -> before any reads can occur
-static mut CONFIG: BvhConfig = BvhConfig {
-    eps: 0.02,
-};
+static mut CONFIG: BvhConfig = BvhConfig::new();
 
 // This tracks the size of the tree
 // Populated after BvhIntrs::vars is called in State::new

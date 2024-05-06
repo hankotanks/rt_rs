@@ -1,4 +1,4 @@
-use std::{fs, io, marker};
+use std::{fs, io};
 
 use winit::dpi;
 
@@ -30,11 +30,8 @@ struct Args {
     #[clap(long = "handler-blank", action)]
     handler_blank: bool,
 
-    #[clap(long = "handler-bvh", action)]
-    handler_bvh: bool,
-
-    #[clap(long = "data", value_parser)]
-    path_data: Option<String>,
+    #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 1)]
+    handler_bvh: Option<Vec<String>>,
 
     #[clap(long, short, value_parser)]
     width: Option<u32>,
@@ -86,7 +83,6 @@ fn main() -> anyhow::Result<()> {
         path,
         handler_blank,
         handler_bvh,
-        path_data,
         width,
         height,
         workgroup_size,
@@ -129,11 +125,11 @@ fn main() -> anyhow::Result<()> {
 
     if handler_blank {
         start::<rt::handlers::BlankIntrs>(resolution, fps, compute, scene)
-    } else if handler_bvh {
+    } else if let Some(path) = handler_bvh {
         use io::Read as _;
 
-        if let Some(path_data) = path_data {
-            let bytes: Result<Vec<u8>, io::Error> = fs::File::open(path_data)?
+        if !path.is_empty() {
+            let bytes: Result<Vec<u8>, io::Error> = fs::File::open(&path[0])?
                 .bytes()
                 .collect();
 

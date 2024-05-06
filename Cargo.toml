@@ -29,6 +29,11 @@ name = "construct"
 path = "src/tools/construct.rs"
 required-features = ["cli"]
 
+[[bin]]
+name = "precompute"
+path = "src/tools/precompute.rs"
+required-features = ["cli"]
+
 [profile.release]
 lto = true
 
