@@ -155,17 +155,16 @@ impl super::IntrsHandler for BvhIntrs {
     }
 
     fn logic() -> &'static str {
-        let eps = unsafe {
-            format!("{}", CONFIG.eps)
-        };
+        let mut logic = String::from(LOGIC);
 
-        let nodes = unsafe {
-            format!("{}", NODES)
-        };
-
-        let logic = LOGIC
-            .replace("<NODES>", &nodes)
-            .replace("<EPS>", &eps);
+        unsafe {
+            const DECL: &str = "var<private> aabb_stack;";
+            
+            logic.insert_str(
+                LOGIC.find(DECL).unwrap() + DECL.len() - 1, 
+                format!(": array<u32, {NODES}>").as_str()
+            );
+        }
 
         Box::leak(logic.into_boxed_str())
     }
@@ -231,21 +230,25 @@ const LOGIC: &str = "\
 
     const INF_POS: f32 = 0x1.p+38f;
     const INF_NEG: f32 = -1.0 * INF_POS;
+
+    // Wobble for the intersection test below
+    const EPS: f32 = 0.000002;
+
     fn collides(bb: Aabb, ray: Ray) -> bool {
-        var t0 = (bb.bounds.min.x - <EPS> - ray.origin.x) / ray.dir.x;
-        var t1 = (bb.bounds.max.x + <EPS> - ray.origin.x) / ray.dir.x;
+        var t0 = (bb.bounds.min.x - EPS - ray.origin.x) / ray.dir.x;
+        var t1 = (bb.bounds.max.x + EPS - ray.origin.x) / ray.dir.x;
 
         var t_min = min(t0, t1);
         var t_max = max(t0, t1);
         
-        t0 = (bb.bounds.min.y - <EPS> - ray.origin.y) / ray.dir.y;
-        t1 = (bb.bounds.max.y + <EPS> - ray.origin.y) / ray.dir.y;
+        t0 = (bb.bounds.min.y - EPS - ray.origin.y) / ray.dir.y;
+        t1 = (bb.bounds.max.y + EPS - ray.origin.y) / ray.dir.y;
 
         t_min = max(t_min, min(min(t0, t1), INF_NEG));
         t_max = min(t_max, max(max(t0, t1), INF_POS));
         
-        t0 = (bb.bounds.min.z - <EPS> - ray.origin.z) / ray.dir.z;
-        t1 = (bb.bounds.max.z + <EPS> - ray.origin.z) / ray.dir.z;
+        t0 = (bb.bounds.min.z - EPS - ray.origin.z) / ray.dir.z;
+        t1 = (bb.bounds.max.z + EPS - ray.origin.z) / ray.dir.z;
 
         t_min = max(t_min, min(min(t0, t1), INF_NEG));
         t_max = min(t_max, max(max(t0, t1), INF_POS));
@@ -285,7 +288,8 @@ const LOGIC: &str = "\
         return intrs;
     }
 
-    var<private> aabb_stack: array<u32, <NODES>>;
+    // NOTE: The type is specified by BvhIntrs::logic
+    var<private> aabb_stack;
 
     fn pop(idx: ptr<function, u32>, empty: ptr<function, bool>) -> u32 {
         if(*idx == 1u) {
