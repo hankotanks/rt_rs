@@ -242,11 +242,6 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Indicates whether the camera has changed
     let mut update_required_camera = false;
 
-    // Indicates that the previous update step was completed
-    let update_completed = sync::Arc::new({
-        sync::atomic::AtomicBool::new(true)
-    });
-
     // Enter the event loop
     BAIL(event_loop.run(|event, target| {
         // We are only updating config options live on the web
@@ -388,9 +383,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
             // This is platform-specific
             // Queue::on_submitted_work_done is not available on WASM
             // So we implement compute pass completion checking with map_async
-            if update_completed.fetch_and(false, sync::atomic::Ordering::Relaxed) { 
-                state.update(*config, update_completed.clone());
-            }
+            state.update(*config);
 
             if !requested {
                 // Anytime we update, we need to request a redraw

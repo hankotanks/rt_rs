@@ -1,4 +1,5 @@
 mod package;
+mod timestamps;
 
 use std::sync;
 
@@ -13,6 +14,9 @@ pub struct State {
     queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     surface_config: wgpu::SurfaceConfiguration,
+
+    // Keeps track of frame time
+    scheduler: timestamps::Scheduler,
 
     // CPU-side of the intersection logic
     pack: handlers::IntrsPack<'static>,
@@ -37,9 +41,6 @@ pub struct State {
     config_buffer: wgpu::Buffer,
     config_group_layout: wgpu::BindGroupLayout,
     config_group: wgpu::BindGroup,
-    // Buffer to read state of compute pass
-    config_block_buffer: wgpu::Buffer,
-    config_block_buffer_read: wgpu::Buffer,
 
     // Texture binding group and compute pipeline
     compute_group: wgpu::BindGroup,
@@ -129,10 +130,18 @@ impl State {
             force_fallback_adapter: false,
         }).await.unwrap();
 
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                let required_features = wgpu::Features::empty();
+            } else {
+                let required_features = wgpu::Features::TIMESTAMP_QUERY;
+            }
+        }
+
         // TODO: In the future we want to enable TIMESTAMP_QUERY
         let device_desc = wgpu::DeviceDescriptor {
             label: None,
-            required_features: wgpu::Features::empty(),
+            required_features,
             required_limits: wgpu::Limits::default(),
         };
 
@@ -140,6 +149,9 @@ impl State {
             .request_device(&device_desc, None)
             .await
             .unwrap();
+
+        // Frame scheduler + benchmark handler
+        let scheduler = timestamps::Scheduler::init(&queue, &device);
 
         // Construct the size
         let size = match config.resolution {
@@ -154,28 +166,9 @@ impl State {
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[size.width, size.height]),
-                usage: wgpu::BufferUsages::UNIFORM 
-                     | wgpu::BufferUsages::COPY_DST,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }
         );
-
-        // This buffer is used to query the completion of compute passes
-        // to prevent submitting a new one before the previous completes
-        let config_block_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: wgpu::MAP_ALIGNMENT,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-
-        // Since reading from uniforms requires MAPPABLE_PRIMARY_BUFFERS,
-        // We need a second buffer to copy into, then read from
-        let config_block_buffer_read = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: wgpu::MAP_ALIGNMENT,
-            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: true,
-        });
 
         // Get all the buffers, groups associated with the scene
         // These fill group(3)
@@ -209,16 +202,6 @@ impl State {
                             ty: wgpu::BufferBindingType::Uniform,
                         }
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        count: None,
-                        ty: wgpu::BindingType::Buffer {
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                            ty: wgpu::BufferBindingType::Uniform,
-                        }
-                    },
                 ],
             }
         );
@@ -231,10 +214,6 @@ impl State {
                     wgpu::BindGroupEntry {
                         binding: 0,
                         resource: config_buffer.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: config_block_buffer.as_entire_binding(),
                     },
                 ],
             }
@@ -351,6 +330,8 @@ impl State {
             surface,
             surface_config,
 
+            scheduler,
+
             pack,
 
             shader_compute,
@@ -366,8 +347,6 @@ impl State {
             config_buffer,
             config_group_layout,
             config_group,
-            config_block_buffer,
-            config_block_buffer_read,
 
             compute_group,
             compute_pipeline,
@@ -446,25 +425,25 @@ impl State {
         }
     }
 
-    pub fn update<H: handlers::IntrsHandler>(
+    pub fn update<H>(&mut self, config: crate::Config<H>)
+        where H: handlers::IntrsHandler {
+
+        if self.scheduler.ready() {
+            self.update_internal(config);
+        }
+    }
+
+    fn update_internal<H: handlers::IntrsHandler>(
         &mut self, 
         config: crate::Config<H>,
-        completed: sync::Arc<sync::atomic::AtomicBool>,
     ) {
-        if !completed.fetch_or(false, sync::atomic::Ordering::Relaxed) {
-            self.config_block_buffer_read.unmap();
-        }
-
         let mut encoder = self.device.create_command_encoder(&{
             wgpu::CommandEncoderDescriptor::default()
         });
 
         {
-            let compute_pass_descriptor = //
-                wgpu::ComputePassDescriptor::default();
-
             let mut compute_pass = encoder
-                .begin_compute_pass(&compute_pass_descriptor);
+                .begin_compute_pass(&self.scheduler.desc());
 
             compute_pass.set_pipeline(&self.compute_pipeline);
 
@@ -501,23 +480,11 @@ impl State {
             );
         }
 
-        let Self {
-            config_block_buffer,
-            config_block_buffer_read, ..
-        } = self;
-
-        encoder.copy_buffer_to_buffer(
-            config_block_buffer, 0, 
-            config_block_buffer_read, 0, 
-            wgpu::MAP_ALIGNMENT
-        );
+        self.scheduler.pre(&mut encoder);
 
         self.queue.submit(Some(encoder.finish()));
 
-        self.config_block_buffer_read.slice(..)
-            .map_async(wgpu::MapMode::Read, move |_| {
-                completed.store(true, sync::atomic::Ordering::Relaxed);
-            });
+        self.scheduler.post(&self.queue, &self.device);
     }
 
     pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {
