@@ -1,14 +1,13 @@
 mod package;
-mod timestamps;
 
 use std::sync;
 
 use winit::{dpi, window};
 
-use crate::{scene, handlers, shaders, vertex};
+use crate::{scene, handlers, shaders, vertex, timing};
 
 #[derive(Debug)]
-pub struct State {
+pub struct State<S: timing::Scheduler> {
     // WGPU interface
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -16,7 +15,7 @@ pub struct State {
     surface_config: wgpu::SurfaceConfiguration,
 
     // Keeps track of frame time
-    scheduler: timestamps::Scheduler,
+    scheduler: S,
 
     // CPU-side of the intersection logic
     pack: handlers::IntrsPack<'static>,
@@ -56,7 +55,7 @@ pub struct State {
     window_size: winit::dpi::PhysicalSize<u32>,
 }
 
-impl State {
+impl<S: timing::Scheduler> State<S> {
     const TEXTURE_FORMAT: wgpu::TextureFormat = //
         wgpu::TextureFormat::Rgba8Unorm;
 
@@ -151,7 +150,7 @@ impl State {
             .unwrap();
 
         // Frame scheduler + benchmark handler
-        let scheduler = timestamps::Scheduler::init(&queue, &device);
+        let scheduler = S::init(&queue, &device);
 
         // Construct the size
         let size = match config.resolution {

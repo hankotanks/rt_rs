@@ -3,6 +3,7 @@ mod vertex;
 mod state;
 mod shaders;
 
+pub mod timing;
 pub mod scene;
 pub mod geom;
 pub mod handlers;
@@ -167,11 +168,15 @@ impl<H: handlers::IntrsHandler> Config<H> {
     }
 }
 
-pub async fn run_native<H: handlers::IntrsHandler>(
+pub async fn run_native<H, S>(
     mut config: Config<H>, 
     mut scene: scene::Scene
-) -> Result<(), Failed> {
-    unsafe { run_internal(&mut config, &mut scene).await }
+) -> Result<(), Failed> 
+    where H: handlers::IntrsHandler, S: timing::Scheduler {
+
+    unsafe { 
+        run_internal::<H, S>(&mut config, &mut scene).await 
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -184,16 +189,22 @@ pub async fn run_wasm() -> Result<(), Failed> {
             scene, ..
         } = &mut web::WEB_STATE;
 
+        // We don't take benchmarks on WASM
+        type WebScheduler = timing::DefaultScheduler;
+
         // TODO: Switch this to the handler with the best performance
         // Likely BvhHandler
-        run_internal(config, scene).await
+        run_internal::<web::WebHandler, WebScheduler>(config, scene)
+            .await
     }
 }
 
-async unsafe fn run_internal<H: handlers::IntrsHandler>(
+async unsafe fn run_internal<H, S>(
     config: &mut Config<H>,
     scene: &mut scene::Scene
-) -> Result<(), Failed> {
+) -> Result<(), Failed> 
+    where H: handlers::IntrsHandler, S: timing::Scheduler {
+
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             console_error_panic_hook::set_once();
@@ -223,7 +234,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Initialize the state (bail on failure)
     let mut state = {
         let window = window.clone();
-        BAIL(state::State::new(*config, scene, window).await)?
+        BAIL(state::State::<S>::new(*config, scene, window).await)?
     };
 
     // Keeps track of resize actions. 

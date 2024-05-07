@@ -3,7 +3,7 @@ use std::io;
 use winit::{dpi, window};
 use winit::platform::web::WindowExtWebSys as _;
 
-use crate::{state, scene, handlers};
+use crate::{state, scene, handlers, timing};
 
 mod err {
     use std::{fmt, error};
@@ -29,9 +29,11 @@ mod err {
     }
 }
 
-pub struct WebState<H: handlers::IntrsHandler> {
+pub type WebHandler = handlers::BasicIntrs;
+
+pub struct WebState {
     // These members are used for run_internal dispatch
-    pub config: crate::Config<H>,
+    pub config: crate::Config<WebHandler>,
 
     // Scene no longer carries the IntrsHandler
     pub scene: scene::Scene,
@@ -44,8 +46,8 @@ pub struct WebState<H: handlers::IntrsHandler> {
     viewport: Option<dpi::PhysicalSize<u32>>,
 }
 
-pub static mut WEB_STATE: WebState<handlers::BasicIntrs> = WebState {
-    config: crate::Config::<handlers::BasicIntrs>::new(),
+pub static mut WEB_STATE: WebState = WebState {
+    config: crate::Config::<WebHandler>::new(),
     update_config: true,
     scene: scene::Scene::Unloaded,
     update_scene: false,
@@ -84,7 +86,9 @@ pub fn init<H: handlers::IntrsHandler>(
 
 // Update all web-related stuff
 // Returns true if a re-render is necessary
-pub unsafe fn update(state: &mut state::State) -> bool {
+pub unsafe fn update<S>(state: &mut state::State<S>) -> bool 
+    where S: timing::Scheduler {
+
     let mut update = false;
 
     if WEB_STATE.update_config {
@@ -121,7 +125,7 @@ pub fn update_config(
     match serialized.as_string() {
         Some(temp) => unsafe {
             WEB_STATE.config = crate::BAIL({
-                serde_json::from_str::<crate::Config<handlers::BasicIntrs>>(&temp)
+                serde_json::from_str::<crate::Config<WebHandler>>(&temp)
             })?;
 
             WEB_STATE.update_config = true;

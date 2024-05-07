@@ -1,7 +1,8 @@
 use std::{fs, io};
 
-use rt::handlers::{self, IntrsHandler};
 use winit::dpi;
+
+use rt::{handlers, timing, scene};
 
 #[derive(clap::Parser)]
 #[derive(Debug)]
@@ -20,7 +21,7 @@ use winit::dpi;
 ))]
 #[clap(group(
     clap::ArgGroup::new("handler")
-        .args(&["handler-bvh", "handler-blank"])
+        .args(&["handler-bvh", "handler-naive"])
         .multiple(false)
 ))]
 struct Args {
@@ -28,14 +29,17 @@ struct Args {
     #[clap(long, value_parser, default_value_t = String::from("scenes/default.json"))]
     path: String,
 
-    #[clap(long = "handler-blank", action)]
-    handler_blank: bool,
+    #[clap(long = "handler-naive", action)]
+    handler_naive: bool,
 
     // This argument can take up to 2 arguments
     // One is the epsilon used to wobble intersection tests
     // The other is the path to a precomputed BVH structure
     #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 1)]
     handler_bvh: Option<Vec<String>>,
+
+    #[clap(long = "benchmark", action)]
+    benchmark: bool,
 
     #[clap(long, short, value_parser)]
     width: Option<u32>,
@@ -59,11 +63,12 @@ struct Args {
     compute_ambience: Option<f32>,
 }
 
-fn start<H: rt::handlers::IntrsHandler>(
+fn start<H: handlers::IntrsHandler>(
+    benchmark: bool,
     resolution: rt::Resolution, 
     fps: Option<u32>,
     compute: rt::ComputeConfig, 
-    scene: rt::scene::Scene,
+    scene: scene::Scene,
 ) -> anyhow::Result<()> {
     let config_default = rt::Config::<H>::default();
     let config: rt::Config<H> = rt::Config {
@@ -72,10 +77,16 @@ fn start<H: rt::handlers::IntrsHandler>(
         fps: fps.unwrap_or(config_default.fps),
         ..Default::default()
     };
-
-    pollster::block_on({
-        rt::run_native(config, scene)
-    })
+    
+    if benchmark {
+        pollster::block_on({
+            rt::run_native::<H, timing::BenchScheduler>(config, scene)
+        })
+    } else {
+        pollster::block_on({
+            rt::run_native::<H, timing::DefaultScheduler>(config, scene)
+        })
+    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -85,8 +96,9 @@ fn main() -> anyhow::Result<()> {
 
     let Args {
         path,
-        handler_blank,
+        handler_naive,
         handler_bvh,
+        benchmark,
         width,
         height,
         workgroup_size,
@@ -124,13 +136,14 @@ fn main() -> anyhow::Result<()> {
         fs::File::open(path)?
     });
 
-    let scene: rt::scene::Scene = //
+    let scene: scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    if handler_blank {
-        start::<rt::handlers::BlankIntrs>(resolution, fps, compute, scene)
+    if handler_naive {
+        start::<handlers::BasicIntrs>(benchmark, resolution, fps, compute, scene)
     } else if let Some(args) = handler_bvh {
         use io::Read as _;
+        use rt::handlers::IntrsHandler as _;
 
         match args.len() {
             0 => { /*  */ },
@@ -156,8 +169,8 @@ fn main() -> anyhow::Result<()> {
             _ => unreachable!(),
         }
 
-        start::<handlers::BvhIntrs>(resolution, fps, compute, scene)
+        start::<handlers::BvhIntrs>(benchmark, resolution, fps, compute, scene)
     } else {
-        start::<handlers::BasicIntrs>(resolution, fps, compute, scene)
+        start::<handlers::BlankIntrs>(benchmark, resolution, fps, compute, scene)
     }
 }

@@ -1,6 +1,6 @@
 use std::{fs, io};
 
-use rt::handlers;
+use rt::{handlers, timing};
 
 fn main() -> anyhow::Result<()> {
     let config = rt::Config {
@@ -16,5 +16,10 @@ fn main() -> anyhow::Result<()> {
     let scene: rt::scene::Scene = //
         serde_json::from_reader(scene_reader)?;
 
-    pollster::block_on(rt::run_native::<handlers::BasicIntrs>(config, scene))
+    pollster::block_on({
+        type Handler = handlers::BasicIntrs;
+        type Scheduler = timing::DefaultScheduler;
+
+        rt::run_native::<Handler, Scheduler>(config, scene)
+    })
 }
