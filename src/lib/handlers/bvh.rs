@@ -46,12 +46,12 @@ impl super::IntrsHandler for BvhIntrs {
     fn vars<'a>(
         scene: &crate::scene::Scene, 
         device: &wgpu::Device
-    ) -> anyhow::Result<super::IntrsPack<'a>> {
+    ) -> super::IntrsPack<'a> {
         let data = unsafe {
             if let Some(data) = LOADED.get() {
                 data.to_owned()
             } else {
-                let aabb = bvh::Aabb::from_scene(CONFIG.eps, scene)?;
+                let aabb = bvh::Aabb::from_scene(CONFIG.eps, scene);
         
                 bvh::BvhData::new(&aabb)
             }
@@ -128,30 +128,28 @@ impl super::IntrsHandler for BvhIntrs {
             }
         );
 
-        Ok({
-            super::IntrsPack {
-                vars: vec![
-                    // TODO: 2 future changes
-                    // - `var_decl` can be a vec of terms: ["storage", "read"]
-                    // - Should add a field with struct declarations that are
-                    //   relevant to the handler's logic
-                    super::IntrsVar { 
-                        var_name: "aabb_uniforms", 
-                        var_decl: "var<storage, read>", 
-                        var_type: "array<Aabb>", 
-                        buffer: aabb_uniforms,
-                    },
-                    super::IntrsVar { 
-                        var_name: "aabb_indices", 
-                        var_decl: "var<storage, read>", 
-                        var_type: "array<u32>", 
-                        buffer: aabb_indices,
-                    },
-                ],
-                group,
-                layout,
-            }
-        })
+        super::IntrsPack {
+            vars: vec![
+                // TODO: 2 future changes
+                // - `var_decl` can be a vec of terms: ["storage", "read"]
+                // - Should add a field with struct declarations that are
+                //   relevant to the handler's logic
+                super::IntrsVar { 
+                    var_name: "aabb_uniforms", 
+                    var_decl: "var<storage, read>", 
+                    var_type: "array<Aabb>", 
+                    buffer: aabb_uniforms,
+                },
+                super::IntrsVar { 
+                    var_name: "aabb_indices", 
+                    var_decl: "var<storage, read>", 
+                    var_type: "array<u32>", 
+                    buffer: aabb_indices,
+                },
+            ],
+            group,
+            layout,
+        }
     }
 
     fn logic() -> &'static str {

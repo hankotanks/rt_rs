@@ -1,7 +1,8 @@
 use std::{io, fs, path};
-use std::io::Write as _;
 
 fn main() -> anyhow::Result<()> {
+    use std::io::Write as _;
+    
     let parsed = clap::Command::new(env!("CARGO_BIN_NAME"))
         .arg(
             clap::Arg::new("out")
@@ -19,7 +20,6 @@ fn main() -> anyhow::Result<()> {
                 .number_of_values(1)
                 .value_parser(clap::value_parser!(f32)))
         .get_matches();
-
 
     let out = parsed
         .get_one::<String>("out")
@@ -42,7 +42,7 @@ fn main() -> anyhow::Result<()> {
     let scene = serde_json::from_reader(scene_reader)?;
 
     let bvh = rt::bvh::BvhData::new({
-        &rt::bvh::Aabb::from_scene(config.eps, &scene)?
+        &rt::bvh::Aabb::from_scene(config.eps, &scene)
     });
     
     fs::File::create(out)?

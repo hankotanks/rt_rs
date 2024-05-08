@@ -1,5 +1,4 @@
 use std::{fs, path};
-use std::io::Write as _;
 
 use rt::geom;
 use rt::geom::light as light;
@@ -7,6 +6,8 @@ use rt::geom::light as light;
 use rt::scene;
 
 fn main() -> anyhow::Result<()> {
+    use std::io::Write as _;
+    
     let parsed = clap::Command::new(env!("CARGO_BIN_NAME"))
         .arg(
             clap::Arg::new("out")

@@ -15,7 +15,7 @@ mod web;
 #[cfg(target_arch = "wasm32")]
 pub use web::{update_config, update_scene, update_viewport};
 
-use std::{marker, sync};
+use std::sync;
 
 use winit::{dpi, event, event_loop, keyboard, window};
 
@@ -140,36 +140,30 @@ impl Default for ComputeConfig {
 #[derive(serde::Deserialize)]
 #[derive(Debug)]
 #[serde(default)]
-pub struct Config<H: handlers::IntrsHandler> {
+pub struct Config {
     pub compute: ComputeConfig,
     pub resolution: Resolution,
     pub fps: u32,
-    pub canvas_raw_handle: u32,
-
-    #[serde(skip)]
-    pub handler: marker::PhantomData<fn() -> H>
 }
 
-impl<H: handlers::IntrsHandler> Default for Config<H> {
+impl Default for Config {
     fn default() -> Self { Self::new() }
 }
 
 // Config::update defaults to true, so deserialization automatically
 // sets the flag
-impl<H: handlers::IntrsHandler> Config<H> {
+impl Config {
     const fn new() -> Self {
         Self {
             compute: ComputeConfig::new(),
             resolution: Resolution::new(),
             fps: 60,
-            canvas_raw_handle: 2024,
-            handler: marker::PhantomData,
         }
     }
 }
 
 pub async fn run_native<H, S>(
-    mut config: Config<H>, 
+    mut config: Config, 
     mut scene: scene::Scene
 ) -> Result<(), Failed> 
     where H: handlers::IntrsHandler, S: timing::Scheduler {
@@ -200,7 +194,7 @@ pub async fn run_wasm() -> Result<(), Failed> {
 }
 
 async unsafe fn run_internal<H, S>(
-    config: &mut Config<H>,
+    config: &mut Config,
     scene: &mut scene::Scene
 ) -> Result<(), Failed> 
     where H: handlers::IntrsHandler, S: timing::Scheduler {
@@ -234,7 +228,7 @@ async unsafe fn run_internal<H, S>(
     // Initialize the state (bail on failure)
     let mut state = {
         let window = window.clone();
-        BAIL(state::State::<S>::new(*config, scene, window).await)?
+        BAIL(state::State::<S>::new::<H>(*config, scene, window).await)?
     };
 
     // Keeps track of resize actions. 
@@ -260,8 +254,8 @@ async unsafe fn run_internal<H, S>(
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] { 
                 #[allow(unused_mut)]
-                let mut update_required_web = unsafe { 
-                    web::update(&mut state) 
+                let mut update_required_web = unsafe {
+                    web::update(window.clone(), &mut state)
                 };
             } else { 
                 let mut update_required_web = false;
@@ -307,7 +301,7 @@ async unsafe fn run_internal<H, S>(
                                 Ok(_) => { /*  */ },
                                 Err(wgpu::SurfaceError::Lost | 
                                     wgpu::SurfaceError::Outdated
-                                ) => state.resize(*config, state.window_size()),
+                                ) => state.resize(*config, window.inner_size()),
                                 Err(e) => failure = BAIL(Err(e)),
                             }
                         },

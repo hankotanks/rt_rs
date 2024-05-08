@@ -8,7 +8,7 @@ impl super::IntrsHandler for BasicIntrs {
     
     fn vars<'a>(
         _scene: &scene::Scene, device: &wgpu::Device,
-    ) -> anyhow::Result<super::IntrsPack<'a>> {
+    ) -> super::IntrsPack<'a> {
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -24,11 +24,11 @@ impl super::IntrsHandler for BasicIntrs {
             }
         );
 
-        Ok(super::IntrsPack {
+        super::IntrsPack {
             vars: Vec::with_capacity(0),
             group,
             layout,
-        })
+        }
     }
 
     fn logic() -> &'static str {"\

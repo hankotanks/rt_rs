@@ -153,7 +153,7 @@ impl Scheduler for DefaultScheduler {
             buffer: device.create_buffer(&wgpu::BufferDescriptor {
                 label: None,
                 size: wgpu::MAP_ALIGNMENT,
-                usage: wgpu::BufferUsages::COPY_SRC,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
                 mapped_at_creation: false,
             }),
             buffer_read: device.create_buffer(&wgpu::BufferDescriptor {

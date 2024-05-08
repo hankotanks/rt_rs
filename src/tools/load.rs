@@ -32,9 +32,9 @@ struct Args {
     #[clap(long = "handler-naive", action)]
     handler_naive: bool,
 
-    // This argument can take up to 2 arguments
-    // One is the epsilon used to wobble intersection tests
-    // The other is the path to a precomputed BVH structure
+    // This argument takes a single value
+    // Either the epsilon used to construct the BVH
+    // Or a path to a preconstructed BVH
     #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 1)]
     handler_bvh: Option<Vec<String>>,
 
@@ -70,12 +70,11 @@ fn start<H: handlers::IntrsHandler>(
     compute: rt::ComputeConfig, 
     scene: scene::Scene,
 ) -> anyhow::Result<()> {
-    let config_default = rt::Config::<H>::default();
-    let config: rt::Config<H> = rt::Config {
+    let config_default = rt::Config::default();
+    let config: rt::Config = rt::Config {
         resolution,
         compute,
         fps: fps.unwrap_or(config_default.fps),
-        ..Default::default()
     };
     
     if benchmark {

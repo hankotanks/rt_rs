@@ -18,11 +18,25 @@ pub struct IntrsVar<'a> {
     pub buffer: wgpu::Buffer,
 }
 
+impl<'a> IntrsVar<'a> {
+    pub fn destroy(&self) {
+        self.buffer.destroy();
+    }
+}
+
 #[derive(Debug)]
 pub struct IntrsPack<'a> {
     pub vars: Vec<IntrsVar<'a>>,
     pub group: wgpu::BindGroup,
     pub layout: wgpu::BindGroupLayout,
+}
+
+impl<'a> IntrsPack<'a> {
+    pub fn destroy(&self) {
+        for var in self.vars.iter() {
+            var.destroy();
+        }
+    }
 }
 
 pub trait IntrsHandler: Copy {
@@ -32,7 +46,7 @@ pub trait IntrsHandler: Copy {
     fn vars<'a>(
         scene: &scene::Scene, 
         device: &wgpu::Device,
-    ) -> anyhow::Result<IntrsPack<'a>>;
+    ) -> IntrsPack<'a>;
 
     // Contains all of the intersection logic
     fn logic() -> &'static str;
