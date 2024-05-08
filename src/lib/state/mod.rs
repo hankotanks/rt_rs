@@ -226,21 +226,18 @@ impl<S: timing::Scheduler> State<S> {
                         Ok(state) => {
                             // Inform the user that the event loop hasn't exited
                             // as a result of the error
-                            log::warn!("\
-                                Scene construction failed, \
-                                state has been loaded with a blank scene \
-                                for the time being.\
-                            ");
+                            #[cfg(target_arch = "wasm32")]
+                            crate::web::note("\
+                                Scene construction failed. \
+                                Initialization will continue with a blank scene\
+                            ")?;
 
                             Ok(state)
                         },
                         Err((_, e1)) => {
                             // Throw error, 
                             // failure is too catastrophic to continue
-                            let e = anyhow::Error::from(e1)
-                                .context(e0);
-
-                            anyhow::bail!(e);
+                            anyhow::bail!(e1.context(e0));
                         },
                     }
                 },
@@ -250,17 +247,16 @@ impl<S: timing::Scheduler> State<S> {
         // Build the handler
         match H::new(config_handler) {
             Ok(handler) => new_internal(internals, config, scene, handler),
-            Err(e) => {
+            Err(_) => {
                 use handlers::{BlankIntrs, IntrsHandler};
 
                 // If handler construction fails, 
                 // try it again with a blank handler
-                log::warn!("\
-                    Encountered an error while \
-                    constructing the intersection handler, \
-                    `BlankIntrs` will be substituted for the current scene.
-                    {}\
-                ", e);
+                #[cfg(target_arch = "wasm32")]
+                crate::web::note("\
+                    Failed to initialize intersection handler. \
+                    Attempting to substitute a blank handler\
+                ")?;
 
                 // Build the handler
                 let handler = <BlankIntrs as IntrsHandler>::new(())
@@ -274,7 +270,7 @@ impl<S: timing::Scheduler> State<S> {
 
     // This function replaces self with a new state object
     // (that has initialized a new scene's data)
-    #[allow(dead_code)]
+    #[cfg(target_arch = "wasm32")]
     pub fn load<H: handlers::IntrsHandler>(
         &mut self, 
         config: crate::Config, 
@@ -313,16 +309,24 @@ impl<S: timing::Scheduler> State<S> {
             Ok(handler) => {
                 match Self::init::<H>(internals, config, scene, handler) {
                     Ok(state) => {
-                        destroy(&state); 
+                        destroy(self); 
                         
                         let _ = mem::replace(self, state);
                     },
                     Err((internals, e)) => {
+                        #[cfg(target_arch = "wasm32")]
+                        crate::web::note("Failed to initialize the selected scene")?;
+
                         let _ = self.internals.insert(internals); Err(e)?;
                     },
                 }
             },
             Err(e) => {
+                // If handler construction fails, 
+                // try it again with a blank handler
+                #[cfg(target_arch = "wasm32")]
+                crate::web::note("Failed to initialize intersection handler")?;
+
                 let _ = self.internals.insert(internals); Err(e)?;
             },
         }

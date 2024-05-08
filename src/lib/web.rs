@@ -89,6 +89,27 @@ pub fn init(window: &window::Window) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn note(msg: &str) -> anyhow::Result<()> {
+    let dom = web_sys::window()
+        .ok_or(err::WebError::new("obtain window"))?;
+
+    let doc = dom.document()
+        .ok_or(err::WebError::new("obtain document"))?;
+
+    let elem = doc.create_element("div")
+        .map_err(|_| err::WebError::new("construct div"))?;
+
+    elem.set_text_content(Some(msg));
+    elem.set_class_name("note");
+
+    doc.get_element_by_id("notes")
+        .ok_or(err::WebError::new("find element `notes`"))?
+        .append_child(&elem)
+        .map_err(|_| err::WebError::new("append element to `notes`"))?;
+
+    Ok(())
+}
+
 // Update all web-related stuff
 // Returns true if a re-render is necessary
 pub unsafe fn update<S>(state: &mut state::State<S>) -> bool 

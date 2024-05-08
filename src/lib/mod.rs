@@ -170,7 +170,7 @@ pub async fn run_native<H, S>(
 ) -> Result<(), Failed> 
     where H: handlers::IntrsHandler, S: timing::Scheduler {
 
-    unsafe { 
+    unsafe {
         run_internal::<H, S>(&mut config, config_handler, &mut scene).await
     }
 }
