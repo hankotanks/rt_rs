@@ -60,6 +60,4 @@ import("../pkg/index.js").then(module => {
     document.getElementById("config-load-default").onclick = _ => {
         loadScene('default');
     };
-
-    
 }).catch(console.error);

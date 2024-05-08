@@ -41,10 +41,13 @@ fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
 
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
+                let _ = web::note("\
+                    Encountered a critical error. \
+                    Check console for details\
+                ");
+
                 wasm_bindgen::JsValue::from_str(&format!("{}", e))
-            } else {
-                e
-            }
+            } else { e }
         }
     })
 }

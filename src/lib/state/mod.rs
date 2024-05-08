@@ -196,75 +196,28 @@ impl<S: timing::Scheduler> State<S> {
         // All other state loads pass it back and forth
         let internals = StateInternals::new(window).await?;
 
-        // Helper function to help with branching caused by errors
-        fn new_internal<S: timing::Scheduler, H: handlers::IntrsHandler>(
-            internals: StateInternals,
-            config: crate::Config, 
-            scene: &scene::Scene,
-            handler: H,
-        ) -> anyhow::Result<State<S>> {
-            // If state construction fails at first, we go through the following:
-            // 1. Try it again with a blank handler
-            // 2. Try it again with a blank scene
-            match State::init(internals, config, scene, handler) {
-                Ok(state) => Ok(state),
-                Err((internals, e0)) => {
-                    // Bail if the scene was unloaded.
-                    // There's nothing else to do to save it
-                    if matches!(scene, scene::Scene::Unloaded) {
-                        anyhow::bail!(e0);
-                    }
-
-                    // If the scene was active and failed,
-                    // we can try again with an unloaded one
-                    match State::init(
-                        internals, 
-                        config, 
-                        &scene::Scene::Unloaded, 
-                        H::new(H::Config::default()).unwrap()
-                    ) {
-                        Ok(state) => {
-                            // Inform the user that the event loop hasn't exited
-                            // as a result of the error
-                            #[cfg(target_arch = "wasm32")]
-                            crate::web::note("\
-                                Scene construction failed. \
-                                Initialization will continue with a blank scene\
-                            ")?;
-
-                            Ok(state)
-                        },
-                        Err((_, e1)) => {
-                            // Throw error, 
-                            // failure is too catastrophic to continue
-                            anyhow::bail!(e1.context(e0));
-                        },
-                    }
-                },
-            }
-        }
-
-        // Build the handler
         match H::new(config_handler) {
-            Ok(handler) => new_internal(internals, config, scene, handler),
-            Err(_) => {
-                use handlers::{BlankIntrs, IntrsHandler};
+            Ok(handler) => {
+                return match State::init(internals, config, scene, handler) {
+                    Ok(state) => Ok(state),
+                    Err((_, e)) => {
+                        // NOTE: When we load additional scenes after this,
+                        // we can always revert to the previous one on failure.
+                        // However, if a blank scene fails to load, 
+                        // there is almost certainly something VERY wrong.
+                        #[cfg(target_arch = "wasm32")]
+                        crate::web::note("Unable to configure empty scene on load")?;
 
-                // If handler construction fails, 
-                // try it again with a blank handler
-                #[cfg(target_arch = "wasm32")]
-                crate::web::note("\
-                    Failed to initialize intersection handler. \
-                    Attempting to substitute a blank handler\
-                ")?;
-
-                // Build the handler
-                let handler = <BlankIntrs as IntrsHandler>::new(())
-                    .unwrap();
-
-                // Try to construct state
-                new_internal(internals, config, scene, handler)
+                        Err(e)
+                    },
+                };
             },
+            Err(e) => {
+                #[cfg(target_arch = "wasm32")]
+                crate::web::note("Failed to initialize intersection handler")?;
+
+                anyhow::bail!(e);
+            }
         }
     }
 
@@ -315,7 +268,7 @@ impl<S: timing::Scheduler> State<S> {
                     },
                     Err((internals, e)) => {
                         #[cfg(target_arch = "wasm32")]
-                        crate::web::note("Failed to initialize the selected scene")?;
+                        crate::web::note("Unable to load new scene")?;
 
                         let _ = self.internals.insert(internals); Err(e)?;
                     },
