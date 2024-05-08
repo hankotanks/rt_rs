@@ -114,6 +114,22 @@ impl Scene {
             .union(wgpu::BufferUsages::COPY_DST) //
     };
 
+    // An empty ScenePack that won't cause empty buffer GPU errors
+    pub fn pack_unloaded(device: &wgpu::Device) -> ScenePack {
+        const N3: [f32; 3] = [0.; 3];
+
+        let scene = Self::Active {
+            camera: camera::CameraUniform::new(N3, N3),
+            camera_controller: camera::CameraController::Fixed,
+            prims: vec![geom::Prim { indices: [0; 3], material: 0 }],
+            vertices: vec![geom::PrimVertex::new(N3, N3)],
+            lights: vec![light::Light { pos: N3, strength: 0., }],
+            materials: vec![geom::PrimMat::new(N3, N3, 0.)],
+        };
+
+        scene.pack(device)
+    }
+
     pub fn pack(&self, device: &wgpu::Device) -> ScenePack {
         use wgpu::util::DeviceExt as _;
 
@@ -124,18 +140,7 @@ impl Scene {
             lights, 
             materials, .. 
         } = self else {
-            let n3 = [0.; 3];
-
-            let dummy = Self::Active {
-                camera: camera::CameraUniform::new(n3, n3),
-                camera_controller: camera::CameraController::Fixed,
-                prims: Vec::with_capacity(1),
-                vertices: vec![geom::PrimVertex::new(n3, n3)],
-                lights: vec![light::Light { pos: n3, strength: 0., }],
-                materials: vec![geom::PrimMat::new(n3, n3, 0.)],
-            };
-
-            return dummy.pack(device);
+            return Self::pack_unloaded(device);
         };
 
         // Separate the contents out to prevent premature drop

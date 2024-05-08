@@ -246,17 +246,24 @@ impl Aabb {
         }
     }
 
+    pub fn from_scene_unloaded() -> Self {
+        Self {
+            fst: OnceCell::new(),
+            snd: OnceCell::new(),
+            bounds: Bounds::new([].into_iter(), &[]),
+            items: vec![0],
+        }
+    }
+
     pub fn from_scene(
         eps: f32,
         scene: &scene::Scene,
     ) -> Self {
-        let scene::Scene::Active { prims, vertices, .. } = scene else {
-            return Self {
-                fst: OnceCell::new(),
-                snd: OnceCell::new(),
-                bounds: Bounds::new([].into_iter(), &[]),
-                items: Vec::with_capacity(0),
-            };
+        let scene::Scene::Active { 
+            prims, 
+            vertices, .. 
+        } = scene else {
+            return Self::from_scene_unloaded();
         };
 
         let mut root = Self {

@@ -4,7 +4,7 @@ use std::{mem, sync};
 
 use winit::{dpi, window};
 
-use crate::{scene, handlers, shaders, vertex, timing};
+use crate::{handlers, scene, shaders, timing, vertex};
 
 #[derive(Debug)]
 struct StateInternals {
@@ -192,12 +192,88 @@ impl<S: timing::Scheduler> State<S> {
         scene: &scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
+        use handlers::IntrsHandler as _;
+
         let internals = StateInternals::new(window).await?;
 
         let handler = H::new(config_handler)?;
 
-        Self::init::<H>(internals, config, scene, handler)
-            .map_err(|(_, e)| e)
+        // If state construction fails at first, we go through the following:
+        // 1. Try it again with a blank handler
+        // 2. Try it again with a blank scene
+        match Self::init(internals, config, scene, handler) {
+            Ok(state) => Ok(state),
+            Err((internals, e0)) => {
+                let handler = handlers::BlankIntrs::new(())?;
+
+                match Self::init(internals, config, scene, handler) {
+                    Ok(state) => {
+                        // Inform the user that the event loop hasn't exited
+                        // as a result of the error
+                        log::warn!("\
+                            Compute shaders could not be compiled due \
+                            to an error in the given intersection handler:
+                            {}\
+                        ", e0);
+
+                        // We are now using a blank intersection handler
+                        log::warn!("Reloaded with a blank intersection handler.");
+
+                        Ok(state)
+                    },
+                    Err((_, e1)) => {
+                        // Report original error (doesn't trigger exit)
+                        log::warn!("\
+                            Compute shaders could not be compiled due \
+                            to an error in the given intersection handler.\
+                        ");
+
+                        // Report scene error (critical)
+                        log::warn!("\
+                            Attempted to reload with a blank intersection handler, \
+                            but encountered a critical error during scene construction.\
+                        ");
+
+                        // Throw error
+                        anyhow::bail!(anyhow::Error::from(e1).context(e0));
+                    },
+                }
+            },
+        }
+    }
+
+    // This function replaces self with a new state object
+    // (that has initialized a new scene's data)
+    #[allow(dead_code)]
+    pub fn load<H: handlers::IntrsHandler>(
+        &mut self, 
+        config: crate::Config, 
+        config_handler: H::Config,
+        scene: &scene::Scene,
+    ) -> anyhow::Result<()> {
+        let internals = self.internals
+            .take()
+            .unwrap();
+
+        match H::new(config_handler) {
+            Ok(handler) => {
+                match Self::init::<H>(internals, config, scene, handler) {
+                    Ok(state) => {
+                        self.destroy(); 
+                        
+                        let _ = mem::replace(self, state);
+                    },
+                    Err((internals, e)) => {
+                        let _ = self.internals.insert(internals); Err(e)?;
+                    },
+                }
+            },
+            Err(e) => {
+                let _ = self.internals.insert(internals); Err(e)?;
+            },
+        }
+
+        Ok(())
     }
 
     // NOTE: This return type is a little strange,
@@ -416,40 +492,6 @@ impl<S: timing::Scheduler> State<S> {
             render_group,
             render_pipeline,
         })
-    }
-
-    // This function replaces self with a new state object
-    // (that has initialized a new scene's data)
-    #[allow(dead_code)]
-    pub fn load<H: handlers::IntrsHandler>(
-        &mut self, 
-        config: crate::Config, 
-        config_handler: H::Config,
-        scene: &scene::Scene,
-    ) -> anyhow::Result<()> {
-        let internals = self.internals
-            .take()
-            .unwrap();
-
-        match H::new(config_handler) {
-            Ok(handler) => {
-                match Self::init::<H>(internals, config, scene, handler) {
-                    Ok(state) => {
-                        self.destroy(); 
-                        
-                        let _ = mem::replace(self, state);
-                    },
-                    Err((internals, e)) => {
-                        let _ = self.internals.insert(internals); Err(e)?;
-                    },
-                }
-            },
-            Err(e) => {
-                let _ = self.internals.insert(internals); Err(e)?;
-            },
-        }
-
-        Ok(())
     }
 
     pub fn resize_hard(&mut self, size: dpi::PhysicalSize<u32>) {

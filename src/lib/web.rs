@@ -33,7 +33,7 @@ mod err {
     }
 }
 
-pub type WebHandler = handlers::BasicIntrs;
+pub type WebHandler = handlers::BvhIntrs;
 
 pub struct WebState {
     // These members are used for run_internal dispatch
