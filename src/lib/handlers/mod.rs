@@ -39,17 +39,19 @@ impl<'a> IntrsPack<'a> {
     }
 }
 
-pub trait IntrsHandler: Copy {
-    type Config;
+pub trait IntrsHandler {
+    type Config: Default;
+
+    fn new(config: Self::Config) -> anyhow::Result<Self> 
+        where Self: Sized;
 
     // Builds all the requisite buffers and groups
     fn vars<'a>(
+        &self,
         scene: &scene::Scene, 
         device: &wgpu::Device,
     ) -> IntrsPack<'a>;
 
     // Contains all of the intersection logic
-    fn logic() -> &'static str;
-
-    fn configure(config: Self::Config);
+    fn logic(&self) -> &'static str;
 }

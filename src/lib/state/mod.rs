@@ -47,16 +47,14 @@ impl StateInternals {
         cfg_if::cfg_if! {
             if #[cfg(target_arch="wasm32")] {
                 use wgpu::rwh;
-                let surface_target = unsafe { 
-                    wgpu::SurfaceTargetUnsafe::RawHandle { 
-                        raw_display_handle: rwh::RawDisplayHandle::Web({
-                            rwh::WebDisplayHandle::new()
-                        }),
-                        raw_window_handle: rwh::RawWindowHandle::Web({
-                            // NOTE: This id is hard-coded
-                            rwh::WebWindowHandle::new(2024)
-                        }),
-                    } 
+                let surface_target = wgpu::SurfaceTargetUnsafe::RawHandle { 
+                    raw_display_handle: rwh::RawDisplayHandle::Web({
+                        rwh::WebDisplayHandle::new()
+                    }),
+                    raw_window_handle: rwh::RawWindowHandle::Web({
+                        // NOTE: This id is hard-coded
+                        rwh::WebWindowHandle::new(2024)
+                    }),
                 };
 
                 let surface = unsafe {
@@ -190,40 +188,43 @@ pub struct State<S: timing::Scheduler> {
 impl<S: timing::Scheduler> State<S> {
     pub async fn new<H: handlers::IntrsHandler>(
         config: crate::Config, 
+        config_handler: H::Config,
         scene: &scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
         let internals = StateInternals::new(window).await?;
 
-        Self::init::<H>(internals, config, scene)
+        let handler = H::new(config_handler)?;
+
+        Self::init::<H>(internals, config, scene, handler)
+            .map_err(|(_, e)| e)
     }
 
+    // NOTE: This return type is a little strange,
+    // because we need to recover the StateInternals if
+    // initialization fails.
+    // By doing this, we can keep the program going on the current scene
     fn init<H: handlers::IntrsHandler>(
         internals: StateInternals,
         config: crate::Config,
         scene: &scene::Scene,
-    ) -> anyhow::Result<Self> {
+        handler: H,
+    ) -> Result<Self, (StateInternals, anyhow::Error)> {
         use wgpu::util::DeviceExt as _;
 
-        let StateInternals {
-            window_size,
-            device,
-            queue, ..
-        } = &internals;
-
         // Frame scheduler + benchmark handler
-        let scheduler = S::init(queue, device);
+        let scheduler = S::init(&internals.queue, &internals.device);
 
         // Construct the size
         let size = match config.resolution {
-            crate::Resolution::Dynamic(_) => *window_size,
+            crate::Resolution::Dynamic(_) => internals.window_size,
             crate::Resolution::Sized(size) => size,
             crate::Resolution::Fixed { size, .. } => size,
         };
 
         // Since we are using winit::dpi::PhysicalSize<u32>
         // instead of our own type, we have to manually cast it into a slice
-        let size_buffer = device.create_buffer_init(
+        let size_buffer = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[size.width, size.height]),
@@ -238,10 +239,10 @@ impl<S: timing::Scheduler> State<S> {
             buffers: scene_buffers,
             bg: scene_group, 
             bg_layout: scene_group_layout, ..
-        } = scene.pack(device);
+        } = scene.pack(&internals.device);
 
         // We have to hold onto the Config buffer since it can be updated live
-        let config_buffer = device.create_buffer_init(
+        let config_buffer = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[config.compute]),
@@ -293,14 +294,14 @@ impl<S: timing::Scheduler> State<S> {
             });
         }
 
-        let config_group_layout = device.create_bind_group_layout(
+        let config_group_layout = internals.device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: &config_group_layout_entries,
             }
         );
 
-        let config_group = device.create_bind_group(
+        let config_group = internals.device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 label: None,
                 layout: &config_group_layout,
@@ -309,30 +310,41 @@ impl<S: timing::Scheduler> State<S> {
         );
 
         // Build the render shader module
-        let shader_render = device.create_shader_module(
+        let shader_render = internals.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: None,
-                source: shaders::source::<H>(shaders::ShaderStage::Render)?,
+                source: match shaders::source(shaders::ShaderStage::Render) {
+                    Ok(source) => source,
+                    Err(e) => { 
+                        return Err((internals, e)); 
+                    },
+                },
             },
         );
 
         // Collection of IntrsHandler-specific bindings
-        let pack = H::vars(scene, device);
+        let pack = handler.vars(scene, &internals.device);
 
         // The compute shader module requires workgroup size 
         // and the variable pack
-        let shader_compute = device.create_shader_module(
+        let shader_compute = internals.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: None,
-                source: shaders::source::<H>(shaders::ShaderStage::Compute {
+                source: match shaders::source(shaders::ShaderStage::Compute {
                     wg: config.resolution.wg(),
                     pack: &pack,
-                })?,
+                    logic: handler.logic(),
+                }) {
+                    Ok(source) => source,
+                    Err(e) => {
+                        return Err((internals, e));
+                    }
+                },
             },
         );
 
         // The vertices for the screen-space quad
-        let vertices = device.create_buffer_init(
+        let vertices = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(vertex::CLIP_SPACE_EXTREMA),
@@ -341,7 +353,7 @@ impl<S: timing::Scheduler> State<S> {
         );
 
         // Corresponding indices for screen-space quad
-        let indices = device.create_buffer_init(
+        let indices = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(vertex::INDICES),
@@ -366,7 +378,7 @@ impl<S: timing::Scheduler> State<S> {
             render_group,
             render_pipeline,
         } = package::PipelinePackage::new(
-            device, 
+            &internals.device, 
             StateInternals::TEXTURE_FORMAT,
             &shader_compute, 
             &shader_render, 
@@ -412,17 +424,30 @@ impl<S: timing::Scheduler> State<S> {
     pub fn load<H: handlers::IntrsHandler>(
         &mut self, 
         config: crate::Config, 
-        scene: &scene::Scene
+        config_handler: H::Config,
+        scene: &scene::Scene,
     ) -> anyhow::Result<()> {
-        self.destroy();
-
         let internals = self.internals
             .take()
             .unwrap();
 
-        let state = Self::init::<H>(internals, config, scene)?;
-
-        let _ = mem::replace(self, state);
+        match H::new(config_handler) {
+            Ok(handler) => {
+                match Self::init::<H>(internals, config, scene, handler) {
+                    Ok(state) => {
+                        self.destroy(); 
+                        
+                        let _ = mem::replace(self, state);
+                    },
+                    Err((internals, e)) => {
+                        let _ = self.internals.insert(internals); Err(e)?;
+                    },
+                }
+            },
+            Err(e) => {
+                let _ = self.internals.insert(internals); Err(e)?;
+            },
+        }
 
         Ok(())
     }

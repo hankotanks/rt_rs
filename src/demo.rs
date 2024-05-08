@@ -20,6 +20,6 @@ fn main() -> anyhow::Result<()> {
         type Handler = handlers::BasicIntrs;
         type Scheduler = timing::DefaultScheduler;
 
-        rt::run_native::<Handler, Scheduler>(config, scene)
+        rt::run_native::<Handler, Scheduler>(config, (), scene)
     })
 }

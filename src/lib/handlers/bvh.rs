@@ -1,36 +1,40 @@
 // Needed for `device.create_buffer_init`
 use wgpu::util::DeviceExt as _;
 
-use once_cell::sync::OnceCell;
+use once_cell::unsync;
 
 use crate::bvh;
 
 // This stores all configuration options 
 // for construction of the BVH and its intersection logic
-#[derive(Clone, Copy)]
-pub struct BvhConfig {
-    pub eps: f32,
-}
-
-impl BvhConfig {
-    pub const fn new() -> Self { Self { eps: 0.02, } }
+pub enum BvhConfig {
+    Bytes(Vec<u8>),
+    Runtime { eps: f32, },
+    Default,
 }
 
 impl Default for BvhConfig {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self { Self::Default }
 }
 
-// Since BvhIntrs is never actually initialized, we keep it in a global
-// This is safe, because it is only set once -> before any reads can occur
-static mut CONFIG: BvhConfig = BvhConfig::new();
+pub struct BvhIntrs {
+    pub eps: f32,
 
-// This tracks the size of the tree
-// Populated after BvhIntrs::vars is called in State::new
-static mut NODES: usize = 0;
+    // These members are private, 
+    // binaries should access them through BvhConfig
+    data: unsync::OnceCell<bvh::BvhData>,
+    nodes: unsync::OnceCell<usize>,
+}
 
-// The dummy struct that the handler methods are implemented on
-#[derive(Clone, Copy)]
-pub struct BvhIntrs;
+impl Default for BvhIntrs {
+    fn default() -> Self {
+        Self { 
+            eps: 0.02, 
+            data: unsync::OnceCell::new(),
+            nodes: unsync::OnceCell::new(),
+        }
+    }
+}
 
 impl BvhIntrs {
     // When reloading scenes, we may want to write into our previous buffers
@@ -43,30 +47,53 @@ impl BvhIntrs {
 impl super::IntrsHandler for BvhIntrs {
     type Config = BvhConfig;
 
+    fn new(config: Self::Config) -> anyhow::Result<Self> {
+        let intrs = match config {
+            BvhConfig::Bytes(bytes) => {
+                let data = serde_json::from_slice::<bvh::BvhData>(&bytes)?;
+
+                let nodes = data.uniforms.len();
+
+                Self {
+                    data: unsync::OnceCell::with_value(data),
+                    nodes: unsync::OnceCell::with_value(nodes),
+                    ..Default::default()
+                }
+            },
+            BvhConfig::Runtime { eps } => Self {
+                eps,
+                ..Default::default()
+            },
+            BvhConfig::Default => Self::default(),
+        };
+
+        Ok(intrs)
+    }
+
     fn vars<'a>(
+        &self,
         scene: &crate::scene::Scene, 
         device: &wgpu::Device
     ) -> super::IntrsPack<'a> {
-        let data = unsafe {
-            if let Some(data) = LOADED.get() {
-                data.to_owned()
-            } else {
-                let aabb = bvh::Aabb::from_scene(CONFIG.eps, scene);
-        
-                bvh::BvhData::new(&aabb)
-            }
-        };
+        // Build the BVH if we haven't already
+        let data = self.data.get_or_init(|| {
+            let aabb = bvh::Aabb::from_scene(self.eps, scene);
 
-        unsafe {
-            // This is set before BvhIntrs::logic is called,
-            // enabling the stack to be sized correctly
-            NODES = data.uniforms.len();
-        }
+            bvh::BvhData::new(&aabb)
+        });
+
+        let bvh::BvhData {
+            uniforms,
+            indices, ..
+        } = data;
+
+        // Set the node count if we haven't already
+        self.nodes.get_or_init(|| uniforms.len());
 
         let aabb_uniforms = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
-                contents: bytemuck::cast_slice(&data.uniforms),
+                contents: bytemuck::cast_slice(uniforms),
                 usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
             }
         );
@@ -74,7 +101,7 @@ impl super::IntrsHandler for BvhIntrs {
         let aabb_indices = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
-                contents: bytemuck::cast_slice(&data.indices),
+                contents: bytemuck::cast_slice(indices),
                 usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
             }
         );
@@ -152,25 +179,25 @@ impl super::IntrsHandler for BvhIntrs {
         }
     }
 
-    fn logic() -> &'static str {
-        let mut logic = String::from(LOGIC);
+    fn logic(&self) -> &'static str {
+        // In the shader code below, this line is incomplete.
+        // It needs to be given a type
+        const DECL: &str = "var<private> aabb_stack;";
 
-        unsafe {
-            const DECL: &str = "var<private> aabb_stack;";
-            
-            logic.insert_str(
-                LOGIC.find(DECL).unwrap() + DECL.len() - 1, 
-                format!(": array<u32, {NODES}>").as_str()
-            );
-        }
+        // IntrsHandler::logic is always called after IntrsHandler::vars,
+        // so the diverging case is truly unreachable
+        let Some(nodes) = self.nodes.get().copied() else { 
+            unreachable!();
+        };
 
+        // Perform the replacement
+        let mut logic = String::from(LOGIC); logic.insert_str(
+            LOGIC.find(DECL).unwrap() + DECL.len() - 1, 
+            format!(": array<u32, {nodes}>",).as_str()
+        );
+        
+        // We have to return a static string, so we leak it
         Box::leak(logic.into_boxed_str())
-    }
-    
-    fn configure(config: Self::Config) {
-        unsafe {
-            CONFIG = config;
-        }
     }
 }
 
@@ -336,19 +363,3 @@ const LOGIC: &str = "\
         return intrs;
     }\
 ";
-
-// BvhIntrs::prepare pre-calculates the BvhData from a bytestream,
-// Then stores it in here
-static mut LOADED: OnceCell<bvh::BvhData> = OnceCell::new();
-
-impl BvhIntrs {
-    pub fn prepare(bytes: &[u8]) -> anyhow::Result<()> {
-        let data = serde_json::from_slice::<bvh::BvhData>(bytes)?;
-
-        let _ = unsafe { 
-            LOADED.set(data)
-        };
-
-        Ok(())
-    }
-}

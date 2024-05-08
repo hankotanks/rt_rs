@@ -1,12 +1,14 @@
 use crate::scene;
 
-#[derive(Clone, Copy)]
 pub struct BasicIntrs;
 
 impl super::IntrsHandler for BasicIntrs {
     type Config = ();
     
+    fn new(_config: ()) -> anyhow::Result<Self> { Ok(Self) }
+
     fn vars<'a>(
+        &self,
         _scene: &scene::Scene, device: &wgpu::Device,
     ) -> super::IntrsPack<'a> {
         let layout = device.create_bind_group_layout(
@@ -31,7 +33,7 @@ impl super::IntrsHandler for BasicIntrs {
         }
     }
 
-    fn logic() -> &'static str {"\
+    fn logic(&self) -> &'static str {"\
         fn intrs_tri(r: Ray, s: Prim) -> Intrs {
             let e1: vec3<f32> = vertices[s.b].pos - vertices[s.a].pos;
             let e2: vec3<f32> = vertices[s.c].pos - vertices[s.a].pos;
@@ -96,6 +98,4 @@ impl super::IntrsHandler for BasicIntrs {
             return intrs;
         }
     "}
-    
-    fn configure(_config: Self::Config) { /*  */ }
 }

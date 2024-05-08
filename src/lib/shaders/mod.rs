@@ -3,11 +3,15 @@ use std::{borrow, io};
 use crate::handlers;
 
 pub enum ShaderStage<'a, 'b: 'a> {
-    Compute { wg: u32, pack: &'a handlers::IntrsPack<'b>, },
+    Compute { 
+        wg: u32, 
+        pack: &'a handlers::IntrsPack<'b>,
+        logic: &'a str,
+    },
     Render,
 }
 
-pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
+pub fn source<'a, 'b: 'a>(
     stage: ShaderStage<'a, 'b>,
 ) -> anyhow::Result<wgpu::ShaderSource<'static>> {
     
@@ -28,7 +32,7 @@ pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
         ShaderStage::Render => { //
             include_str!("render.wgsl").into()
         },
-        ShaderStage::Compute { wg, pack, } => {
+        ShaderStage::Compute { wg, pack, logic, .. } => {
             let source: &'static str = include_str!("compute.wgsl");
 
             let source = source.replace(
@@ -62,10 +66,7 @@ pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
             }
 
             // Add the intersection logic
-            let source = source.replace(
-                "fn intrs(ray: Ray, excl: Prim) -> Intrs { return intrs_empty(); }", 
-                H::logic()
-            );
+            let source = source.replace(LOGIC_DEFAULT, logic);
 
             borrow::Cow::Borrowed({
                 Box::leak(source.into_boxed_str())
@@ -75,3 +76,6 @@ pub fn source<'a, 'b: 'a, H: handlers::IntrsHandler>(
 
     Ok(wgpu::ShaderSource::Wgsl(source))
 }
+
+const LOGIC_DEFAULT: &str = //
+    "fn intrs(ray: Ray, excl: Prim) -> Intrs { return intrs_empty(); }";

@@ -67,23 +67,26 @@ fn start<H: handlers::IntrsHandler>(
     benchmark: bool,
     resolution: rt::Resolution, 
     fps: Option<u32>,
-    compute: rt::ComputeConfig, 
+    config_compute: rt::ComputeConfig, 
+    config_handler: H::Config,
     scene: scene::Scene,
 ) -> anyhow::Result<()> {
     let config_default = rt::Config::default();
     let config: rt::Config = rt::Config {
         resolution,
-        compute,
+        compute: config_compute,
         fps: fps.unwrap_or(config_default.fps),
     };
     
     if benchmark {
         pollster::block_on({
-            rt::run_native::<H, timing::BenchScheduler>(config, scene)
+            rt::run_native::<H, timing::BenchScheduler>
+                (config, config_handler, scene)
         })
     } else {
         pollster::block_on({
-            rt::run_native::<H, timing::DefaultScheduler>(config, scene)
+            rt::run_native::<H, timing::DefaultScheduler>
+                (config, config_handler, scene)
         })
     }
 }
@@ -120,14 +123,14 @@ fn main() -> anyhow::Result<()> {
         _ => rt::Resolution::default(),
     };
 
-    let compute_default = rt::ComputeConfig::default();
-    let compute = rt::ComputeConfig {
+    let config_compute_default = rt::ComputeConfig::default();
+    let config_compute = rt::ComputeConfig {
         bounces: compute_bounces
-            .unwrap_or(compute_default.bounces),
+            .unwrap_or(config_compute_default.bounces),
         camera_light_source: compute_camera_light_source
-            .unwrap_or(compute_default.camera_light_source),
+            .unwrap_or(config_compute_default.camera_light_source),
         ambience: compute_ambience
-            .unwrap_or(compute_default.ambience),
+            .unwrap_or(config_compute_default.ambience),
         ..Default::default()
     };
 
@@ -139,37 +142,39 @@ fn main() -> anyhow::Result<()> {
         serde_json::from_reader(scene_reader)?;
 
     if handler_naive {
-        start::<handlers::BasicIntrs>(benchmark, resolution, fps, compute, scene)
+        start::<handlers::BasicIntrs>
+            (benchmark, resolution, fps, config_compute, (), scene)
     } else if let Some(args) = handler_bvh {
         use io::Read as _;
-        use rt::handlers::IntrsHandler as _;
 
-        match args.len() {
-            0 => { /*  */ },
-            1 => match args[0].parse::<f32>() {
-                Ok(eps) => handlers::BvhIntrs::configure({
-                    handlers::BvhConfig { eps, }
-                }),
-                Err(_) => match fs::File::open(&args[0]) {
-                    Ok(file) => {
-                        let bytes = file
-                            .bytes()
-                            .collect::<Result<Vec<_>, io::Error>>()?;
+        let config_handler: handlers::BvhConfig = match args.len() {
+            0 => handlers::BvhConfig::Default,
+            1 => {
+                match args[0].parse::<f32>() {
+                    Ok(eps) => handlers::BvhConfig::Runtime { eps, },
+                    Err(_) => match fs::File::open(&args[0]) {
+                        Ok(file) => {
+                            let bytes = file
+                                .bytes()
+                                .collect::<Result<Vec<_>, io::Error>>()?;
 
-                        handlers::BvhIntrs::prepare(bytes.as_slice())?;
+                            handlers::BvhConfig::Bytes(bytes)
+                        },
+                        Err(_) => anyhow::bail!("\
+                            Flag --handler-bvh requires either:
+                              - The path to a precomputed BVH file
+                              - An epsilon value (f32)\
+                        "),
                     },
-                    Err(_) => anyhow::bail!("\
-                        Flag --handler-bvh requires either:
-                          - The path to a precomputed BVH file
-                          - An epsilon value (f32)\
-                    "),
-                },
+                }
             },
             _ => unreachable!(),
-        }
+        };
 
-        start::<handlers::BvhIntrs>(benchmark, resolution, fps, compute, scene)
+        start::<handlers::BvhIntrs>
+            (benchmark, resolution, fps, config_compute, config_handler, scene)
     } else {
-        start::<handlers::BlankIntrs>(benchmark, resolution, fps, compute, scene)
+        start::<handlers::BlankIntrs>
+            (benchmark, resolution, fps, config_compute, (), scene)
     }
 }

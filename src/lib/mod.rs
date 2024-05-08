@@ -26,15 +26,15 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 // Define the error type based on the platform
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub type Failed = wasm_bindgen::JsValue;
+        type Failed = wasm_bindgen::JsValue;
     } else {
-        pub type Failed = anyhow::Error;
+        type Failed = anyhow::Error;
     }
 }
 
 // This is a wrapper function to avoid having to cast Err variants
 #[allow(non_snake_case)]
-pub fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
+fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
     #[allow(clippy::let_and_return)]
     result.map_err(|e| {
         let e = Into::<anyhow::Error>::into(e);
@@ -162,14 +162,16 @@ impl Config {
     }
 }
 
+#[allow(unused_mut)]
 pub async fn run_native<H, S>(
     mut config: Config, 
+    mut config_handler: H::Config,
     mut scene: scene::Scene
 ) -> Result<(), Failed> 
     where H: handlers::IntrsHandler, S: timing::Scheduler {
 
     unsafe { 
-        run_internal::<H, S>(&mut config, &mut scene).await 
+        run_internal::<H, S>(&mut config, config_handler, &mut scene).await
     }
 }
 
@@ -186,15 +188,18 @@ pub async fn run_wasm() -> Result<(), Failed> {
         // We don't take benchmarks on WASM
         type WebScheduler = timing::DefaultScheduler;
 
-        // TODO: Switch this to the handler with the best performance
-        // Likely BvhHandler
-        run_internal::<web::WebHandler, WebScheduler>(config, scene)
-            .await
+        // TODO: I'm going to keep web::WebHandler == BasicIntrs
+        // until optimizations are complete
+        run_internal::<web::WebHandler, WebScheduler>
+            (config, <web::WebHandler as handlers::IntrsHandler>::Config::default(), scene).await
+
+            
     }
 }
 
 async unsafe fn run_internal<H, S>(
     config: &mut Config,
+    config_handler: H::Config,
     scene: &mut scene::Scene
 ) -> Result<(), Failed> 
     where H: handlers::IntrsHandler, S: timing::Scheduler {
@@ -220,7 +225,7 @@ async unsafe fn run_internal<H, S>(
     })?;
 
     // Initialize the canvas (WASM only)
-    #[cfg(target_arch = "wasm32")] BAIL(web::init(*config, &window))?;
+    #[cfg(target_arch = "wasm32")] BAIL(web::init(&window))?;
 
     // This needs to be shared with State
     let window = sync::Arc::new(window);
@@ -228,7 +233,9 @@ async unsafe fn run_internal<H, S>(
     // Initialize the state (bail on failure)
     let mut state = {
         let window = window.clone();
-        BAIL(state::State::<S>::new::<H>(*config, scene, window).await)?
+
+        BAIL(state::State::<S>::new::<H>(
+            *config, config_handler, scene, window).await)?
     };
 
     // Keeps track of resize actions. 
@@ -255,7 +262,7 @@ async unsafe fn run_internal<H, S>(
             if #[cfg(target_arch = "wasm32")] { 
                 #[allow(unused_mut)]
                 let mut update_required_web = unsafe {
-                    web::update(window.clone(), &mut state)
+                    web::update(&mut state)
                 };
             } else { 
                 let mut update_required_web = false;

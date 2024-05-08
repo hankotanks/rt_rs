@@ -1,8 +1,10 @@
 use std::{io, fs, path};
 
+use rt::{bvh, handlers};
+
 fn main() -> anyhow::Result<()> {
     use std::io::Write as _;
-    
+
     let parsed = clap::Command::new(env!("CARGO_BIN_NAME"))
         .arg(
             clap::Arg::new("out")
@@ -34,15 +36,15 @@ fn main() -> anyhow::Result<()> {
         .map(io::BufReader::new)
         .unwrap();
 
-    let config = match parsed.get_one::<f32>("eps") {
-        Some(eps) => rt::handlers::BvhConfig { eps: *eps, },
-        None => rt::handlers::BvhConfig::default(),
-    };
-
     let scene = serde_json::from_reader(scene_reader)?;
 
+    let eps = match parsed.get_one::<f32>("eps") {
+        Some(eps) => *eps,
+        None => handlers::BvhIntrs::default().eps,
+    };
+
     let bvh = rt::bvh::BvhData::new({
-        &rt::bvh::Aabb::from_scene(config.eps, &scene)
+        &bvh::Aabb::from_scene(eps, &scene)
     });
     
     fs::File::create(out)?
