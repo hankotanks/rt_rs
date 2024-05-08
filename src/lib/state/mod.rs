@@ -192,52 +192,82 @@ impl<S: timing::Scheduler> State<S> {
         scene: &scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
-        use handlers::IntrsHandler as _;
-
+        // We only build this once
+        // All other state loads pass it back and forth
         let internals = StateInternals::new(window).await?;
 
-        let handler = H::new(config_handler)?;
+        // Helper function to help with branching caused by errors
+        fn new_internal<S: timing::Scheduler, H: handlers::IntrsHandler>(
+            internals: StateInternals,
+            config: crate::Config, 
+            scene: &scene::Scene,
+            handler: H,
+        ) -> anyhow::Result<State<S>> {
+            // If state construction fails at first, we go through the following:
+            // 1. Try it again with a blank handler
+            // 2. Try it again with a blank scene
+            match State::init(internals, config, scene, handler) {
+                Ok(state) => Ok(state),
+                Err((internals, e0)) => {
+                    // Bail if the scene was unloaded.
+                    // There's nothing else to do to save it
+                    if matches!(scene, scene::Scene::Unloaded) {
+                        anyhow::bail!(e0);
+                    }
 
-        // If state construction fails at first, we go through the following:
-        // 1. Try it again with a blank handler
-        // 2. Try it again with a blank scene
-        match Self::init(internals, config, scene, handler) {
-            Ok(state) => Ok(state),
-            Err((internals, e0)) => {
-                let handler = handlers::BlankIntrs::new(())?;
+                    // If the scene was active and failed,
+                    // we can try again with an unloaded one
+                    match State::init(
+                        internals, 
+                        config, 
+                        &scene::Scene::Unloaded, 
+                        H::new(H::Config::default()).unwrap()
+                    ) {
+                        Ok(state) => {
+                            // Inform the user that the event loop hasn't exited
+                            // as a result of the error
+                            log::warn!("\
+                                Scene construction failed, \
+                                state has been loaded with a blank scene \
+                                for the time being.\
+                            ");
 
-                match Self::init(internals, config, scene, handler) {
-                    Ok(state) => {
-                        // Inform the user that the event loop hasn't exited
-                        // as a result of the error
-                        log::warn!("\
-                            Compute shaders could not be compiled due \
-                            to an error in the given intersection handler:
-                            {}\
-                        ", e0);
+                            Ok(state)
+                        },
+                        Err((_, e1)) => {
+                            // Throw error, 
+                            // failure is too catastrophic to continue
+                            let e = anyhow::Error::from(e1)
+                                .context(e0);
 
-                        // We are now using a blank intersection handler
-                        log::warn!("Reloaded with a blank intersection handler.");
+                            anyhow::bail!(e);
+                        },
+                    }
+                },
+            }
+        }
 
-                        Ok(state)
-                    },
-                    Err((_, e1)) => {
-                        // Report original error (doesn't trigger exit)
-                        log::warn!("\
-                            Compute shaders could not be compiled due \
-                            to an error in the given intersection handler.\
-                        ");
+        // Build the handler
+        match H::new(config_handler) {
+            Ok(handler) => new_internal(internals, config, scene, handler),
+            Err(e) => {
+                use handlers::{BlankIntrs, IntrsHandler};
 
-                        // Report scene error (critical)
-                        log::warn!("\
-                            Attempted to reload with a blank intersection handler, \
-                            but encountered a critical error during scene construction.\
-                        ");
+                // If handler construction fails, 
+                // try it again with a blank handler
+                log::warn!("\
+                    Encountered an error while \
+                    constructing the intersection handler, \
+                    `BlankIntrs` will be substituted for the current scene.
+                    {}\
+                ", e);
 
-                        // Throw error
-                        anyhow::bail!(anyhow::Error::from(e1).context(e0));
-                    },
-                }
+                // Build the handler
+                let handler = <BlankIntrs as IntrsHandler>::new(())
+                    .unwrap();
+
+                // Try to construct state
+                new_internal(internals, config, scene, handler)
             },
         }
     }
@@ -255,11 +285,35 @@ impl<S: timing::Scheduler> State<S> {
             .take()
             .unwrap();
 
+        fn destroy<S: timing::Scheduler>(state: &State<S>) {
+            let State {
+                pack,
+                scene_camera_buffer,
+                scene_buffers,
+                config_buffer, ..
+            } = state;
+    
+            // The CPU-side intersection buffers
+            pack.destroy();
+    
+            // The Camera uniform buffer
+            scene_camera_buffer.destroy();
+            
+            // Each buffer in the scene
+            // Includes prims, vertices, etc.
+            for buffer in scene_buffers {
+                buffer.destroy();
+            }
+    
+            // The ComputeConfig buffer
+            config_buffer.destroy();
+        }
+
         match H::new(config_handler) {
             Ok(handler) => {
                 match Self::init::<H>(internals, config, scene, handler) {
                     Ok(state) => {
-                        self.destroy(); 
+                        destroy(&state); 
                         
                         let _ = mem::replace(self, state);
                     },
@@ -567,6 +621,75 @@ impl<S: timing::Scheduler> State<S> {
         }
     }
 
+    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        let Self {
+            internals: Some(StateInternals { 
+                device, 
+                queue, 
+                surface, .. 
+            }), ..
+        } = self else { unreachable!(); };
+
+        let output = surface.get_current_texture()?;
+
+        let view = output.texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = device.create_command_encoder({
+            &wgpu::CommandEncoderDescriptor::default()
+        });
+
+        {
+            let color_attachment = wgpu::RenderPassColorAttachment {
+                view: &view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Load,
+                    store: wgpu::StoreOp::Store,
+                },
+            };
+
+            // No need for fancy features like the depth buffer
+            let mut render_pass = encoder.begin_render_pass(
+                &wgpu::RenderPassDescriptor {
+                    label: None,
+                    color_attachments: &[Some(color_attachment)],
+                    depth_stencil_attachment: None,
+                    ..Default::default()
+                }
+            );
+
+            // Apply the render pipeline
+            render_pass.set_pipeline(&self.render_pipeline);
+
+            // This contains the texture and size
+            render_pass.set_bind_group(0, &self.render_group, &[]);
+
+            // The indices for the screen-space quad
+            render_pass.set_index_buffer(
+                self.indices.slice(..), 
+                wgpu::IndexFormat::Uint32
+            );
+
+            // The vertices for the screen-space quad
+            render_pass.set_vertex_buffer(0, self.vertices.slice(..));
+
+            render_pass.draw_indexed(
+                0..(vertex::INDICES.len() as u32), 
+                0, 
+                0..1
+            ); 
+        }
+
+        // Submit for execution (async)
+        queue.submit(Some(encoder.finish()));
+
+        // Schedule for drawing
+        output.present();
+
+        Ok(())
+    }
+
     pub fn update(&mut self, config: crate::Config) {
         if self.scheduler.ready() {
             self.update_internal(config);
@@ -656,98 +779,5 @@ impl<S: timing::Scheduler> State<S> {
             config_buffer, 0,
             bytemuck::cast_slice(&[config])
         );
-    }
-
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let Self {
-            internals: Some(StateInternals { 
-                device, 
-                queue, 
-                surface, .. 
-            }), ..
-        } = self else { unreachable!(); };
-
-        let output = surface.get_current_texture()?;
-
-        let view = output.texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = device.create_command_encoder({
-            &wgpu::CommandEncoderDescriptor::default()
-        });
-
-        {
-            let color_attachment = wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Load,
-                    store: wgpu::StoreOp::Store,
-                },
-            };
-
-            // No need for fancy features like the depth buffer
-            let mut render_pass = encoder.begin_render_pass(
-                &wgpu::RenderPassDescriptor {
-                    label: None,
-                    color_attachments: &[Some(color_attachment)],
-                    depth_stencil_attachment: None,
-                    ..Default::default()
-                }
-            );
-
-            // Apply the render pipeline
-            render_pass.set_pipeline(&self.render_pipeline);
-
-            // This contains the texture and size
-            render_pass.set_bind_group(0, &self.render_group, &[]);
-
-            // The indices for the screen-space quad
-            render_pass.set_index_buffer(
-                self.indices.slice(..), 
-                wgpu::IndexFormat::Uint32
-            );
-
-            // The vertices for the screen-space quad
-            render_pass.set_vertex_buffer(0, self.vertices.slice(..));
-
-            render_pass.draw_indexed(
-                0..(vertex::INDICES.len() as u32), 
-                0, 
-                0..1
-            ); 
-        }
-
-        // Submit for execution (async)
-        queue.submit(Some(encoder.finish()));
-
-        // Schedule for drawing
-        output.present();
-
-        Ok(())
-    }
-
-    pub fn destroy(&self) {
-        let Self {
-            pack,
-            scene_camera_buffer,
-            scene_buffers,
-            config_buffer, ..
-        } = self;
-
-        // The CPU-side intersection buffers
-        pack.destroy();
-
-        // The Camera uniform buffer
-        scene_camera_buffer.destroy();
-        
-        // Each buffer in the scene
-        // Includes prims, vertices, etc.
-        for buffer in scene_buffers {
-            buffer.destroy();
-        }
-
-        // The ComputeConfig buffer
-        config_buffer.destroy();
     }
 }
