@@ -11,7 +11,7 @@ impl super::IntrsHandler for BlankIntrs {
     
     fn vars<'a>(
         &self,
-        _scene: &scene::Scene, device: &wgpu::Device,
+        _scene: &mut scene::Scene, device: &wgpu::Device,
     ) -> super::IntrsPack<'a> {
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {

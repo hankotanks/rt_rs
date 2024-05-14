@@ -48,7 +48,7 @@ pub trait IntrsHandler {
     // Builds all the requisite buffers and groups
     fn vars<'a>(
         &self,
-        scene: &scene::Scene, 
+        scene: &mut scene::Scene, 
         device: &wgpu::Device,
     ) -> IntrsPack<'a>;
 

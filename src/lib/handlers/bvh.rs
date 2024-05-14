@@ -72,7 +72,7 @@ impl super::IntrsHandler for BvhIntrs {
 
     fn vars<'a>(
         &self,
-        scene: &crate::scene::Scene, 
+        scene: &mut crate::scene::Scene, 
         device: &wgpu::Device
     ) -> super::IntrsPack<'a> {
         // Build the BVH if we haven't already
@@ -98,13 +98,16 @@ impl super::IntrsHandler for BvhIntrs {
             }
         );
 
-        let aabb_indices = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(indices),
-                usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
-            }
-        );
+        if let crate::scene::Scene::Active { prims, .. } = scene {
+            use std::mem;
+
+            let ordered = indices
+                .iter()
+                .map(|&idx| prims[idx as usize])
+                .collect::<Vec<_>>();
+
+            let _ = mem::replace(prims, ordered);
+        }
 
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
@@ -112,18 +115,6 @@ impl super::IntrsHandler for BvhIntrs {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        count: None,
-                        ty: wgpu::BindingType::Buffer {
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                            ty: wgpu::BufferBindingType::Storage { 
-                                read_only: true 
-                            },
-                        },
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
                         visibility: wgpu::ShaderStages::COMPUTE,
                         count: None,
                         ty: wgpu::BindingType::Buffer {
@@ -147,10 +138,6 @@ impl super::IntrsHandler for BvhIntrs {
                         binding: 0,
                         resource: aabb_uniforms.as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: aabb_indices.as_entire_binding(),
-                    },
                 ],
             }
         );
@@ -166,12 +153,6 @@ impl super::IntrsHandler for BvhIntrs {
                     var_decl: "var<storage, read>", 
                     var_type: "array<Aabb>", 
                     buffer: aabb_uniforms,
-                },
-                super::IntrsVar { 
-                    var_name: "aabb_indices", 
-                    var_decl: "var<storage, read>", 
-                    var_type: "array<u32>", 
-                    buffer: aabb_indices,
                 },
             ],
             group,
@@ -301,7 +282,7 @@ const LOGIC: &str = "\
         var intrs: Intrs = intrs_empty();
 
         for(var i: u32 = bb.item_idx; i < (bb.item_idx + bb.item_count); i = i + 1u) {
-            let prim: Prim = primitives[aabb_indices[i]];
+            let prim: Prim = primitives[i];
 
             let temp: Intrs = intrs_tri(ray, prim);
 

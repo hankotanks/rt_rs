@@ -189,7 +189,7 @@ impl<S: timing::Scheduler> State<S> {
     pub async fn new<H: handlers::IntrsHandler>(
         config: crate::Config, 
         config_handler: H::Config,
-        scene: &scene::Scene,
+        scene: &mut scene::Scene,
         window: sync::Arc<window::Window>,
     ) -> anyhow::Result<Self> {
         // We only build this once
@@ -294,7 +294,7 @@ impl<S: timing::Scheduler> State<S> {
     fn init<H: handlers::IntrsHandler>(
         internals: StateInternals,
         config: crate::Config,
-        scene: &scene::Scene,
+        scene: &mut scene::Scene,
         handler: H,
     ) -> Result<Self, (StateInternals, anyhow::Error)> {
         use wgpu::util::DeviceExt as _;
