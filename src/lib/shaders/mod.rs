@@ -50,15 +50,24 @@ pub fn source<'a, 'b: 'a>(
             for (binding, var) in vars.iter().enumerate() {
                 let handlers::IntrsVar { 
                     var_name, 
-                    var_decl, 
-                    var_type, .. 
+                    var_ty, 
+                    buffer_ty, .. 
                 } = var;
+
+                let var_decl = match buffer_ty {
+                    wgpu::BufferBindingType::Uniform => //
+                        "var<uniform>",
+                    wgpu::BufferBindingType::Storage { read_only: true } => //
+                        "var<storage, read>",
+                    wgpu::BufferBindingType::Storage { read_only: false } => //
+                        "var<storage, read_write>",
+                };
                 
                 // NOTE: group(3) is hard-coded
                 // See the same behavior in `State::update`
                 let binding = format!("
                     @group(3) @binding({binding})
-                    {var_decl} {var_name}: {var_type};
+                    {var_decl} {var_name}: {var_ty};
                 ");
 
                 // The insertion index changes each time

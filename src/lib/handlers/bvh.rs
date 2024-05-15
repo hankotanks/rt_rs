@@ -144,15 +144,13 @@ impl super::IntrsHandler for BvhIntrs {
 
         super::IntrsPack {
             vars: vec![
-                // TODO: 2 future changes
-                // - `var_decl` can be a vec of terms: ["storage", "read"]
-                // - Should add a field with struct declarations that are
-                //   relevant to the handler's logic
                 super::IntrsVar { 
-                    var_name: "aabb_uniforms", 
-                    var_decl: "var<storage, read>", 
-                    var_type: "array<Aabb>", 
+                    var_name: "aabb_uniforms",
+                    var_ty: "array<Aabb>", 
                     buffer: aabb_uniforms,
+                    buffer_ty: wgpu::BufferBindingType::Storage { 
+                        read_only: true, 
+                    },
                 },
             ],
             group,

@@ -13,9 +13,9 @@ use crate::scene;
 #[derive(Debug)]
 pub struct IntrsVar<'a> {
     pub var_name: &'a str,
-    pub var_decl: &'a str,
-    pub var_type: &'a str,
+    pub var_ty: &'a str,
     pub buffer: wgpu::Buffer,
+    pub buffer_ty: wgpu::BufferBindingType,
 }
 
 impl<'a> IntrsVar<'a> {
