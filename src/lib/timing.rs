@@ -105,63 +105,51 @@ pub struct BenchScheduler {
     set: wgpu::QuerySet,
     buffer: wgpu::Buffer,
     buffer_read: wgpu::Buffer,
-    times: sync::Arc<sync::Mutex<Vec<f32>>>,
     times_handle: thread::JoinHandle<()>,
+    times_sender: sync::mpsc::Sender<f32>,
 }
 
 impl Scheduler for BenchScheduler {
     fn init(queue: &wgpu::Queue, device: &wgpu::Device) -> Self {
-        let times: sync::Arc<sync::Mutex<Vec<f32>>> = //
-            sync::Arc::new(sync::Mutex::new(Vec::new()));
+        let (times_sender, times_reciever) = sync::mpsc::channel();
 
-        let times_chart = sync::Arc::clone(&times);
         let times_handle = std::thread::spawn(move || {
-            
-            use plotters::drawing::IntoDrawingArea;
-            use plotters::style::Palette;
-            use plotters::{style, series, chart};
+            let mut data = Vec::new();
 
-            let mut window: piston_window::PistonWindow = piston_window::WindowSettings::new(
-                "Compute Pass Completion Time", 
-                [450, 300]
-            ).samples(4).build().unwrap();
+            loop {
+                match times_reciever.recv() {
+                    Ok(value) => //
+                        data.push((data.len() as f64, value as f64)),
+                    Err(_) => break,
+                }
 
-            let mut inner = Some(sync::Arc::clone(&times_chart));
+                // TODO: Do I really have to clone the data here?
+                let chart = plotlib::repr::Plot::new(data.clone())
+                    .line_style(plotlib::style::LineStyle::new().colour("#FF0000"));
 
-            while let Some(_) = plotters_piston::draw_piston_window(&mut window, |b| {
-                let root = b.into_drawing_area();
-
-                
-                if let Some(times) = inner.take() {
-                    let times = times.lock()?;
-
-                    let times_max = *times
-                    .iter()
-                    .max_by(|a, b| a.total_cmp(b))
-                    .unwrap_or(&1.);
-
-                    let times_min = *times
+                let chart_view = { 
+                    let data_max = *data
                         .iter()
+                        .map(|(_, value)| value)
+                        .max_by(|a, b| a.total_cmp(b))
+                        .unwrap_or(&1.);
+
+                    let data_min = *data
+                        .iter()
+                        .map(|(_, value)| value)
                         .max_by(|a, b| b.total_cmp(a))
                         .unwrap_or(&0.);
 
-                    let mut chart = chart::ChartBuilder::on(&root)
-                        .build_cartesian_2d(0..times.len(), times_min..times_max)?;
+                    plotlib::view::ContinuousView::new()
+                        .add(chart)
+                        .y_range(data_min, data_max)
+                        .x_range(0., data.len() as f64)
+                };
 
-                    chart.configure_mesh().draw()?;
+                let chart_page = plotlib::page::Page::single(&chart_view);
 
-                    chart.draw_series(series::LineSeries::new(
-                        (0..).zip(times.iter().copied()),
-                        &style::Palette99::pick(0),
-                    ));
-
-                }
-
-                
-                Ok(())
-            }) {
-                inner.insert(sync::Arc::clone(&times_chart));
-            }
+                let _ = chart_page.save("benchmark.svg");
+            } 
         });
 
         Self {
@@ -184,8 +172,8 @@ impl Scheduler for BenchScheduler {
                 usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: true,
             }),
-            times,
             times_handle,
+            times_sender,
         }
     }
 
@@ -249,7 +237,7 @@ impl Scheduler for BenchScheduler {
             period,
             completed,
             buffer_read, 
-            times, .. 
+            times_sender, .. 
         } = self;
 
         let completed = completed
@@ -269,15 +257,7 @@ impl Scheduler for BenchScheduler {
             if let Some(frame_time) = end.checked_sub(start) {
                 let frame_time = 0.000001 * *period * frame_time as f32;
 
-                if let sync::LockResult::Ok(mut times) = times.lock() {
-                    times.push(frame_time);
-                }
-                
-                log::info!("{:?}", frame_time);
-            }
-
-            #[cfg(not(target_arch = "wasm32"))] {
-                // TODO
+                let _ = times_sender.send(frame_time);
             }
         }  
 

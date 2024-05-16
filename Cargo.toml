@@ -55,9 +55,7 @@ chrono = "0.4.35"
 pollster = "0.3.0"
 simple_logger = "4.3.3"
 clap = { version = "3.2.23", features = ["derive"], optional = true }
-plotters = "0.3.5"
-plotters-piston = "0.3.0"
-piston_window = "0.112.0"
+plotlib = "0.5.1"
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
