@@ -1,4 +1,7 @@
 use std::{sync, thread};
+
+use resvg::tiny_skia;
+
 pub struct SchedulerEntry<'a> {
     pub ty: wgpu::BindingType,
     pub resource: wgpu::BindingResource<'a>,
@@ -111,7 +114,14 @@ pub struct BenchScheduler {
 }
 
 impl BenchScheduler {
-    const GRAPH_ENTRIES: Option<usize> = Some(200);
+    // The total number of entries to benchmark
+    // If None: Benchmarking won't stop
+    const GRAPH_ENTRIES: Option<usize> = None;
+
+    // Create a graph every N compute passes
+    // If None: Graph is only generated when N passes have run such that
+    // GRAPH_ENTRIES == Some(N)
+    const GRAPH_ENTRY_INTERVAL: Option<usize> = Some(10);
 }
 
 impl Scheduler for BenchScheduler {
@@ -119,93 +129,50 @@ impl Scheduler for BenchScheduler {
         let (times_sender, times_reciever) = sync::mpsc::channel();
 
         let times_handle = std::thread::spawn(move || {
-            use plotlib::{repr, view, style};
-
-            use resvg::tiny_skia;
-
             let mut data = Vec::new();
+
+            // The running average of compute pass durations
+            let mut avg = 0.;
 
             loop {
                 match times_reciever.recv() {
                     Ok(value) if value == 0. => continue,
                     Ok(value) => {
+                        // Begin computing running average
+                        avg *= data.len() as f32;
+                        avg += value;
+
+                        // Add the new data value
                         data.push((data.len() as f64, value as f64));
 
-                        if matches!(Some(data.len()), Self::GRAPH_ENTRIES) {
-                            break;
+                        // Complete the running average
+                        avg /= data.len() as f32;
+
+                        // Indicates that the final data point has been collected
+                        let complete = matches!(Some(data.len()), Self::GRAPH_ENTRIES);
+
+                        // If the last pass has completed or interval is reached
+                        if Self::GRAPH_ENTRY_INTERVAL
+                            .map(|i| data.len() % i)
+                            .unwrap_or(1) == 0 || complete {
+                            
+                            // Generate the graph and save it
+                            match graph(&data, Some(avg)) {
+                                Ok(pixels) => {
+                                    let _ = pixels.save_png("benchmark.png");
+                                }
+                                Err(e) => anyhow::bail!(e),
+                            }
+                        }
+
+                        // Break if we've recorded all data points
+                        if complete {
+                            break Ok(());
                         }
                     },
-                    Err(_) => break,
+                    Err(_) => break Ok(()),
                 }
-            }
-
-            let data_min = data
-                .iter()
-                .map(|(_, value)| *value)
-                .fold(f64::INFINITY, |a, b| a.min(b));
-
-            let data_max = data
-                .iter()
-                .map(|(_, value)| *value)
-                .fold(f64::NEG_INFINITY, |a, b| a.max(b));
-
-            let chart_view = { 
-                // TODO: Do I really have to clone the data here?
-                let chart = repr::Plot::new(data.clone())
-                    .line_style(style::LineStyle::new().colour("#FF0000"));
-
-                view::ContinuousView::new()
-                    .add(chart)
-                    .y_range(data_min, data_max)
-                    .x_range(0., data.len() as f64)
-            };
-
-            fn view_to_pixels(
-                view: impl view::View,
-            ) -> anyhow::Result<tiny_skia::Pixmap> {
-                use plotlib::page;
-
-                let page = page::Page::single(&view);
-
-                match page.to_svg() {
-                    Ok(svg) => {
-                        use resvg::usvg;
-
-                        let mut bytes: Vec<u8> = Vec::new();
-
-                        svg::write(&mut bytes, &svg)?;
-
-                        let tree = usvg::Tree::from_data(
-                            &bytes, 
-                            &resvg::usvg::Options::default(), 
-                            &resvg::usvg::fontdb::Database::new()
-                        )?;
-
-                        let temp = tree.size();
-
-                        let (width, height) = (temp.width() as u32, temp.height() as u32);
-
-                        let mut pixels = tiny_skia::Pixmap::new(width, height)
-                            .unwrap();
-
-                        resvg::render(
-                            &tree, 
-                            tiny_skia::Transform::identity(), 
-                            &mut pixels.as_mut()
-                        );
-
-                        Ok(pixels)
-                    },
-                    Err(e) => anyhow::bail!(e),
-                }
-            }
-
-            match view_to_pixels(chart_view) {
-                Ok(pixels) => pixels
-                    .save_png("benchmark.png")
-                    .map_err(anyhow::Error::from),
-                Err(e) => Err(e),
-            }
+            } 
         });
 
         Self {
@@ -322,5 +289,90 @@ impl Scheduler for BenchScheduler {
         }
 
         completed
+    }
+}
+
+// Construct a graph from data points
+fn graph(data: &[(f64, f64)], avg: Option<f32>) -> anyhow::Result<tiny_skia::Pixmap> {
+    use plotlib::{repr, view, style, page};
+
+    use resvg::usvg;
+
+    use once_cell::sync;
+
+    let data_min = data
+        .iter()
+        .map(|(_, value)| *value)
+        .fold(f64::INFINITY, |a, b| a.min(b));
+
+    let data_max = data
+        .iter()
+        .map(|(_, value)| *value)
+        .fold(f64::NEG_INFINITY, |a, b| a.max(b));
+
+    let chart_view = { 
+        // TODO: Do I really have to clone the data here?
+        let chart = repr::Plot::new(data.to_vec())
+            .legend(String::from("Compute Pass Duration (MS)"))
+            .line_style(style::LineStyle::new().colour("#FF0000"));
+
+        let chart_avg = avg
+            .map(|avg| format!("{avg}ms (average)"))
+            .unwrap_or(String::from(""));
+
+        let chart_avg = repr::Plot::new(Vec::with_capacity(0))
+            .legend(chart_avg);
+
+        view::ContinuousView::new()
+            .add(chart)
+            .add(chart_avg)
+            .x_range(0., data.len() as f64)
+            .x_label("Frame")
+            .y_range(data_min, data_max)
+    };
+
+    static FONT_DATABASE: sync::Lazy<usvg::fontdb::Database> = sync::Lazy::new(|| {
+        let mut fonts = usvg::fontdb::Database::new();
+        
+        fonts.load_system_fonts();
+        fonts
+    });
+
+    match page::Page::single(&chart_view).to_svg() {
+        Ok(svg) => {
+            let mut bytes: Vec<u8> = Vec::new();
+
+            // Write SVG file contents into buffer
+            svg::write(&mut bytes, &svg)?;
+
+            // Reparse it from this buffer
+            let tree = usvg::Tree::from_data(
+                &bytes, 
+                &usvg::Options::default(), 
+                &FONT_DATABASE
+            )?;
+
+            // Grab the graph dimensions
+            let temp = tree.size();
+
+            let ( // Extract width and height from it
+                width, 
+                height
+            ) = (temp.width() as u32, temp.height() as u32);
+
+            // Construct a new Pixmap from these dimensions
+            let mut pixels = tiny_skia::Pixmap::new(width, height)
+                .unwrap();
+
+            // Render into the Pixmap
+            resvg::render(
+                &tree, 
+                tiny_skia::Transform::identity(), 
+                &mut pixels.as_mut()
+            );
+
+            Ok(pixels)
+        },
+        Err(e) => anyhow::bail!(e),
     }
 }
