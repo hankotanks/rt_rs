@@ -198,7 +198,7 @@ impl<S: timing::Scheduler> State<S> {
 
         match H::new(config_handler) {
             Ok(handler) => {
-                return match State::init(internals, config, scene, handler) {
+                match State::init(internals, config, scene, handler) {
                     Ok(state) => Ok(state),
                     Err((_, e)) => {
                         // NOTE: When we load additional scenes after this,
@@ -210,7 +210,7 @@ impl<S: timing::Scheduler> State<S> {
 
                         Err(e)
                     },
-                };
+                }
             },
             Err(e) => {
                 #[cfg(target_arch = "wasm32")]

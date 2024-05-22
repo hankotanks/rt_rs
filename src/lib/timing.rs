@@ -105,8 +105,13 @@ pub struct BenchScheduler {
     set: wgpu::QuerySet,
     buffer: wgpu::Buffer,
     buffer_read: wgpu::Buffer,
-    times_handle: thread::JoinHandle<()>,
+    #[allow(dead_code)]
+    times_handle: thread::JoinHandle<anyhow::Result<()>>,
     times_sender: sync::mpsc::Sender<f32>,
+}
+
+impl BenchScheduler {
+    const GRAPH_ENTRIES: Option<usize> = Some(200);
 }
 
 impl Scheduler for BenchScheduler {
@@ -114,42 +119,93 @@ impl Scheduler for BenchScheduler {
         let (times_sender, times_reciever) = sync::mpsc::channel();
 
         let times_handle = std::thread::spawn(move || {
+            use plotlib::{repr, view, style};
+
+            use resvg::tiny_skia;
+
             let mut data = Vec::new();
 
             loop {
                 match times_reciever.recv() {
-                    Ok(value) => //
-                        data.push((data.len() as f64, value as f64)),
+                    Ok(value) if value == 0. => continue,
+                    Ok(value) => {
+                        data.push((data.len() as f64, value as f64));
+
+                        if matches!(Some(data.len()), Self::GRAPH_ENTRIES) {
+                            break;
+                        }
+                    },
                     Err(_) => break,
                 }
+            }
 
+            let data_min = data
+                .iter()
+                .map(|(_, value)| *value)
+                .fold(f64::INFINITY, |a, b| a.min(b));
+
+            let data_max = data
+                .iter()
+                .map(|(_, value)| *value)
+                .fold(f64::NEG_INFINITY, |a, b| a.max(b));
+
+            let chart_view = { 
                 // TODO: Do I really have to clone the data here?
-                let chart = plotlib::repr::Plot::new(data.clone())
-                    .line_style(plotlib::style::LineStyle::new().colour("#FF0000"));
+                let chart = repr::Plot::new(data.clone())
+                    .line_style(style::LineStyle::new().colour("#FF0000"));
 
-                let chart_view = { 
-                    let data_max = *data
-                        .iter()
-                        .map(|(_, value)| value)
-                        .max_by(|a, b| a.total_cmp(b))
-                        .unwrap_or(&1.);
+                view::ContinuousView::new()
+                    .add(chart)
+                    .y_range(data_min, data_max)
+                    .x_range(0., data.len() as f64)
+            };
 
-                    let data_min = *data
-                        .iter()
-                        .map(|(_, value)| value)
-                        .max_by(|a, b| b.total_cmp(a))
-                        .unwrap_or(&0.);
+            fn view_to_pixels(
+                view: impl view::View,
+            ) -> anyhow::Result<tiny_skia::Pixmap> {
+                use plotlib::page;
 
-                    plotlib::view::ContinuousView::new()
-                        .add(chart)
-                        .y_range(data_min, data_max)
-                        .x_range(0., data.len() as f64)
-                };
+                let page = page::Page::single(&view);
 
-                let chart_page = plotlib::page::Page::single(&chart_view);
+                match page.to_svg() {
+                    Ok(svg) => {
+                        use resvg::usvg;
 
-                let _ = chart_page.save("benchmark.svg");
-            } 
+                        let mut bytes: Vec<u8> = Vec::new();
+
+                        svg::write(&mut bytes, &svg)?;
+
+                        let tree = usvg::Tree::from_data(
+                            &bytes, 
+                            &resvg::usvg::Options::default(), 
+                            &resvg::usvg::fontdb::Database::new()
+                        )?;
+
+                        let temp = tree.size();
+
+                        let (width, height) = (temp.width() as u32, temp.height() as u32);
+
+                        let mut pixels = tiny_skia::Pixmap::new(width, height)
+                            .unwrap();
+
+                        resvg::render(
+                            &tree, 
+                            tiny_skia::Transform::identity(), 
+                            &mut pixels.as_mut()
+                        );
+
+                        Ok(pixels)
+                    },
+                    Err(e) => anyhow::bail!(e),
+                }
+            }
+
+            match view_to_pixels(chart_view) {
+                Ok(pixels) => pixels
+                    .save_png("benchmark.png")
+                    .map_err(anyhow::Error::from),
+                Err(e) => Err(e),
+            }
         });
 
         Self {
