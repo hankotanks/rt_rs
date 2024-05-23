@@ -1,6 +1,6 @@
 mod aabb;
 
-pub use aabb::Aabb;
+pub use aabb::{Aabb, Bounds};
 
 // The Aabb tree gets rendered down into an array of AabbUniform structs
 // It's placed at the module root to avoid importing items from siblings

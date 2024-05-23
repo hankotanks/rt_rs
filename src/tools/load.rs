@@ -21,7 +21,7 @@ use rt::{handlers, timing, scene};
 ))]
 #[clap(group(
     clap::ArgGroup::new("handler")
-        .args(&["handler-bvh", "handler-naive"])
+        .args(&["handler-bvh", "handler-bvh-rf", "handler-naive"])
         .multiple(false)
 ))]
 struct Args {
@@ -37,6 +37,9 @@ struct Args {
     // Or a path to a preconstructed BVH
     #[clap(long = "handler-bvh", value_parser, min_values = 0, max_values = 1)]
     handler_bvh: Option<Vec<String>>,
+
+    #[clap(long = "handler-bvh-rf", value_parser, min_values = 0, max_values = 1)]
+    handler_bvh_rf: Option<Vec<f32>>,
 
     #[clap(long = "benchmark", action)]
     benchmark: bool,
@@ -100,6 +103,7 @@ fn main() -> anyhow::Result<()> {
         path,
         handler_naive,
         handler_bvh,
+        handler_bvh_rf,
         benchmark,
         width,
         height,
@@ -172,6 +176,15 @@ fn main() -> anyhow::Result<()> {
         };
 
         start::<handlers::BvhIntrs>
+            (benchmark, resolution, fps, config_compute, config_handler, scene)
+    } else if let Some(args) = handler_bvh_rf {
+        let config_handler = match args.len() {
+            0 => handlers::RfBvhConfig::default(),
+            1 => handlers::RfBvhConfig::Eps(args[0]),
+            _ => unreachable!(),
+        };
+
+        start::<handlers::RfBvhIntrs>
             (benchmark, resolution, fps, config_compute, config_handler, scene)
     } else {
         start::<handlers::BlankIntrs>

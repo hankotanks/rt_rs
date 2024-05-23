@@ -77,7 +77,7 @@ impl super::IntrsHandler for BvhIntrs {
     ) -> super::IntrsPack<'a> {
         // Build the BVH if we haven't already
         let data = self.data.get_or_init(|| {
-            let aabb = bvh::Aabb::from_scene(self.eps, scene);
+            let aabb = bvh::Aabb::from_scene(self.eps, scene, 2);
 
             bvh::BvhData::new(&aabb)
         });

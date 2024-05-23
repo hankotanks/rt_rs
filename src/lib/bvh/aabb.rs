@@ -10,10 +10,10 @@ use crate::{geom, scene};
 #[derive(serde::Serialize)]
 #[derive(Debug)]
 pub struct Bounds {
-    min: [f32; 3],
+    pub min: [f32; 3],
     #[serde(skip)]
     _p0: u32,
-    max: [f32; 3],
+    pub max: [f32; 3],
     #[serde(skip)]
     _p1: u32,
 }
@@ -152,10 +152,11 @@ impl Aabb {
         eps: f32,
         prims: &[geom::Prim], 
         vertices: &[geom::PrimVertex],
+        target_item_count: usize,
     ) {
         use geom::V3Ops as _;
 
-        if self.items.len() <= 2 { 
+        if self.items.len() <= target_item_count { 
             return;
         }
 
@@ -220,11 +221,11 @@ impl Aabb {
         if fst.items.is_empty() {
             self.bounds = snd.bounds;
 
-            self.split(eps, prims, vertices);
+            self.split(eps, prims, vertices, target_item_count);
         } else if snd.items.is_empty() {
             self.bounds = fst.bounds;
 
-            self.split(eps, prims, vertices);
+            self.split(eps, prims, vertices, target_item_count);
         } else {
             self.items.clear();
 
@@ -238,8 +239,8 @@ impl Aabb {
                 vertices
             );
 
-            fst.split(eps, prims, vertices);
-            snd.split(eps, prims, vertices);
+            fst.split(eps, prims, vertices, target_item_count);
+            snd.split(eps, prims, vertices, target_item_count);
 
             self.fst.set(Box::new(fst)).unwrap();
             self.snd.set(Box::new(snd)).unwrap();
@@ -258,6 +259,7 @@ impl Aabb {
     pub fn from_scene(
         eps: f32,
         scene: &scene::Scene,
+        target_item_count: usize,
     ) -> Self {
         let scene::Scene::Active { 
             prims, 
@@ -273,7 +275,7 @@ impl Aabb {
             items: (0..prims.len()).collect()
         };
 
-        root.split(eps, prims, vertices);
+        root.split(eps, prims, vertices, target_item_count);
         root
     }
 }

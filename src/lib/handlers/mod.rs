@@ -4,6 +4,9 @@ pub use basic::BasicIntrs;
 mod bvh;
 pub use bvh::{BvhIntrs, BvhConfig};
 
+mod rf;
+pub use rf::{RfBvhIntrs, RfBvhConfig};
+
 mod blank;
 // NOTE: Dummy intersection handler used for benchmarking
 pub use blank::BlankIntrs;

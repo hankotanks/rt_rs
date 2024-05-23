@@ -21,6 +21,12 @@ fn main() -> anyhow::Result<()> {
                 .long("eps")
                 .number_of_values(1)
                 .value_parser(clap::value_parser!(f32)))
+        .arg(
+            clap::Arg::new("item-count")
+                .long("item-count")
+                .number_of_values(1)
+                .value_parser(clap::value_parser!(usize))
+                .required(true))
         .get_matches();
 
     let out = parsed
@@ -43,8 +49,13 @@ fn main() -> anyhow::Result<()> {
         None => handlers::BvhIntrs::default().eps,
     };
 
+    // This is required so we can safely unwrap
+    let item_count = parsed
+        .get_one::<>("item-count")
+        .unwrap();
+
     let bvh = rt::bvh::BvhData::new({
-        &bvh::Aabb::from_scene(eps, &scene)
+        &bvh::Aabb::from_scene(eps, &scene, *item_count)
     });
     
     fs::File::create(out)?
