@@ -2,13 +2,20 @@ use std::{sync, thread};
 
 use resvg::tiny_skia;
 
+use crate::handlers;
+
 pub struct SchedulerEntry<'a> {
     pub ty: wgpu::BindingType,
     pub resource: wgpu::BindingResource<'a>,
 }
 
 pub trait Scheduler {
-    fn init(queue: &wgpu::Queue, device: &wgpu::Device) -> Self;
+    fn init(
+        queue: &wgpu::Queue, 
+        device: &wgpu::Device, 
+        stats: handlers::IntrsStats
+    ) -> Self;
+
     fn entry(&self) -> Option<SchedulerEntry>;
     fn desc(&self) -> wgpu::ComputePassDescriptor;
     fn pre(&self, encoder: &mut wgpu::CommandEncoder);
@@ -23,7 +30,12 @@ pub struct DefaultScheduler {
 }
 
 impl Scheduler for DefaultScheduler {
-    fn init(_queue: &wgpu::Queue, device: &wgpu::Device) -> Self {
+    fn init(
+        _queue: &wgpu::Queue, 
+        device: &wgpu::Device, 
+        _stats: handlers::IntrsStats
+    ) -> Self {
+
         Self {
             completed: sync::Arc::new(sync::atomic::AtomicBool::new(true)),
             buffer: device.create_buffer(&wgpu::BufferDescriptor {
@@ -125,7 +137,11 @@ impl BenchScheduler {
 }
 
 impl Scheduler for BenchScheduler {
-    fn init(queue: &wgpu::Queue, device: &wgpu::Device) -> Self {
+    fn init(
+        queue: &wgpu::Queue, 
+        device: &wgpu::Device, 
+        stats: handlers::IntrsStats
+    ) -> Self {
         let (times_sender, times_reciever) = sync::mpsc::channel();
 
         let times_handle = std::thread::spawn(move || {
@@ -157,7 +173,7 @@ impl Scheduler for BenchScheduler {
                             .unwrap_or(1) == 0 || complete {
                             
                             // Generate the graph and save it
-                            match graph(&data, Some(avg)) {
+                            match graph(&data, Some(avg), stats) {
                                 Ok(pixels) => {
                                     let _ = pixels.save_png("benchmark.png");
                                 }
@@ -293,7 +309,11 @@ impl Scheduler for BenchScheduler {
 }
 
 // Construct a graph from data points
-fn graph(data: &[(f64, f64)], avg: Option<f32>) -> anyhow::Result<tiny_skia::Pixmap> {
+fn graph(
+    data: &[(f64, f64)], 
+    avg: Option<f32>, 
+    stats: handlers::IntrsStats
+) -> anyhow::Result<tiny_skia::Pixmap> {
     use plotlib::{repr, view, style, page};
 
     use resvg::usvg;
@@ -316,16 +336,34 @@ fn graph(data: &[(f64, f64)], avg: Option<f32>) -> anyhow::Result<tiny_skia::Pix
             .legend(String::from("Compute Pass Duration (MS)"))
             .line_style(style::LineStyle::new().colour("#FF0000"));
 
-        let chart_avg = avg
-            .map(|avg| format!("{avg}ms (average)"))
-            .unwrap_or(String::from(""));
+        let chart_title = {
+            let handlers::IntrsStats { name, .. } = stats;
 
-        let chart_avg = repr::Plot::new(Vec::with_capacity(0))
-            .legend(chart_avg);
+            repr::Plot::new(Vec::with_capacity(0))
+                .legend(format!("Handler: {name}"))
+        };
+
+        let chart_size = {
+            let handlers::IntrsStats { size, .. } = stats;
+
+            repr::Plot::new(Vec::with_capacity(0))
+                .legend(format!("Size: {size} bytes"))
+        };
+
+        let chart_avg = {
+            let chart_avg = avg
+                .map(|avg| format!("Average: {avg}ms"))
+                .unwrap_or(String::from(""));
+            
+            repr::Plot::new(Vec::with_capacity(0))
+                .legend(chart_avg)
+        };
 
         view::ContinuousView::new()
-            .add(chart)
+            .add(chart_title)
+            .add(chart_size)
             .add(chart_avg)
+            .add(chart)
             .x_range(0., data.len() as f64)
             .x_label("Frame")
             .y_range(data_min, data_max)

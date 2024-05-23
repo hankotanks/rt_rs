@@ -1,3 +1,5 @@
+use std::mem;
+
 use once_cell::unsync;
 use wgpu::util::DeviceExt as _;
 
@@ -58,7 +60,7 @@ impl super::IntrsHandler for RfBvhIntrs {
         &self,
         scene: &mut crate::scene::Scene, 
         device: &wgpu::Device,
-    ) -> super::IntrsPack<'a> {
+    ) -> (super::IntrsPack<'a>, super::IntrsStats) {
         let aabb = bvh::Aabb::from_scene(self.eps, scene, 4);
 
         let data = bvh::BvhData::new(&aabb);
@@ -196,7 +198,7 @@ impl super::IntrsHandler for RfBvhIntrs {
             }
         );
 
-        super::IntrsPack {
+        let pack = super::IntrsPack {
             vars: vec![
                 super::IntrsVar { 
                     var_name: "aabb_uniforms",
@@ -209,7 +211,14 @@ impl super::IntrsHandler for RfBvhIntrs {
             ],
             group,
             layout,
-        }
+        };
+
+        let stats = super::IntrsStats {
+            name: "RF-BVH",
+            size: mem::size_of::<RfAabbUniform>() * uniforms_rf.len(),
+        };
+
+        (pack, stats)
     }
 
     fn logic(&self) -> &'static str {

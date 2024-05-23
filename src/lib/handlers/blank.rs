@@ -12,7 +12,7 @@ impl super::IntrsHandler for BlankIntrs {
     fn vars<'a>(
         &self,
         _scene: &mut scene::Scene, device: &wgpu::Device,
-    ) -> super::IntrsPack<'a> {
+    ) -> (super::IntrsPack<'a>, super::IntrsStats) {
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -28,11 +28,18 @@ impl super::IntrsHandler for BlankIntrs {
             }
         );
 
-        super::IntrsPack {
+        let pack = super::IntrsPack {
             vars: Vec::with_capacity(0),
             group,
             layout,
-        }
+        };
+
+        let stats = super::IntrsStats { 
+            name: "Blank",
+            size: 0,
+        };
+
+        (pack, stats)
     }
 
     fn logic(&self) -> &'static str {

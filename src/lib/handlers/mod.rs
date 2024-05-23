@@ -42,6 +42,13 @@ impl<'a> IntrsPack<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+#[derive(Debug)]
+pub struct IntrsStats {
+    pub name: &'static str,
+    pub size: usize,
+}
+
 pub trait IntrsHandler {
     type Config: Default;
 
@@ -53,7 +60,7 @@ pub trait IntrsHandler {
         &self,
         scene: &mut scene::Scene, 
         device: &wgpu::Device,
-    ) -> IntrsPack<'a>;
+    ) -> (IntrsPack<'a>, IntrsStats);
 
     // Contains all of the intersection logic
     fn logic(&self) -> &'static str;

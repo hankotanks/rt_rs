@@ -1,3 +1,5 @@
+use std::mem;
+
 // Needed for `device.create_buffer_init`
 use wgpu::util::DeviceExt as _;
 
@@ -74,7 +76,7 @@ impl super::IntrsHandler for BvhIntrs {
         &self,
         scene: &mut crate::scene::Scene, 
         device: &wgpu::Device
-    ) -> super::IntrsPack<'a> {
+    ) -> (super::IntrsPack<'a>, super::IntrsStats) {
         // Build the BVH if we haven't already
         let data = self.data.get_or_init(|| {
             let aabb = bvh::Aabb::from_scene(self.eps, scene, 2);
@@ -99,8 +101,6 @@ impl super::IntrsHandler for BvhIntrs {
         );
 
         if let crate::scene::Scene::Active { prims, .. } = scene {
-            use std::mem;
-
             let ordered = indices
                 .iter()
                 .map(|&idx| prims[idx as usize])
@@ -142,7 +142,7 @@ impl super::IntrsHandler for BvhIntrs {
             }
         );
 
-        super::IntrsPack {
+        let pack = super::IntrsPack {
             vars: vec![
                 super::IntrsVar { 
                     var_name: "aabb_uniforms",
@@ -155,7 +155,14 @@ impl super::IntrsHandler for BvhIntrs {
             ],
             group,
             layout,
-        }
+        };
+
+        let stats = super::IntrsStats {
+            name: "BVH",
+            size: mem::size_of::<bvh::AabbUniform>() * uniforms.len(),
+        };
+
+        (pack, stats)
     }
 
     fn logic(&self) -> &'static str {

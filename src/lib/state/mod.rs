@@ -151,7 +151,9 @@ pub struct State<S: timing::Scheduler> {
     scheduler: S,
 
     // CPU-side of the intersection logic
-    pack: handlers::IntrsPack<'static>,
+    pack_vars: handlers::IntrsPack<'static>,
+    #[allow(dead_code)]
+    pack_stats: handlers::IntrsStats,
 
     // Shader modules
     shader_compute: wgpu::ShaderModule,
@@ -236,14 +238,14 @@ impl<S: timing::Scheduler> State<S> {
 
         fn destroy<S: timing::Scheduler>(state: &State<S>) {
             let State {
-                pack,
+                pack_vars,
                 scene_camera_buffer,
                 scene_buffers,
                 config_buffer, ..
             } = state;
     
             // The CPU-side intersection buffers
-            pack.destroy();
+            pack_vars.destroy();
     
             // The Camera uniform buffer
             scene_camera_buffer.destroy();
@@ -298,9 +300,6 @@ impl<S: timing::Scheduler> State<S> {
         handler: H,
     ) -> Result<Self, (StateInternals, anyhow::Error)> {
         use wgpu::util::DeviceExt as _;
-
-        // Frame scheduler + benchmark handler
-        let scheduler = S::init(&internals.queue, &internals.device);
 
         // Construct the size
         let size = match config.resolution {
@@ -359,6 +358,12 @@ impl<S: timing::Scheduler> State<S> {
             },
         ];
 
+        // Collection of IntrsHandler-specific bindings
+        let (pack_vars, pack_stats) = handler.vars(scene, &internals.device);
+
+        // Frame scheduler + benchmark handler
+        let scheduler = S::init(&internals.queue, &internals.device, pack_stats);
+
         // The scheduler's buffers (if its using them)
         // need to piggyback off group 2
         // Otherwise, they will always be available to map
@@ -409,9 +414,6 @@ impl<S: timing::Scheduler> State<S> {
             },
         );
 
-        // Collection of IntrsHandler-specific bindings
-        let pack = handler.vars(scene, &internals.device);
-
         // The compute shader module requires workgroup size 
         // and the variable pack
         let shader_compute = internals.device.create_shader_module(
@@ -419,7 +421,7 @@ impl<S: timing::Scheduler> State<S> {
                 label: None,
                 source: match shaders::source(shaders::ShaderStage::Compute {
                     wg: config.resolution.wg(),
-                    pack: &pack,
+                    pack: &pack_vars,
                     logic: handler.logic(),
                 }) {
                     Ok(source) => source,
@@ -451,7 +453,7 @@ impl<S: timing::Scheduler> State<S> {
         let handlers::IntrsPack { 
             vars, 
             layout, .. 
-        } = &pack;
+        } = &pack_vars;
 
         let layouts = if vars.is_empty() {
             vec![&config_group_layout, &scene_group_layout]
@@ -479,7 +481,8 @@ impl<S: timing::Scheduler> State<S> {
 
             scheduler,
 
-            pack,
+            pack_vars,
+            pack_stats,
 
             shader_compute,
             shader_render,
@@ -510,7 +513,7 @@ impl<S: timing::Scheduler> State<S> {
             internals: Some(StateInternals { device, queue, .. }),
             shader_compute,
             shader_render,
-            pack: handlers::IntrsPack { vars, layout, .. }, 
+            pack_vars: handlers::IntrsPack { vars, layout, .. }, 
             size_buffer,
             scene_group_layout,
             config_group_layout,  ..
@@ -676,7 +679,7 @@ impl<S: timing::Scheduler> State<S> {
                 config_group, 
                 scene_group,
                 compute_group,
-                pack: handlers::IntrsPack { vars, group, .. }, ..
+                pack_vars: handlers::IntrsPack { vars, group, .. }, ..
             } = self;
 
             compute_pass.set_bind_group(0, compute_group, &[]);
