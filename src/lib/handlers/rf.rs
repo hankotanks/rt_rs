@@ -1,3 +1,6 @@
+use once_cell::unsync;
+use wgpu::util::DeviceExt as _;
+
 use crate::bvh;
 
 #[repr(C)]
@@ -19,12 +22,24 @@ impl Default for RfBvhConfig {
 
 pub struct RfBvhIntrs {
     eps: f32,
+    nodes: unsync::OnceCell<usize>,
 }
 
 impl Default for RfBvhIntrs {
     fn default() -> Self {
-        Self { eps: 0.02, }
+        Self { 
+            eps: 0.02, 
+            nodes: unsync::OnceCell::new(),
+        }
     }
+}
+
+impl RfBvhIntrs {
+    // When reloading scenes, we may want to write into our previous buffers
+    const COPY_USAGES: wgpu::BufferUsages = {
+        wgpu::BufferUsages::COPY_SRC //
+            .union(wgpu::BufferUsages::COPY_DST) //
+    };
 }
 
 impl super::IntrsHandler for RfBvhIntrs {
@@ -34,7 +49,7 @@ impl super::IntrsHandler for RfBvhIntrs {
         where Self: Sized {
 
         Ok(match config {
-            RfBvhConfig::Eps(eps) => Self { eps },
+            RfBvhConfig::Eps(eps) => Self { eps, ..Default::default() },
             RfBvhConfig::Default => Self::default(),
         })
     }
@@ -52,6 +67,9 @@ impl super::IntrsHandler for RfBvhIntrs {
             uniforms,
             indices, ..
         } = data;
+
+        // Set the node count if we haven't already
+        self.nodes.get_or_init(|| uniforms.len());
 
         let mut uniforms_rf = Vec::with_capacity(uniforms.len());
 
@@ -137,10 +155,31 @@ impl super::IntrsHandler for RfBvhIntrs {
             }
         }
 
+        let aabb_uniforms = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&uniforms_rf),
+                usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
+            }
+        );
+
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
-                entries: &[]
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::COMPUTE,
+                        count: None,
+                        ty: wgpu::BindingType::Buffer {
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                            ty: wgpu::BufferBindingType::Storage { 
+                                read_only: true 
+                            },
+                        },
+                    },
+                ]
             }
         );
 
@@ -148,19 +187,50 @@ impl super::IntrsHandler for RfBvhIntrs {
             &wgpu::BindGroupDescriptor {
                 label: None,
                 layout: &layout,
-                entries: &[],
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: aabb_uniforms.as_entire_binding(),
+                    },
+                ],
             }
         );
 
         super::IntrsPack {
-            vars: Vec::with_capacity(0),
+            vars: vec![
+                super::IntrsVar { 
+                    var_name: "aabb_uniforms",
+                    var_ty: "array<Aabb>", 
+                    buffer: aabb_uniforms,
+                    buffer_ty: wgpu::BufferBindingType::Storage { 
+                        read_only: true, 
+                    },
+                },
+            ],
             group,
             layout,
         }
     }
 
     fn logic(&self) -> &'static str {
-        "fn intrs(r: Ray, excl: Prim) -> Intrs { return intrs_empty(); }"
+        // In the shader code below, this line is incomplete.
+        // It needs to be given a type
+        const DECL: &str = "var<private> aabb_stack;";
+
+        // IntrsHandler::logic is always called after IntrsHandler::vars,
+        // so the diverging case is truly unreachable
+        let Some(nodes) = self.nodes.get().copied() else { 
+            unreachable!();
+        };
+
+        // Perform the replacement
+        let mut logic = String::from(LOGIC); logic.insert_str(
+            LOGIC.find(DECL).unwrap() + DECL.len() - 1, 
+            format!(": array<u32, {nodes}>",).as_str()
+        );
+        
+        // We have to return a static string, so we leak it
+        Box::leak(logic.into_boxed_str())
     }
 }
 
@@ -263,3 +333,175 @@ fn debug_rf_aabb(bbs: &[RfAabbUniform]) {
 
     debug_rf_aabb_inner(bbs, 0, 0);
 }
+
+const LOGIC: &str = "\
+    struct Bounds {
+        min: vec3<f32>,
+        max: vec3<f32>,
+    }
+
+    struct Aabb {
+        bounds: vec3<u32>,
+        tag: u32
+    }
+
+    fn intrs_tri(r: Ray, s: Prim) -> Intrs {
+        let e1: vec3<f32> = vertices[s.b].pos - vertices[s.a].pos;
+        let e2: vec3<f32> = vertices[s.c].pos - vertices[s.a].pos;
+
+        let p: vec3<f32> = cross(r.dir, e2);
+        let t: vec3<f32> = r.origin - vertices[s.a].pos;
+        let q: vec3<f32> = cross(t, e1);
+
+        let det = dot(e1, p);
+
+        var u: f32 = 0.0;
+        var v: f32 = 0.0;
+        if(det > config.eps) {
+            u = dot(t, p);
+            if(u < 0.0 || u > det) { return intrs_empty(); }
+
+            v = dot(r.dir, q);
+            if(v < 0.0 || u + v > det) { return intrs_empty(); }
+        } else if(det < -1.0 * config.eps) {
+            u = dot(t, p);
+            if(u > 0.0 || u < det) { return intrs_empty(); }
+
+            v = dot(r.dir, q);
+            if(v > 0.0 || u + v < det) { return intrs_empty(); }
+        } else {
+            return intrs_empty();
+        }
+
+        let w: f32 = dot(e2, q) / det;
+        
+        if(w > config.t_max || w < config.t_min) {
+            return intrs_empty();
+        } else {
+            return Intrs(s, w);
+        }
+    }
+
+    const INF_POS: f32 = 0x1.p+38f;
+    const INF_NEG: f32 = -1.0 * INF_POS;
+
+    // Wobble for the intersection test below
+    const EPS: f32 = 0.000002;
+
+    fn collides(bb: Aabb, ray: Ray) -> bool {
+        let a: vec2<f32> = unpack2x16float(bb.bounds.x);
+        let b: vec2<f32> = unpack2x16float(bb.bounds.y);
+        let c: vec2<f32> = unpack2x16float(bb.bounds.z);
+
+        let minima: vec3<f32> = vec3<f32>(a.x, b.x, c.x);
+        let maxima: vec3<f32> = vec3<f32>(a.y, b.y, c.y);
+        
+        var t0 = (minima.x - EPS - ray.origin.x) / ray.dir.x;
+        var t1 = (maxima.x + EPS - ray.origin.x) / ray.dir.x;
+
+        var t_min = min(t0, t1);
+        var t_max = max(t0, t1);
+        
+        t0 = (minima.y - EPS - ray.origin.y) / ray.dir.y;
+        t1 = (maxima.y + EPS - ray.origin.y) / ray.dir.y;
+
+        t_min = max(t_min, min(min(t0, t1), INF_NEG));
+        t_max = min(t_max, max(max(t0, t1), INF_POS));
+        
+        t0 = (minima.z - EPS - ray.origin.z) / ray.dir.z;
+        t1 = (maxima.z + EPS - ray.origin.z) / ray.dir.z;
+
+        t_min = max(t_min, min(min(t0, t1), INF_NEG));
+        t_max = min(t_max, max(max(t0, t1), INF_POS));
+
+        return (t_min < t_max);
+    }
+
+    fn intrs_bvh_helper(idx: u32, ray: Ray, curr: Intrs) -> Intrs {
+        if(idx != 0u) {
+            let prim: Prim = primitives[idx];
+
+            let temp: Intrs = intrs_tri(ray, prim);
+
+            if(temp.t < curr.t) {
+                return temp;
+            }
+        }
+        
+        return curr;
+    }
+
+    fn intrs_bvh(bb: Aabb, ray: Ray, excl: Prim) -> Intrs {
+        var intrs: Intrs = intrs_empty();
+
+        var t = bb.bounds.x & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+        t = (bb.bounds.x >> 16) & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+
+        t = bb.bounds.y & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+        t = (bb.bounds.y >> 16) & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+
+        t = bb.bounds.z & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+        t = (bb.bounds.z >> 16) & 0xFFFF;
+        intrs = intrs_bvh_helper(t, ray, intrs);
+
+        return intrs;
+    }
+
+    // NOTE: The type is specified by BvhIntrs::logic
+    var<private> aabb_stack;
+
+    fn pop(idx: ptr<function, u32>, empty: ptr<function, bool>) -> u32 {
+        if(*idx == 1u) {
+            *empty = true;
+        }
+
+        *idx = *idx - 1u;
+
+        return aabb_stack[*idx];
+    }
+
+    fn push(idx: ptr<function, u32>, bb: u32) {
+        aabb_stack[*idx] = bb;
+
+        *idx = *idx + 1u;
+    }
+
+    fn intrs(r: Ray, excl: Prim) -> Intrs {
+        var stack_idx = 0u;
+        var stack_empty = false;
+
+        push(&stack_idx, 0u);
+
+        var intrs = intrs_empty();
+
+        while(!stack_empty) {
+            let bb_idx = pop(&stack_idx, &stack_empty);
+            let bb = aabb_uniforms[bb_idx];
+
+            if(collides(bb, r)) {
+                if((bb.tag >> 31 & 1) == 1u) {
+                    let temp = intrs_bvh(aabb_uniforms[bb_idx + 1u], r, excl);
+
+                    if(temp.t < intrs.t) {
+                        intrs = temp;
+                    }
+                } else {
+                    let fst: u32 = bb.tag & 0xFFFF;
+                    push(&stack_idx, fst);
+
+                    let snd: u32 = (bb.tag >> 16) & 0xFFFF;
+                    push(&stack_idx, snd);
+
+                    stack_empty = false;
+                }
+            }
+        }
+
+        return intrs;
+    }\
+";
