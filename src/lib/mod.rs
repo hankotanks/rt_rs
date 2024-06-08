@@ -3,9 +3,11 @@ mod vertex;
 mod state;
 mod shaders;
 
+pub mod timing;
 pub mod scene;
 pub mod geom;
 pub mod handlers;
+pub mod bvh;
 
 #[cfg(target_arch = "wasm32")]
 mod web;
@@ -13,7 +15,7 @@ mod web;
 #[cfg(target_arch = "wasm32")]
 pub use web::{update_config, update_scene, update_viewport};
 
-use std::{marker, sync};
+use std::sync;
 
 use winit::{dpi, event, event_loop, keyboard, window};
 
@@ -24,25 +26,28 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 // Define the error type based on the platform
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub type Failed = wasm_bindgen::JsValue;
+        type Failed = wasm_bindgen::JsValue;
     } else {
-        pub type Failed = anyhow::Error;
+        type Failed = anyhow::Error;
     }
 }
 
 // This is a wrapper function to avoid having to cast Err variants
 #[allow(non_snake_case)]
-pub fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
+fn BAIL<T, E: Into<anyhow::Error>>(result: Result<T, E>) -> Result<T, Failed> {
     #[allow(clippy::let_and_return)]
     result.map_err(|e| {
         let e = Into::<anyhow::Error>::into(e);
 
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
+                let _ = web::note("\
+                    Encountered a critical error. \
+                    Check console for details\
+                ");
+
                 wasm_bindgen::JsValue::from_str(&format!("{}", e))
-            } else {
-                e
-            }
+            } else { e }
         }
     })
 }
@@ -138,39 +143,39 @@ impl Default for ComputeConfig {
 #[derive(serde::Deserialize)]
 #[derive(Debug)]
 #[serde(default)]
-pub struct Config<H: handlers::IntrsHandler> {
+pub struct Config {
     pub compute: ComputeConfig,
     pub resolution: Resolution,
     pub fps: u32,
-    pub canvas_raw_handle: u32,
-
-    #[serde(skip)]
-    pub handler: marker::PhantomData<fn() -> H>
 }
 
-impl<H: handlers::IntrsHandler> Default for Config<H> {
+impl Default for Config {
     fn default() -> Self { Self::new() }
 }
 
 // Config::update defaults to true, so deserialization automatically
 // sets the flag
-impl<H: handlers::IntrsHandler> Config<H> {
+impl Config {
     const fn new() -> Self {
         Self {
             compute: ComputeConfig::new(),
             resolution: Resolution::new(),
             fps: 60,
-            canvas_raw_handle: 2024,
-            handler: marker::PhantomData,
         }
     }
 }
 
-pub async fn run_native<H: handlers::IntrsHandler>(
-    mut config: Config<H>, 
+#[allow(unused_mut)]
+pub async fn run_native<H, S>(
+    mut config: Config, 
+    mut config_handler: H::Config,
     mut scene: scene::Scene
-) -> Result<(), Failed> {
-    unsafe { run_internal(&mut config, &mut scene).await }
+) -> Result<(), Failed> 
+    where H: handlers::IntrsHandler, S: timing::Scheduler {
+
+    unsafe {
+        run_internal::<H, S>(&mut config, config_handler, &mut scene).await
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -183,16 +188,25 @@ pub async fn run_wasm() -> Result<(), Failed> {
             scene, ..
         } = &mut web::WEB_STATE;
 
-        // TODO: Switch this to the handler with the best performance
-        // Likely BvhHandler
-        run_internal(config, scene).await
+        // We don't take benchmarks on WASM
+        type WebScheduler = timing::DefaultScheduler;
+
+        // TODO: I'm going to keep web::WebHandler == BasicIntrs
+        // until optimizations are complete
+        run_internal::<web::WebHandler, WebScheduler>
+            (config, <web::WebHandler as handlers::IntrsHandler>::Config::default(), scene).await
+
+            
     }
 }
 
-async unsafe fn run_internal<H: handlers::IntrsHandler>(
-    config: &mut Config<H>,
+async unsafe fn run_internal<H, S>(
+    config: &mut Config,
+    config_handler: H::Config,
     scene: &mut scene::Scene
-) -> Result<(), Failed> {
+) -> Result<(), Failed> 
+    where H: handlers::IntrsHandler, S: timing::Scheduler {
+
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             console_error_panic_hook::set_once();
@@ -214,7 +228,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     })?;
 
     // Initialize the canvas (WASM only)
-    #[cfg(target_arch = "wasm32")] BAIL(web::init(*config, &window))?;
+    #[cfg(target_arch = "wasm32")] BAIL(web::init(&window))?;
 
     // This needs to be shared with State
     let window = sync::Arc::new(window);
@@ -222,7 +236,9 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Initialize the state (bail on failure)
     let mut state = {
         let window = window.clone();
-        BAIL(state::State::new(*config, scene, window).await)?
+
+        BAIL(state::State::<S>::new::<H>(
+            *config, config_handler, scene, window).await)?
     };
 
     // Keeps track of resize actions. 
@@ -241,11 +257,6 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
     // Indicates whether the camera has changed
     let mut update_required_camera = false;
 
-    // Indicates that the previous update step was completed
-    let update_completed = sync::Arc::new({
-        sync::atomic::AtomicBool::new(true)
-    });
-
     // Enter the event loop
     BAIL(event_loop.run(|event, target| {
         // We are only updating config options live on the web
@@ -253,8 +264,8 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] { 
                 #[allow(unused_mut)]
-                let mut update_required_web = unsafe { 
-                    web::update(&mut state) 
+                let mut update_required_web = unsafe {
+                    web::update(&mut state)
                 };
             } else { 
                 let mut update_required_web = false;
@@ -300,7 +311,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
                                 Ok(_) => { /*  */ },
                                 Err(wgpu::SurfaceError::Lost | 
                                     wgpu::SurfaceError::Outdated
-                                ) => state.resize(*config, state.window_size()),
+                                ) => state.resize(*config, window.inner_size()),
                                 Err(e) => failure = BAIL(Err(e)),
                             }
                         },
@@ -314,12 +325,19 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         let frame_instant = chrono::Local::now();
         let frame_duration = 1_000. * (config.fps as f64).recip();
 
-        let temp = prev_frame_instant.signed_duration_since(frame_instant);
-        let temp = temp
+        #[allow(unused_mut)]
+        let mut temp = prev_frame_instant.signed_duration_since(frame_instant);
+        let mut temp = temp
             .num_microseconds()
             .map(|micros| 0.001 * micros as f64)
             .unwrap_or(temp.num_milliseconds() as f64)
             .abs();
+
+        // Prevent death spiral
+        // https://cs.pomona.edu/classes/cs181g/notes/controlling-time.html
+        if temp > frame_duration * 10. {
+            temp = frame_duration; prev_frame_duration = 0.;
+        }
 
         // Update the camera
         // NOTE: Camera updates are tied to FPS
@@ -371,7 +389,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
         }
 
         // Force an update if `web` requests it
-        if update_required_web {
+        if update_required_web && prev_frame_duration < frame_duration {
             prev_frame_duration += frame_duration;
         }
 
@@ -380,9 +398,7 @@ async unsafe fn run_internal<H: handlers::IntrsHandler>(
             // This is platform-specific
             // Queue::on_submitted_work_done is not available on WASM
             // So we implement compute pass completion checking with map_async
-            if update_completed.fetch_and(false, sync::atomic::Ordering::Relaxed) { 
-                state.update(*config, update_completed.clone());
-            }
+            state.update(*config);
 
             if !requested {
                 // Anytime we update, we need to request a redraw

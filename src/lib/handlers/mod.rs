@@ -4,6 +4,9 @@ pub use basic::BasicIntrs;
 mod bvh;
 pub use bvh::{BvhIntrs, BvhConfig};
 
+mod rf;
+pub use rf::{RfBvhIntrs, RfBvhConfig};
+
 mod blank;
 // NOTE: Dummy intersection handler used for benchmarking
 pub use blank::BlankIntrs;
@@ -13,9 +16,15 @@ use crate::scene;
 #[derive(Debug)]
 pub struct IntrsVar<'a> {
     pub var_name: &'a str,
-    pub var_decl: &'a str,
-    pub var_type: &'a str,
+    pub var_ty: &'a str,
     pub buffer: wgpu::Buffer,
+    pub buffer_ty: wgpu::BufferBindingType,
+}
+
+impl<'a> IntrsVar<'a> {
+    pub fn destroy(&self) {
+        self.buffer.destroy();
+    }
 }
 
 #[derive(Debug)]
@@ -25,17 +34,34 @@ pub struct IntrsPack<'a> {
     pub layout: wgpu::BindGroupLayout,
 }
 
-pub trait IntrsHandler: Copy {
-    type Config;
+impl<'a> IntrsPack<'a> {
+    pub fn destroy(&self) {
+        for var in self.vars.iter() {
+            var.destroy();
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+#[derive(Debug)]
+pub struct IntrsStats {
+    pub name: &'static str,
+    pub size: usize,
+}
+
+pub trait IntrsHandler {
+    type Config: Default;
+
+    fn new(config: Self::Config) -> anyhow::Result<Self> 
+        where Self: Sized;
 
     // Builds all the requisite buffers and groups
     fn vars<'a>(
-        scene: &scene::Scene, 
+        &self,
+        scene: &mut scene::Scene, 
         device: &wgpu::Device,
-    ) -> anyhow::Result<IntrsPack<'a>>;
+    ) -> (IntrsPack<'a>, IntrsStats);
 
     // Contains all of the intersection logic
-    fn logic() -> &'static str;
-
-    fn configure(config: Self::Config);
+    fn logic(&self) -> &'static str;
 }

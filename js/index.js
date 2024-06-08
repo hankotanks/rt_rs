@@ -38,13 +38,26 @@ import("../pkg/index.js").then(module => {
 
             return response.text();
         }).then(sceneSerial => {
-            module.update_scene(sceneSerial);
+            const notes = document.getElementById("notes");
+            while(notes.lastElementChild) {
+                notes.removeChild(notes.lastElementChild);
+            }
+
+            try {
+                module.update_scene(sceneSerial);
+            } catch(err) {
+                const temp = document.createElement('div');
+
+                temp.classList.add('note');
+                temp.textContent = //
+                    'Failed to load scene. Returning to previous scene';
+                
+                notes.appendChild(temp);
+            }
         }).catch(console.error);
     };
 
     document.getElementById("config-load-default").onclick = _ => {
         loadScene('default');
     };
-
-    
 }).catch(console.error);

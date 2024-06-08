@@ -5,3 +5,5 @@ node_modules
 /wasm-pack.log
 Cargo.lock
 package-lock.json
+benchmark.svg
+benchmark.png

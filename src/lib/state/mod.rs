@@ -1,72 +1,25 @@
 mod package;
 
-use std::sync;
-
-use wgpu::util::DeviceExt as _;
+use std::{mem, sync};
 
 use winit::{dpi, window};
 
-use crate::{handlers, shaders, vertex};
-use crate::scene;
+use crate::{handlers, scene, shaders, timing, vertex};
 
 #[derive(Debug)]
-pub struct State {
-    // WGPU interface
+struct StateInternals {
+    window_size: dpi::PhysicalSize<u32>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     surface_config: wgpu::SurfaceConfiguration,
-
-    // CPU-side of the intersection logic
-    pack: handlers::IntrsPack<'static>,
-
-    // Shader modules
-    shader_compute: wgpu::ShaderModule,
-    shader_render: wgpu::ShaderModule,
-
-    // Size buffer
-    // NOTE: Included in `compute_group`
-    size_buffer: wgpu::Buffer,
-
-    // Scene buffers & group
-    scene_group_layout: wgpu::BindGroupLayout,
-    scene_group: wgpu::BindGroup,
-    scene_camera_buffer: wgpu::Buffer,
-    #[allow(dead_code)]
-    scene_buffers: Vec<wgpu::Buffer>,
-
-    // Config buffers & group
-    #[allow(dead_code)]
-    config_buffer: wgpu::Buffer,
-    config_group_layout: wgpu::BindGroupLayout,
-    config_group: wgpu::BindGroup,
-    // Buffer to read state of compute pass
-    config_block_buffer: wgpu::Buffer,
-    config_block_buffer_read: wgpu::Buffer,
-
-    // Texture binding group and compute pipeline
-    compute_group: wgpu::BindGroup,
-    compute_pipeline: wgpu::ComputePipeline,
-    
-    // Render pass
-    vertices: wgpu::Buffer,
-    indices: wgpu::Buffer,
-    render_group: wgpu::BindGroup,
-    render_pipeline: wgpu::RenderPipeline,
-
-    // Window
-    window_size: winit::dpi::PhysicalSize<u32>,
 }
 
-impl State {
+impl StateInternals {
     const TEXTURE_FORMAT: wgpu::TextureFormat = //
         wgpu::TextureFormat::Rgba8Unorm;
 
-    pub async fn new<H: handlers::IntrsHandler>(
-        config: crate::Config<H>, 
-        scene: &scene::Scene,
-        window: sync::Arc<window::Window>,
-    ) -> anyhow::Result<Self> {
+    async fn new(window: sync::Arc<window::Window>) -> anyhow::Result<Self> {
         let window_size = match window.inner_size() {
             // This value can later be used as an Extent3D for a texture
             // We never want texture dimensions to be 0,
@@ -91,27 +44,18 @@ impl State {
             backends, ..Default::default()
         });
 
-        // Helper function to construct the surface target on WASM
-        // It depends on the canvas having a particular data field
-        #[cfg(target_arch = "wasm32")]
-        unsafe fn target<H: handlers::IntrsHandler>(
-            config: crate::Config<H>
-        ) -> anyhow::Result<wgpu::SurfaceTargetUnsafe> {
-            use wgpu::rwh;
-
-            Ok(wgpu::SurfaceTargetUnsafe::RawHandle { 
-                raw_display_handle: rwh::RawDisplayHandle::Web({
-                    rwh::WebDisplayHandle::new()
-                }),
-                raw_window_handle: rwh::RawWindowHandle::Web({
-                    rwh::WebWindowHandle::new(config.canvas_raw_handle)
-                }),
-            })
-        }
-
         cfg_if::cfg_if! {
             if #[cfg(target_arch="wasm32")] {
-                let surface_target = unsafe { target(config)? };
+                use wgpu::rwh;
+                let surface_target = wgpu::SurfaceTargetUnsafe::RawHandle { 
+                    raw_display_handle: rwh::RawDisplayHandle::Web({
+                        rwh::WebDisplayHandle::new()
+                    }),
+                    raw_window_handle: rwh::RawWindowHandle::Web({
+                        // NOTE: This id is hard-coded
+                        rwh::WebWindowHandle::new(2024)
+                    }),
+                };
 
                 let surface = unsafe {
                     instance.create_surface_unsafe(surface_target)?
@@ -130,10 +74,18 @@ impl State {
             force_fallback_adapter: false,
         }).await.unwrap();
 
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                let required_features = wgpu::Features::empty();
+            } else {
+                let required_features = wgpu::Features::TIMESTAMP_QUERY;
+            }
+        }
+
         // TODO: In the future we want to enable TIMESTAMP_QUERY
         let device_desc = wgpu::DeviceDescriptor {
             label: None,
-            required_features: wgpu::Features::empty(),
+            required_features,
             required_limits: wgpu::Limits::default(),
         };
 
@@ -142,41 +94,229 @@ impl State {
             .await
             .unwrap();
 
+            let surface_capabilities = surface.get_capabilities(&adapter);
+
+            cfg_if::cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    let format = Self::TEXTURE_FORMAT;
+                } else {
+                    let format = Self::TEXTURE_FORMAT.add_srgb_suffix();
+                }
+            }
+    
+            // Bail immediately if we don't support the given format
+            if !surface_capabilities.formats.contains(&format) {
+                anyhow::bail!(wgpu::SurfaceError::Lost);
+            }
+    
+            let wgpu::SurfaceCapabilities {
+                present_modes,
+                alpha_modes, ..
+            } = surface_capabilities;
+    
+            // Construct the surface configuration
+            let surface_config = wgpu::SurfaceConfiguration {
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                format,
+                width: window_size.width,
+                height: window_size.height,
+                present_mode: present_modes[0],
+                alpha_mode: alpha_modes[0],
+                view_formats: vec![
+                    Self::TEXTURE_FORMAT,
+                    Self::TEXTURE_FORMAT.add_srgb_suffix(),
+                ],
+                desired_maximum_frame_latency: 1,
+            };
+    
+            // Configure the surface (no longer platform-specific)
+            surface.configure(&device, &surface_config);
+    
+            Ok(Self {
+                window_size,
+                device,
+                queue,
+                surface,
+                surface_config,
+            })
+    }
+}
+
+#[derive(Debug)]
+pub struct State<S: timing::Scheduler> {
+    // WGPU interface
+    internals: Option<StateInternals>,
+
+    // Keeps track of frame time
+    scheduler: S,
+
+    // CPU-side of the intersection logic
+    pack_vars: handlers::IntrsPack<'static>,
+    #[allow(dead_code)]
+    pack_stats: handlers::IntrsStats,
+
+    // Shader modules
+    shader_compute: wgpu::ShaderModule,
+    shader_render: wgpu::ShaderModule,
+
+    // Size buffer
+    // NOTE: Included in `compute_group`
+    size_buffer: wgpu::Buffer,
+
+    // Scene buffers & group
+    scene_group_layout: wgpu::BindGroupLayout,
+    scene_group: wgpu::BindGroup,
+    scene_camera_buffer: wgpu::Buffer,
+    #[allow(dead_code)]
+    scene_buffers: Vec<wgpu::Buffer>,
+
+    // Config buffers & group
+    #[allow(dead_code)]
+    config_buffer: wgpu::Buffer,
+    config_group_layout: wgpu::BindGroupLayout,
+    config_group: wgpu::BindGroup,
+
+    // Texture binding group and compute pipeline
+    compute_group: wgpu::BindGroup,
+    compute_pipeline: wgpu::ComputePipeline,
+    
+    // Render pass
+    vertices: wgpu::Buffer,
+    indices: wgpu::Buffer,
+    render_group: wgpu::BindGroup,
+    render_pipeline: wgpu::RenderPipeline,
+}
+
+impl<S: timing::Scheduler> State<S> {
+    pub async fn new<H: handlers::IntrsHandler>(
+        config: crate::Config, 
+        config_handler: H::Config,
+        scene: &mut scene::Scene,
+        window: sync::Arc<window::Window>,
+    ) -> anyhow::Result<Self> {
+        // We only build this once
+        // All other state loads pass it back and forth
+        let internals = StateInternals::new(window).await?;
+
+        match H::new(config_handler) {
+            Ok(handler) => {
+                match State::init(internals, config, scene, handler) {
+                    Ok(state) => Ok(state),
+                    Err((_, e)) => {
+                        // NOTE: When we load additional scenes after this,
+                        // we can always revert to the previous one on failure.
+                        // However, if a blank scene fails to load, 
+                        // there is almost certainly something VERY wrong.
+                        #[cfg(target_arch = "wasm32")]
+                        crate::web::note("Unable to configure empty scene on load")?;
+
+                        Err(e)
+                    },
+                }
+            },
+            Err(e) => {
+                #[cfg(target_arch = "wasm32")]
+                crate::web::note("Failed to initialize intersection handler")?;
+
+                anyhow::bail!(e);
+            }
+        }
+    }
+
+    // This function replaces self with a new state object
+    // (that has initialized a new scene's data)
+    #[cfg(target_arch = "wasm32")]
+    pub fn load<H: handlers::IntrsHandler>(
+        &mut self, 
+        config: crate::Config, 
+        config_handler: H::Config,
+        scene: &scene::Scene,
+    ) -> anyhow::Result<()> {
+        let internals = self.internals
+            .take()
+            .unwrap();
+
+        fn destroy<S: timing::Scheduler>(state: &State<S>) {
+            let State {
+                pack_vars,
+                scene_camera_buffer,
+                scene_buffers,
+                config_buffer, ..
+            } = state;
+    
+            // The CPU-side intersection buffers
+            pack_vars.destroy();
+    
+            // The Camera uniform buffer
+            scene_camera_buffer.destroy();
+            
+            // Each buffer in the scene
+            // Includes prims, vertices, etc.
+            for buffer in scene_buffers {
+                buffer.destroy();
+            }
+    
+            // The ComputeConfig buffer
+            config_buffer.destroy();
+        }
+
+        match H::new(config_handler) {
+            Ok(handler) => {
+                match Self::init::<H>(internals, config, scene, handler) {
+                    Ok(state) => {
+                        destroy(self); 
+                        
+                        let _ = mem::replace(self, state);
+                    },
+                    Err((internals, e)) => {
+                        #[cfg(target_arch = "wasm32")]
+                        crate::web::note("Unable to load new scene")?;
+
+                        let _ = self.internals.insert(internals); Err(e)?;
+                    },
+                }
+            },
+            Err(e) => {
+                // If handler construction fails, 
+                // try it again with a blank handler
+                #[cfg(target_arch = "wasm32")]
+                crate::web::note("Failed to initialize intersection handler")?;
+
+                let _ = self.internals.insert(internals); Err(e)?;
+            },
+        }
+
+        Ok(())
+    }
+
+    // NOTE: This return type is a little strange,
+    // because we need to recover the StateInternals if
+    // initialization fails.
+    // By doing this, we can keep the program going on the current scene
+    fn init<H: handlers::IntrsHandler>(
+        internals: StateInternals,
+        config: crate::Config,
+        scene: &mut scene::Scene,
+        handler: H,
+    ) -> Result<Self, (StateInternals, anyhow::Error)> {
+        use wgpu::util::DeviceExt as _;
+
         // Construct the size
         let size = match config.resolution {
-            crate::Resolution::Dynamic(_) => window_size,
+            crate::Resolution::Dynamic(_) => internals.window_size,
             crate::Resolution::Sized(size) => size,
             crate::Resolution::Fixed { size, .. } => size,
         };
 
         // Since we are using winit::dpi::PhysicalSize<u32>
         // instead of our own type, we have to manually cast it into a slice
-        let size_buffer = device.create_buffer_init(
+        let size_buffer = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[size.width, size.height]),
-                usage: wgpu::BufferUsages::UNIFORM 
-                     | wgpu::BufferUsages::COPY_DST,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }
         );
-
-        // This buffer is used to query the completion of compute passes
-        // to prevent submitting a new one before the previous completes
-        let config_block_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: wgpu::MAP_ALIGNMENT,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-
-        // Since reading from uniforms requires MAPPABLE_PRIMARY_BUFFERS,
-        // We need a second buffer to copy into, then read from
-        let config_block_buffer_read = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: wgpu::MAP_ALIGNMENT,
-            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: true,
-        });
 
         // Get all the buffers, groups associated with the scene
         // These fill group(3)
@@ -185,10 +325,10 @@ impl State {
             buffers: scene_buffers,
             bg: scene_group, 
             bg_layout: scene_group_layout, ..
-        } = scene.pack(&device);
+        } = scene.pack(&internals.device);
 
         // We have to hold onto the Config buffer since it can be updated live
-        let config_buffer = device.create_buffer_init(
+        let config_buffer = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(&[config.compute]),
@@ -196,114 +336,104 @@ impl State {
             }
         );
 
-        let config_group_layout = device.create_bind_group_layout(
+        // A list of all entry layouts in the config group (2)
+        let mut config_group_layout_entries = vec![
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                count: None,
+                ty: wgpu::BindingType::Buffer {
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                    ty: wgpu::BufferBindingType::Uniform,
+                }
+            },
+        ];
+
+        // A list of all entries in the config group (2)
+        let mut config_group_entries = vec![
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: config_buffer.as_entire_binding(),
+            },
+        ];
+
+        // Collection of IntrsHandler-specific bindings
+        let (pack_vars, pack_stats) = handler.vars(scene, &internals.device);
+
+        // Frame scheduler + benchmark handler
+        let scheduler = S::init(&internals.queue, &internals.device, pack_stats);
+
+        // The scheduler's buffers (if its using them)
+        // need to piggyback off group 2
+        // Otherwise, they will always be available to map
+        if let Some(scheduler_entry) = scheduler.entry() {
+            let timing::SchedulerEntry {
+                ty,
+                resource,
+            } = scheduler_entry;
+
+            config_group_layout_entries.push(wgpu::BindGroupLayoutEntry {
+                binding: config_group_layout_entries.len() as u32,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                ty,
+                count: None,
+            });
+
+            config_group_entries.push(wgpu::BindGroupEntry {
+                binding: config_group_entries.len() as u32,
+                resource,
+            });
+        }
+
+        let config_group_layout = internals.device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        count: None,
-                        ty: wgpu::BindingType::Buffer {
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                            ty: wgpu::BufferBindingType::Uniform,
-                        }
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        count: None,
-                        ty: wgpu::BindingType::Buffer {
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                            ty: wgpu::BufferBindingType::Uniform,
-                        }
-                    },
-                ],
+                entries: &config_group_layout_entries,
             }
         );
 
-        let config_group = device.create_bind_group(
+        let config_group = internals.device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 label: None,
                 layout: &config_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: config_buffer.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: config_block_buffer.as_entire_binding(),
-                    },
-                ],
+                entries: &config_group_entries,
             }
         );
 
-        let surface_capabilities = surface.get_capabilities(&adapter);
-
-        cfg_if::cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                let format = Self::TEXTURE_FORMAT;
-            } else {
-                let format = Self::TEXTURE_FORMAT.add_srgb_suffix();
-            }
-        }
-
-        // Bail immediately if we don't support the given format
-        if !surface_capabilities.formats.contains(&format) {
-            anyhow::bail!(wgpu::SurfaceError::Lost);
-        }
-
-        let wgpu::SurfaceCapabilities {
-            present_modes,
-            alpha_modes, ..
-        } = surface_capabilities;
-
-        // Construct the surface configuration
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format,
-            width: window_size.width,
-            height: window_size.height,
-            present_mode: present_modes[0],
-            alpha_mode: alpha_modes[0],
-            view_formats: vec![
-                Self::TEXTURE_FORMAT,
-                Self::TEXTURE_FORMAT.add_srgb_suffix(),
-            ],
-            desired_maximum_frame_latency: 1,
-        };
-
-        // Configure the surface (no longer platform-specific)
-        surface.configure(&device, &surface_config);
-
         // Build the render shader module
-        let shader_render = device.create_shader_module(
+        let shader_render = internals.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: None,
-                source: shaders::source::<H>(shaders::ShaderStage::Render)?,
+                source: match shaders::source(shaders::ShaderStage::Render) {
+                    Ok(source) => source,
+                    Err(e) => { 
+                        return Err((internals, e)); 
+                    },
+                },
             },
         );
 
-        // Collection of IntrsHandler-specific bindings
-        let pack = H::vars(scene, &device)?;
-
         // The compute shader module requires workgroup size 
         // and the variable pack
-        let shader_compute = device.create_shader_module(
+        let shader_compute = internals.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: None,
-                source: shaders::source::<H>(shaders::ShaderStage::Compute {
+                source: match shaders::source(shaders::ShaderStage::Compute {
                     wg: config.resolution.wg(),
-                    pack: &pack,
-                })?,
+                    pack: &pack_vars,
+                    logic: handler.logic(),
+                }) {
+                    Ok(source) => source,
+                    Err(e) => {
+                        return Err((internals, e));
+                    }
+                },
             },
         );
 
         // The vertices for the screen-space quad
-        let vertices = device.create_buffer_init(
+        let vertices = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(vertex::CLIP_SPACE_EXTREMA),
@@ -312,7 +442,7 @@ impl State {
         );
 
         // Corresponding indices for screen-space quad
-        let indices = device.create_buffer_init(
+        let indices = internals.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: bytemuck::cast_slice(vertex::INDICES),
@@ -323,7 +453,7 @@ impl State {
         let handlers::IntrsPack { 
             vars, 
             layout, .. 
-        } = &pack;
+        } = &pack_vars;
 
         let layouts = if vars.is_empty() {
             vec![&config_group_layout, &scene_group_layout]
@@ -337,8 +467,8 @@ impl State {
             render_group,
             render_pipeline,
         } = package::PipelinePackage::new(
-            &device, 
-            Self::TEXTURE_FORMAT,
+            &internals.device, 
+            StateInternals::TEXTURE_FORMAT,
             &shader_compute, 
             &shader_render, 
             size,
@@ -347,12 +477,12 @@ impl State {
         );
 
         Ok(Self {
-            device,
-            queue,
-            surface,
-            surface_config,
+            internals: Some(internals),
 
-            pack,
+            scheduler,
+
+            pack_vars,
+            pack_stats,
 
             shader_compute,
             shader_render,
@@ -367,8 +497,6 @@ impl State {
             config_buffer,
             config_group_layout,
             config_group,
-            config_block_buffer,
-            config_block_buffer_read,
 
             compute_group,
             compute_pipeline,
@@ -377,28 +505,25 @@ impl State {
             indices,
             render_group,
             render_pipeline,
-
-            window_size,
         })
     }
 
     pub fn resize_hard(&mut self, size: dpi::PhysicalSize<u32>) {
-        self.queue.write_buffer(
-            &self.size_buffer, 
-            0,
-            bytemuck::cast_slice(&[size.width, size.height])
-        );
-
         let Self {
-            device,
+            internals: Some(StateInternals { device, queue, .. }),
             shader_compute,
             shader_render,
-            pack: handlers::IntrsPack { vars, layout, .. }, 
+            pack_vars: handlers::IntrsPack { vars, layout, .. }, 
             size_buffer,
             scene_group_layout,
             config_group_layout,  ..
-        } = self;
+        } = self else { unreachable!(); };
 
+        queue.write_buffer(
+            size_buffer, 
+            0,
+            bytemuck::cast_slice(&[size.width, size.height])
+        );
         
         let layouts: Vec<&wgpu::BindGroupLayout> = if vars.is_empty() {
             vec![config_group_layout, scene_group_layout]
@@ -413,7 +538,7 @@ impl State {
             render_pipeline,
         } = package::PipelinePackage::new(
             device, 
-            Self::TEXTURE_FORMAT,
+            StateInternals::TEXTURE_FORMAT,
             shader_compute, 
             shader_render, 
             size, 
@@ -428,18 +553,27 @@ impl State {
         self.render_pipeline = render_pipeline;
     }
 
-    pub fn resize<H: handlers::IntrsHandler>(
+    pub fn resize(
         &mut self,
-        config: crate::Config<H>,
+        config: crate::Config,
         size: winit::dpi::PhysicalSize<u32>
     ) {
+        let Self {
+            internals: Some(StateInternals { 
+                window_size,
+                device,
+                surface,
+                surface_config, ..
+            }), ..
+        } = self else { unreachable!(); };
+
         if size.width > 0 && size.height > 0 {
-            self.window_size = size;
+            let _ = mem::replace(window_size, size);
 
-            self.surface_config.width = size.width;
-            self.surface_config.height = size.height;
+            surface_config.width = size.width;
+            surface_config.height = size.height;
 
-            self.surface.configure(&self.device, &self.surface_config);
+            surface.configure(device, surface_config);
 
             if let crate::Resolution::Dynamic { .. } = config.resolution {
                 self.resize_hard(size);
@@ -447,124 +581,21 @@ impl State {
         }
     }
 
-    pub fn update<H: handlers::IntrsHandler>(
-        &mut self, 
-        config: crate::Config<H>,
-        completed: sync::Arc<sync::atomic::AtomicBool>,
-    ) {
-        if !completed.fetch_or(false, sync::atomic::Ordering::Relaxed) {
-            self.config_block_buffer_read.unmap();
-        }
-
-        let mut encoder = self.device.create_command_encoder(&{
-            wgpu::CommandEncoderDescriptor::default()
-        });
-
-        {
-            let compute_pass_descriptor = //
-                wgpu::ComputePassDescriptor::default();
-
-            let mut compute_pass = encoder
-                .begin_compute_pass(&compute_pass_descriptor);
-
-            compute_pass.set_pipeline(&self.compute_pipeline);
-
-            let Self {
-                config_group, 
-                scene_group,
-                compute_group,
-                pack: handlers::IntrsPack { vars, group, .. }, ..
-            } = self;
-
-            compute_pass.set_bind_group(0, compute_group, &[]);
-            compute_pass.set_bind_group(1, config_group, &[]);
-            compute_pass.set_bind_group(2, scene_group, &[]);
-
-            if !vars.is_empty() {
-                compute_pass.set_bind_group(3, group, &[]);
-            }
-
-            let wg = config.resolution.wg();
-
-            let dpi::PhysicalSize {
-                width,
-                height, ..
-            } = match config.resolution {
-                crate::Resolution::Dynamic { .. } => self.window_size,
-                crate::Resolution::Sized(size) => size,
-                crate::Resolution::Fixed { size, .. } => size,
-            };
-
-            compute_pass.dispatch_workgroups(
-                width.div_euclid(wg), 
-                height.div_euclid(wg), 
-                1
-            );
-        }
-
-        let Self {
-            config_block_buffer,
-            config_block_buffer_read, ..
-        } = self;
-
-        encoder.copy_buffer_to_buffer(
-            config_block_buffer, 0, 
-            config_block_buffer_read, 0, 
-            wgpu::MAP_ALIGNMENT
-        );
-
-        self.queue.submit(Some(encoder.finish()));
-
-        self.config_block_buffer_read.slice(..)
-            .map_async(wgpu::MapMode::Read, move |_| {
-                completed.store(true, sync::atomic::Ordering::Relaxed);
-            });
-    }
-
-    pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {
-        self.queue.write_buffer(
-            &self.scene_camera_buffer, 0, 
-            bytemuck::cast_slice(&[camera])
-        );
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub fn update_config(&mut self, config: crate::ComputeConfig) {
-        self.queue.write_buffer(
-            &self.config_buffer, 0,
-            bytemuck::cast_slice(&[config])
-        );
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub fn update_scene(&mut self, scene: &scene::Scene) {
-        use std::mem;
-        
-        let scene::ScenePack {
-            camera_buffer,
-            buffers,
-            bg, ..
-        } = scene.pack(&self.device);
-
-        let _ = mem::replace(&mut self.scene_group, bg);
-        let _ = mem::replace(&mut self.scene_camera_buffer, camera_buffer);
-
-        for (dst, src) in self.scene_buffers.iter_mut().zip(buffers) {
-            mem::replace(dst, src).destroy();
-        }
-    }
-
-    pub fn window_size(&self) -> dpi::PhysicalSize<u32> {
-        self.window_size
-    }
-
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
+        let Self {
+            internals: Some(StateInternals { 
+                device, 
+                queue, 
+                surface, .. 
+            }), ..
+        } = self else { unreachable!(); };
+
+        let output = surface.get_current_texture()?;
 
         let view = output.texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut encoder = self.device.create_command_encoder({
+        let mut encoder = device.create_command_encoder({
             &wgpu::CommandEncoderDescriptor::default()
         });
 
@@ -611,11 +642,102 @@ impl State {
         }
 
         // Submit for execution (async)
-        self.queue.submit(Some(encoder.finish()));
+        queue.submit(Some(encoder.finish()));
 
         // Schedule for drawing
         output.present();
 
         Ok(())
+    }
+
+    pub fn update(&mut self, config: crate::Config) {
+        if self.scheduler.ready() {
+            self.update_internal(config);
+        }
+    }
+
+    fn update_internal(&mut self, config: crate::Config) {
+        let Self {
+            internals: Some(StateInternals { 
+                device, 
+                queue,
+                window_size, .. 
+            }), ..
+        } = self else { unreachable!(); };
+
+        let mut encoder = device.create_command_encoder(&{
+            wgpu::CommandEncoderDescriptor::default()
+        });
+
+        {
+            let mut compute_pass = encoder
+                .begin_compute_pass(&self.scheduler.desc());
+
+            compute_pass.set_pipeline(&self.compute_pipeline);
+
+            let Self {
+                config_group, 
+                scene_group,
+                compute_group,
+                pack_vars: handlers::IntrsPack { vars, group, .. }, ..
+            } = self;
+
+            compute_pass.set_bind_group(0, compute_group, &[]);
+            compute_pass.set_bind_group(1, config_group, &[]);
+            compute_pass.set_bind_group(2, scene_group, &[]);
+
+            if !vars.is_empty() {
+                compute_pass.set_bind_group(3, group, &[]);
+            }
+
+            let wg = config.resolution.wg();
+
+            let dpi::PhysicalSize {
+                width,
+                height, ..
+            } = match config.resolution {
+                crate::Resolution::Dynamic { .. } => *window_size,
+                crate::Resolution::Sized(size) => size,
+                crate::Resolution::Fixed { size, .. } => size,
+            };
+
+            compute_pass.dispatch_workgroups(
+                width.div_euclid(wg), 
+                height.div_euclid(wg), 
+                1
+            );
+        }
+
+        self.scheduler.pre(&mut encoder);
+
+        queue.submit(Some(encoder.finish()));
+
+        self.scheduler.post(queue, device);
+    }
+
+    pub fn update_camera_buffer(&mut self, camera: scene::CameraUniform) {
+        let Self {
+            internals: Some(StateInternals { queue, .. }), 
+            scene_camera_buffer, ..
+        } = self else { unreachable!(); };
+
+        queue.write_buffer(
+            scene_camera_buffer, 
+            0, 
+            bytemuck::cast_slice(&[camera]),
+        );
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn update_config(&mut self, config: crate::ComputeConfig) {
+        let Self {
+            internals: Some(StateInternals { queue, .. }), 
+            config_buffer, ..
+        } = self else { unreachable!(); };
+
+        queue.write_buffer(
+            config_buffer, 0,
+            bytemuck::cast_slice(&[config])
+        );
     }
 }

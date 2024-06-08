@@ -1,5 +1,4 @@
 use std::{fs, path};
-use std::io::Write as _;
 
 use rt::geom;
 use rt::geom::light as light;
@@ -7,6 +6,8 @@ use rt::geom::light as light;
 use rt::scene;
 
 fn main() -> anyhow::Result<()> {
+    use std::io::Write as _;
+    
     let parsed = clap::Command::new(env!("CARGO_BIN_NAME"))
         .arg(
             clap::Arg::new("out")
@@ -183,11 +184,11 @@ fn main() -> anyhow::Result<()> {
 
     let out = parsed
         .get_one::<String>("out")
-        .map(|temp| path::PathBuf::from(temp))
+        .map(path::PathBuf::from)
         .unwrap();
-
+        
     fs::File::create(out)?
-        .write(serde_json::to_string_pretty(&scene)?.as_bytes())?;
+        .write_all(serde_json::to_string_pretty(&scene)?.as_bytes())?;
 
     Ok(())
 }

@@ -1,28 +1,42 @@
-mod aabb;
+use std::mem;
 
 // Needed for `device.create_buffer_init`
 use wgpu::util::DeviceExt as _;
 
+use once_cell::unsync;
+
+use crate::bvh;
+
 // This stores all configuration options 
 // for construction of the BVH and its intersection logic
-#[derive(Clone, Copy)]
-pub struct BvhConfig {
-    pub eps: f32,
+pub enum BvhConfig {
+    Bytes(Vec<u8>),
+    Runtime { eps: f32, },
+    Default,
 }
 
-// Since BvhIntrs is never actually initialized, we keep it in a global
-// This is safe, because it is only set once -> before any reads can occur
-static mut CONFIG: BvhConfig = BvhConfig {
-    eps: 0.02,
-};
+impl Default for BvhConfig {
+    fn default() -> Self { Self::Default }
+}
 
-// This tracks the size of the tree
-// Populated after BvhIntrs::vars is called in State::new
-static mut NODES: usize = 0;
+pub struct BvhIntrs {
+    pub eps: f32,
 
-// The dummy struct that the handler methods are implemented on
-#[derive(Clone, Copy)]
-pub struct BvhIntrs;
+    // These members are private, 
+    // binaries should access them through BvhConfig
+    data: unsync::OnceCell<bvh::BvhData>,
+    nodes: unsync::OnceCell<usize>,
+}
+
+impl Default for BvhIntrs {
+    fn default() -> Self {
+        Self { 
+            eps: 0.02, 
+            data: unsync::OnceCell::new(),
+            nodes: unsync::OnceCell::new(),
+        }
+    }
+}
 
 impl BvhIntrs {
     // When reloading scenes, we may want to write into our previous buffers
@@ -35,37 +49,65 @@ impl BvhIntrs {
 impl super::IntrsHandler for BvhIntrs {
     type Config = BvhConfig;
 
-    fn vars<'a>(
-        scene: &crate::scene::Scene, 
-        device: &wgpu::Device
-    ) -> anyhow::Result<super::IntrsPack<'a>> {
-        let aabb = unsafe {
-            aabb::Aabb::from_scene(CONFIG.eps, scene)?
+    fn new(config: Self::Config) -> anyhow::Result<Self> {
+        let intrs = match config {
+            BvhConfig::Bytes(bytes) => {
+                let data = serde_json::from_slice::<bvh::BvhData>(&bytes)?;
+
+                let nodes = data.uniforms.len();
+
+                Self {
+                    data: unsync::OnceCell::with_value(data),
+                    nodes: unsync::OnceCell::with_value(nodes),
+                    ..Default::default()
+                }
+            },
+            BvhConfig::Runtime { eps } => Self {
+                eps,
+                ..Default::default()
+            },
+            BvhConfig::Default => Self::default(),
         };
 
-        let data = BvhData::new(&aabb);
+        Ok(intrs)
+    }
 
-        unsafe {
-            // This is set before BvhIntrs::logic is called,
-            // enabling the stack to be sized correctly
-            NODES = data.uniforms.len();
-        }
+    fn vars<'a>(
+        &self,
+        scene: &mut crate::scene::Scene, 
+        device: &wgpu::Device
+    ) -> (super::IntrsPack<'a>, super::IntrsStats) {
+        // Build the BVH if we haven't already
+        let data = self.data.get_or_init(|| {
+            let aabb = bvh::Aabb::from_scene(self.eps, scene, 2);
+
+            bvh::BvhData::new(&aabb)
+        });
+
+        let bvh::BvhData {
+            uniforms,
+            indices, ..
+        } = data;
+
+        // Set the node count if we haven't already
+        self.nodes.get_or_init(|| uniforms.len());
 
         let aabb_uniforms = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: None,
-                contents: bytemuck::cast_slice(&data.uniforms),
+                contents: bytemuck::cast_slice(uniforms),
                 usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
             }
         );
 
-        let aabb_indices = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::cast_slice(&data.indices),
-                usage: wgpu::BufferUsages::STORAGE | Self::COPY_USAGES,
-            }
-        );
+        if let crate::scene::Scene::Active { prims, .. } = scene {
+            let ordered = indices
+                .iter()
+                .map(|&idx| prims[idx as usize])
+                .collect::<Vec<_>>();
+
+            let _ = mem::replace(prims, ordered);
+        }
 
         let layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
@@ -73,18 +115,6 @@ impl super::IntrsHandler for BvhIntrs {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        count: None,
-                        ty: wgpu::BindingType::Buffer {
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                            ty: wgpu::BufferBindingType::Storage { 
-                                read_only: true 
-                            },
-                        },
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
                         visibility: wgpu::ShaderStages::COMPUTE,
                         count: None,
                         ty: wgpu::BindingType::Buffer {
@@ -108,60 +138,52 @@ impl super::IntrsHandler for BvhIntrs {
                         binding: 0,
                         resource: aabb_uniforms.as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: aabb_indices.as_entire_binding(),
-                    },
                 ],
             }
         );
 
-        Ok({
-            super::IntrsPack {
-                vars: vec![
-                    // TODO: 2 future changes
-                    // - `var_decl` can be a vec of terms: ["storage", "read"]
-                    // - Should add a field with struct declarations that are
-                    //   relevant to the handler's logic
-                    super::IntrsVar { 
-                        var_name: "aabb_uniforms", 
-                        var_decl: "var<storage, read>", 
-                        var_type: "array<Aabb>", 
-                        buffer: aabb_uniforms,
+        let pack = super::IntrsPack {
+            vars: vec![
+                super::IntrsVar { 
+                    var_name: "aabb_uniforms",
+                    var_ty: "array<Aabb>", 
+                    buffer: aabb_uniforms,
+                    buffer_ty: wgpu::BufferBindingType::Storage { 
+                        read_only: true, 
                     },
-                    super::IntrsVar { 
-                        var_name: "aabb_indices", 
-                        var_decl: "var<storage, read>", 
-                        var_type: "array<u32>", 
-                        buffer: aabb_indices,
-                    },
-                ],
-                group,
-                layout,
-            }
-        })
+                },
+            ],
+            group,
+            layout,
+        };
+
+        let stats = super::IntrsStats {
+            name: "BVH",
+            size: mem::size_of::<bvh::AabbUniform>() * uniforms.len(),
+        };
+
+        (pack, stats)
     }
 
-    fn logic() -> &'static str {
-        let eps = unsafe {
-            format!("{}", CONFIG.eps)
+    fn logic(&self) -> &'static str {
+        // In the shader code below, this line is incomplete.
+        // It needs to be given a type
+        const DECL: &str = "var<private> aabb_stack;";
+
+        // IntrsHandler::logic is always called after IntrsHandler::vars,
+        // so the diverging case is truly unreachable
+        let Some(nodes) = self.nodes.get().copied() else { 
+            unreachable!();
         };
 
-        let nodes = unsafe {
-            format!("{}", NODES)
-        };
-
-        let logic = LOGIC
-            .replace("<NODES>", &nodes)
-            .replace("<EPS>", &eps);
-
+        // Perform the replacement
+        let mut logic = String::from(LOGIC); logic.insert_str(
+            LOGIC.find(DECL).unwrap() + DECL.len() - 1, 
+            format!(": array<u32, {nodes}>",).as_str()
+        );
+        
+        // We have to return a static string, so we leak it
         Box::leak(logic.into_boxed_str())
-    }
-    
-    fn configure(config: Self::Config) {
-        unsafe {
-            CONFIG = config;
-        }
     }
 }
 
@@ -219,21 +241,25 @@ const LOGIC: &str = "\
 
     const INF_POS: f32 = 0x1.p+38f;
     const INF_NEG: f32 = -1.0 * INF_POS;
+
+    // Wobble for the intersection test below
+    const EPS: f32 = 0.000002;
+
     fn collides(bb: Aabb, ray: Ray) -> bool {
-        var t0 = (bb.bounds.min.x - <EPS> - ray.origin.x) / ray.dir.x;
-        var t1 = (bb.bounds.max.x + <EPS> - ray.origin.x) / ray.dir.x;
+        var t0 = (bb.bounds.min.x - EPS - ray.origin.x) / ray.dir.x;
+        var t1 = (bb.bounds.max.x + EPS - ray.origin.x) / ray.dir.x;
 
         var t_min = min(t0, t1);
         var t_max = max(t0, t1);
         
-        t0 = (bb.bounds.min.y - <EPS> - ray.origin.y) / ray.dir.y;
-        t1 = (bb.bounds.max.y + <EPS> - ray.origin.y) / ray.dir.y;
+        t0 = (bb.bounds.min.y - EPS - ray.origin.y) / ray.dir.y;
+        t1 = (bb.bounds.max.y + EPS - ray.origin.y) / ray.dir.y;
 
         t_min = max(t_min, min(min(t0, t1), INF_NEG));
         t_max = min(t_max, max(max(t0, t1), INF_POS));
         
-        t0 = (bb.bounds.min.z - <EPS> - ray.origin.z) / ray.dir.z;
-        t1 = (bb.bounds.max.z + <EPS> - ray.origin.z) / ray.dir.z;
+        t0 = (bb.bounds.min.z - EPS - ray.origin.z) / ray.dir.z;
+        t1 = (bb.bounds.max.z + EPS - ray.origin.z) / ray.dir.z;
 
         t_min = max(t_min, min(min(t0, t1), INF_NEG));
         t_max = min(t_max, max(max(t0, t1), INF_POS));
@@ -261,7 +287,7 @@ const LOGIC: &str = "\
         var intrs: Intrs = intrs_empty();
 
         for(var i: u32 = bb.item_idx; i < (bb.item_idx + bb.item_count); i = i + 1u) {
-            let prim: Prim = primitives[aabb_indices[i]];
+            let prim: Prim = primitives[i];
 
             let temp: Intrs = intrs_tri(ray, prim);
 
@@ -273,7 +299,8 @@ const LOGIC: &str = "\
         return intrs;
     }
 
-    var<private> aabb_stack: array<u32, <NODES>>;
+    // NOTE: The type is specified by BvhIntrs::logic
+    var<private> aabb_stack;
 
     fn pop(idx: ptr<function, u32>, empty: ptr<function, bool>) -> u32 {
         if(*idx == 1u) {
@@ -322,62 +349,3 @@ const LOGIC: &str = "\
         return intrs;
     }\
 ";
-
-// The Aabb tree gets rendered down into an array of AabbUniform structs
-// It's placed at the module root to avoid importing items from siblings
-#[repr(C)]
-#[derive(Clone, Copy)]
-#[derive(bytemuck::Pod, bytemuck::Zeroable)]
-pub struct AabbUniform {
-    pub fst: u32,
-    pub snd: u32,
-    pub item_idx: u32,
-    pub item_count: u32,
-    pub bounds: aabb::Bounds,
-}
-
-// I've factored out the process of making the Aabb tree compute-friendly
-// for simplicity's sake
-#[derive(Default)]
-pub struct BvhData {
-    pub uniforms: Vec<AabbUniform>,
-    pub indices: Vec<u32>,
-}
-
-impl BvhData {
-    // Construct the shader data from the root node of the tree
-    pub fn new(aabb: &aabb::Aabb) -> Self {
-        let mut data = Self::default();
-
-        fn into_aabb_uniform(
-            data: &mut BvhData,
-            aabb: &aabb::Aabb
-        ) -> u32 {
-            let uniform = data.uniforms.len();
-        
-            data.uniforms.push(AabbUniform {
-                fst: 0,
-                snd: 0,
-                bounds: aabb.bounds,
-                item_idx: data.indices.len() as u32,
-                item_count: aabb.items.len() as u32,
-            });
-        
-            data.indices.extend(aabb.items.iter().map(|&i| i as u32));
-        
-            if let Some(fst) = aabb.fst.get() {
-                data.uniforms[uniform].fst = into_aabb_uniform(data, fst);
-            }
-        
-            if let Some(snd) = aabb.snd.get() {
-                data.uniforms[uniform].snd = into_aabb_uniform(data, snd);
-            }
-
-            uniform as u32
-        }
-        
-        into_aabb_uniform(&mut data, aabb);
-
-        data
-    }
-}

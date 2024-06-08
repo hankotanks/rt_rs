@@ -1,18 +1,76 @@
-use std::{fmt, io};
+use std::fmt;
 
-use once_cell::unsync::OnceCell;
+use once_cell::sync::OnceCell;
 
 use crate::{geom, scene};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(serde::Serialize)]
 #[derive(Debug)]
 pub struct Bounds {
-    min: [f32; 3],
+    pub min: [f32; 3],
+    #[serde(skip)]
     _p0: u32,
-    max: [f32; 3],
+    pub max: [f32; 3],
+    #[serde(skip)]
     _p1: u32,
+}
+
+impl<'de> serde::Deserialize<'de> for Bounds {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de> {
+        
+        #[derive(serde::Deserialize)]
+        struct Intermediate {
+            min: Vec<f32>,
+            max: Vec<f32>,
+        }
+
+        let intermediate = Intermediate::deserialize(deserializer)?;
+
+        let min = match intermediate.min.len() {
+            3 => {
+                let mut min = [0.; 3];
+
+                min.copy_from_slice(&intermediate.min);
+                min
+            },
+            _ => {
+                use serde::de;
+
+                return Err(de::Error::invalid_length(
+                    intermediate.min.len(), 
+                    &"an array of len 3",
+                ));
+            }
+        };
+
+        let max = match intermediate.max.len() {
+            3 => {
+                let mut max = [0.; 3];
+
+                max.copy_from_slice(&intermediate.max);
+                max
+            },
+            _ => {
+                use serde::de;
+
+                return Err(de::Error::invalid_length(
+                    intermediate.max.len(), 
+                    &"an array of len 3",
+                ));
+            }
+        };
+
+        Ok(Self {
+            min, 
+            _p0: 0,
+            max, 
+            _p1: 0,
+        })
+    }
 }
 
 impl Bounds {
@@ -59,7 +117,6 @@ impl Bounds {
     }
 }
 
-
 pub struct Aabb {
     pub fst: OnceCell<Box<Aabb>>,
     pub snd: OnceCell<Box<Aabb>>,
@@ -95,11 +152,12 @@ impl Aabb {
         eps: f32,
         prims: &[geom::Prim], 
         vertices: &[geom::PrimVertex],
-    ) -> anyhow::Result<()> {
+        target_item_count: usize,
+    ) {
         use geom::V3Ops as _;
 
-        if self.items.len() <= 2 { 
-            return Ok(()); 
+        if self.items.len() <= target_item_count { 
+            return;
         }
 
         let d = self.bounds.max.sub(self.bounds.min);
@@ -119,17 +177,17 @@ impl Aabb {
         };
 
         if d[0] >= d[1] && d[0] >= d[2] {
-            if d[0] < eps * 0.5 { return Ok(()); }
+            if d[0] < eps * 0.5 { return; }
 
             fst.bounds.max[0] = self.bounds.min[0] + d[0] * 0.5;
             snd.bounds.min[0] = fst.bounds.max[0];
         } else if d[1] >= d[2] && d[1] >= d[0] {
-            if d[1] < eps * 0.5 { return Ok(()); }
+            if d[1] < eps * 0.5 { return; }
 
             fst.bounds.max[1] = self.bounds.min[1] + d[1] * 0.5;
             snd.bounds.min[1] = fst.bounds.max[1];
         } else {
-            if d[2] < eps * 0.5 { return Ok(()); }
+            if d[2] < eps * 0.5 { return; }
 
             fst.bounds.max[2] = self.bounds.min[2] + d[2] * 0.5;
             snd.bounds.min[2] = fst.bounds.max[2];
@@ -163,11 +221,11 @@ impl Aabb {
         if fst.items.is_empty() {
             self.bounds = snd.bounds;
 
-            self.split(eps, prims, vertices)?;
+            self.split(eps, prims, vertices, target_item_count);
         } else if snd.items.is_empty() {
             self.bounds = fst.bounds;
 
-            self.split(eps, prims, vertices)?;
+            self.split(eps, prims, vertices, target_item_count);
         } else {
             self.items.clear();
 
@@ -181,28 +239,33 @@ impl Aabb {
                 vertices
             );
 
-            fst.split(eps, prims, vertices)?;
-            snd.split(eps, prims, vertices)?;
+            fst.split(eps, prims, vertices, target_item_count);
+            snd.split(eps, prims, vertices, target_item_count);
 
-            self.fst.set(Box::new(fst))
-                .map_err(|_| io::Error::from(io::ErrorKind::AlreadyExists))?;
-
-            self.snd.set(Box::new(snd))
-                .map_err(|_| io::Error::from(io::ErrorKind::AlreadyExists))?;
+            self.fst.set(Box::new(fst)).unwrap();
+            self.snd.set(Box::new(snd)).unwrap();
         }
+    }
 
-        Ok(())
+    pub fn from_scene_unloaded() -> Self {
+        Self {
+            fst: OnceCell::new(),
+            snd: OnceCell::new(),
+            bounds: Bounds::new([].into_iter(), &[]),
+            items: vec![0],
+        }
     }
 
     pub fn from_scene(
         eps: f32,
         scene: &scene::Scene,
-    ) -> anyhow::Result<Self> {
-        let scene::Scene::Active { prims, vertices, .. } = scene else {
-            anyhow::bail!("\
-                Unable to construct an axis-aligned bounding box \
-                from an unloaded scene\
-            ");
+        target_item_count: usize,
+    ) -> Self {
+        let scene::Scene::Active { 
+            prims, 
+            vertices, .. 
+        } = scene else {
+            return Self::from_scene_unloaded();
         };
 
         let mut root = Self {
@@ -212,8 +275,7 @@ impl Aabb {
             items: (0..prims.len()).collect()
         };
 
-        root.split(eps, prims, vertices)?;
-
-        Ok(root)
+        root.split(eps, prims, vertices, target_item_count);
+        root
     }
 }
