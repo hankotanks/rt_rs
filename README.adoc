@@ -3,7 +3,7 @@
 
 https://hankotanks.github.io/rt_rs[Link to Pages]
 
-[Link to Project Specification and Findings](Lewis_COMP3391Study_20240608.pdf)
+Lewis_COMP3391Study_20240608.pdf[Link to Project Specification and Findings]
 
 Currently, this file is just a reference for my own use.
 The codebase is the subject of my COMP3391 independent study.
